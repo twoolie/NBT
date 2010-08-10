@@ -1,4 +1,4 @@
-This is a Named Binary Tag parser based upon the specification by Markus Peerson
+This is a Named Binary Tag parser based upon the specification by Markus Persson.
 
 From The spec: 
   "NBT (Named Binary Tag) is a tag based binary format designed to carry large 
