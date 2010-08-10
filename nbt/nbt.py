@@ -258,9 +258,14 @@ class NBTFile(TAG_Compound):
 			else:
 				raise ValueError("First record is not a Compound Tag")
 
-	def write_file(self, file=None):
+	def write_file(self, filename=None, file=None):
 		if file:
 			self.file = file
+		elif filename:
+			self.file = GzipFile(filename, "wb")
+		else:
+			raise ValueError("Need to specify either a filename or a file")
+		#Render tree to file
 		self.type._render_buffer(file)
 		self.name._render_buffer(file)
 		self._render_buffer(file)
