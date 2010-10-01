@@ -32,7 +32,7 @@ class TAG(object):
 	#Printing and Formatting of tree
 	def tag_info(self):
 		return self.__class__.__name__ + \
-               ('("%s")'%self.name if self.name else "") + \
+               ('("%s")'%self.name if (self.name and self.name.value) else "") + \
                ": " + self.__repr__()
 	
 	def pretty_tree(self, indent=0):
@@ -135,7 +135,10 @@ class TAG_String(TAG):
 			
 	#Printing and Formatting of tree
 	def __repr__(self):
-		return self.value
+		if self.value:
+			return self.value
+		else:
+			return ""
 		
 class TAG_List(TAG):
 	id = TAG_LIST
