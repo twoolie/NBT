@@ -14,7 +14,8 @@ TAG_LIST = 9
 TAG_COMPOUND = 10
 
 class TAG(object):
-	"""Each Tag needs to take a buffer, an index into the buffer and return the index that it stops reading at."""
+	"""Each Tag needs to take a file-like object for reading and writing.
+	The file object will be initialised by the calling code."""
 	id = None
 	
 	def __init__(self, value=None, name=None):
@@ -125,7 +126,7 @@ class TAG_String(TAG):
 	def _render_buffer(self, buffer, offset=None):
 		if self.value:
 			save_val = self.value.encode("utf-8")
-			self.length.value = len(save_val)
+			self.length = TAG_Short(len(save_val))
 			self.length._render_buffer(buffer, offset)
 			if self.length > 0:
 				buffer.write(save_val)
@@ -244,6 +245,7 @@ class NBTFile(TAG_Compound):
 	def __init__(self, filename=None, mode=None, buffer=None):
 		super(NBTFile,self).__init__()
 		self.__class__.__name__ = "TAG_Compound"
+		self.type = TAG_Byte(self.id)
 		if filename:
 			self.file = GzipFile(filename, mode)
 			self.parse_file(self.file)
@@ -266,12 +268,12 @@ class NBTFile(TAG_Compound):
 			self.file = file
 		elif filename:
 			self.file = GzipFile(filename, "wb")
-		else:
+		elif not self.file:
 			raise ValueError("Need to specify either a filename or a file")
 		#Render tree to file
-		self.type._render_buffer(file)
-		self.name._render_buffer(file)
-		self._render_buffer(file)
+		self.type._render_buffer(self.file)
+		self.name._render_buffer(self.file)
+		self._render_buffer(self.file)
 	
 
 	
