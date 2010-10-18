@@ -1,0 +1,2 @@
+include *.txt
+include nbt\bigtest.nbt
