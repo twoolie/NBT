@@ -249,6 +249,8 @@ class NBTFile(TAG_Compound):
 		if filename:
 			self.file = GzipFile(filename, mode)
 			self.parse_file(self.file)
+		elif buffer:
+			self.file = buffer
 	
 	def parse_file(self, file=None):
 		if not file:
