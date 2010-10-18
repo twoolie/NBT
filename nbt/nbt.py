@@ -262,6 +262,7 @@ class NBTFile(TAG_Compound):
 				self.file.close()
 			else:
 				raise ValueError("First record is not a Compound Tag")
+		else: ValueError("need a file!")
 
 	def write_file(self, filename=None, file=None):
 		if file:
@@ -274,8 +275,3 @@ class NBTFile(TAG_Compound):
 		self.type._render_buffer(self.file)
 		self.name._render_buffer(self.file)
 		self._render_buffer(self.file)
-	
-
-	
-
-
