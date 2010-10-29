@@ -136,37 +136,35 @@ class TAG_List(TAG):
 	id = TAG_LIST
 	def __init__(self, type=None, value=None, name=None, buffer=None):
 		super(TAG_List, self).__init__(value, name)
-		if type: 
-			self.tagID = TAG_Byte(value = type.id)
+		if type:
+			self.tagID = type.id
 		else: self.tagID = None
 		if buffer:
 			self._parse_buffer(buffer)
 		if not self.tagID:
 			raise ValueError("No type specified for list")
-		if not self.value:
-			self.value = []
 	
 	#Parsers and Generators	
 	def _parse_buffer(self, buffer, offset=None):
-		self.tagID = TAG_Byte(buffer=buffer)
+		self.tagID = TAG_Byte(buffer=buffer).value
 		self.value = []
 		length = TAG_Int(buffer=buffer)
 		for x in range(length.value):
-			self.value.append(TAGLIST[self.tagID.value](buffer=buffer))
+			self.value.append(TAGLIST[self.tagID](buffer=buffer))
 	
 	def _render_buffer(self, buffer, offset=None):
-		self.tagID._render_buffer(buffer, offset)
+		TAG_Byte(self.tagID)._render_buffer(buffer, offset)
 		length = TAG_Int(len(self.value))
 		length._render_buffer(buffer, offset)
 		for i, tag in enumerate(self.value):
-			if tag.id != self.tagID.value:
+			if tag.id != self.tagID:
 				raise ValueError("List element %d(%s) has type %d != container type %d" %
-						 (i, tag, tag.id, self.tagID.value))
+						 (i, tag, tag.id, self.tagID))
 			tag._render_buffer(buffer, offset)
 	
 	#Printing and Formatting of tree
 	def __repr__(self):
-		return "%i entries of type %s" % (len(self.tags), TAGLIST[self.tagID.value].__name__)
+		return "%i entries of type %s" % (len(self.tags), TAGLIST[self.tagID].__name__)
 	
 	def pretty_tree(self, indent=0):
 		output = [super(TAG_List,self).pretty_tree(indent)]
