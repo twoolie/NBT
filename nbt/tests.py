@@ -39,6 +39,25 @@ class TreeManipulationTest(unittest.TestCase):
         
     def tearDown(self):
         del self.nbtfile
-        
+
+class EmptyStringTest(unittest.TestCase):
+
+    def setUp(self):
+        self.golden_value = "\x0A\0\x04Test\x08\0\x0Cempty string\0\0\0"
+        self.nbtfile = NBTFile(buffer=StringIO(self.golden_value))
+
+    def testReadEmptyString(self):
+        self.assertEqual(self.nbtfile.name.value, "Test")
+        print self.nbtfile.tags
+        self.assertEqual(self.nbtfile["empty string"].value, "")
+
+    def testWriteEmptyString(self):
+        buffer = StringIO()
+        self.nbtfile.write_file(file=buffer)
+        self.assertEqual(buffer.getvalue(), self.golden_value)
+
+    def tearDown(self):
+        pass
+
 if __name__ == '__main__':
     unittest.main()

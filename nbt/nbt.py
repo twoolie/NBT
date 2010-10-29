@@ -120,27 +120,17 @@ class TAG_String(TAG):
 	#Parsers and Generators	
 	def _parse_buffer(self, buffer, offset=None):
 		self.length = TAG_Short(buffer=buffer)
-		if self.length.value > 0:
-			self.value = unicode(buffer.read(self.length.value), "utf-8")
-		else: self.value = None
+		self.value = unicode(buffer.read(self.length.value), "utf-8")
 	
 	def _render_buffer(self, buffer, offset=None):
-		if self.value:
-			save_val = self.value.encode("utf-8")
-			self.length = TAG_Short(len(save_val))
-			self.length._render_buffer(buffer, offset)
-			if self.length > 0:
-				buffer.write(save_val)
-		else:
-			self.length.value = 0
-			self.length._render_buffer(buffer, offset)
+		save_val = self.value.encode("utf-8")
+		self.length = TAG_Short(len(save_val))
+		self.length._render_buffer(buffer, offset)
+		buffer.write(save_val)
 			
 	#Printing and Formatting of tree
 	def __repr__(self):
-		if self.value:
-			return self.value
-		else:
-			return ""
+		return self.value
 		
 class TAG_List(TAG):
 	id = TAG_LIST
