@@ -134,29 +134,31 @@ class TAG_String(TAG):
 		
 class TAG_List(TAG):
 	id = TAG_LIST
-	def __init__(self, type=None, name=None, buffer=None):
-		super(TAG_List, self).__init__(name=name)
+	def __init__(self, type=None, value=None, name=None, buffer=None):
+		super(TAG_List, self).__init__(value, name)
 		if type: 
 			self.tagID = TAG_Byte(value = type.id)
 		else: self.tagID = None
-		self.tags = []
 		if buffer:
 			self._parse_buffer(buffer)
 		if not self.tagID:
 			raise ValueError("No type specified for list")
+		if not self.value:
+			self.value = []
 	
 	#Parsers and Generators	
 	def _parse_buffer(self, buffer, offset=None):
 		self.tagID = TAG_Byte(buffer=buffer)
+		self.value = []
 		length = TAG_Int(buffer=buffer)
 		for x in range(length.value):
-			self.tags.append(TAGLIST[self.tagID.value](buffer=buffer))
+			self.value.append(TAGLIST[self.tagID.value](buffer=buffer))
 	
 	def _render_buffer(self, buffer, offset=None):
 		self.tagID._render_buffer(buffer, offset)
-		length = TAG_Int(len(self.tags))
+		length = TAG_Int(len(self.value))
 		length._render_buffer(buffer, offset)
-		for i, tag in enumerate(self.tags):
+		for i, tag in enumerate(self.value):
 			if tag.id != self.tagID.value:
 				raise ValueError("List element %d(%s) has type %d != container type %d" %
 						 (i, tag, tag.id, self.tagID.value))
