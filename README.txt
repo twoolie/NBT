@@ -1,7 +1,7 @@
 This is a Named Binary Tag parser based upon the specification by Markus Persson.
 
-From The spec: 
-  "NBT (Named Binary Tag) is a tag based binary format designed to carry large 
+From The spec:
+  "NBT (Named Binary Tag) is a tag based binary format designed to carry large
    amounts of binary data with smaller amounts of additional data.
    An NBT file consists of a single GZIPped Named Tag of type TAG_Compound."
 
@@ -9,12 +9,12 @@ read the full spec at http://www.minecraft.net/docs/NBT.txt
 
 Usage:
  1) Reading files.
- 
+
  the easiest way to read an nbt file is to instantiate an NBTFile object e.g.
- 
+
     >>> import nbt
     >>> nbtfile = nbt.NBTFile("bigtest.nbt",'rb')
-    >>> nbtfile.name.value
+    >>> nbtfile.name
     u'Level'
     >>> nbtfile["nested compound test"].tag_info()
     TAG_Compound("nested compound test"): 2 Entries
@@ -23,39 +23,39 @@ Usage:
     ...
     TAG_String("name"): Hampus
     TAG_Float("value"): 0.75
-    >>> [tag.value for tag in nbtfile["listTest (long)"].tags]
+    >>> [tag.value for tag in nbtfile["listTest (long)"].value]
     [11, 12, 13, 14, 15]
-    
+
  2) Writing files.
- 
- Writing files is easy too! if you have a NBTFile object, simply call it's 
- write_file() method. If the NBTFile was instantiated with a filename, then 
+
+ Writing files is easy too! if you have a NBTFile object, simply call it's
+ write_file() method. If the NBTFile was instantiated with a filename, then
  write_file needs no extra arguments. It just works. If however you created a new
  file object from scratch (or even if you just want to save it somewhere else)
  call write_file('path\to\new\file.nbt')
- 
+
     >>> import nbt
     >>> nbtfile = nbt.NBTFile("bigtest.nbt",'rb')
-    >>> nbtfile["listTest (compound)"][0].value = u'Hello World!'
+    >>> nbtfile["listTest (compound)"].value[0]["name"].value = "Different name"
     >>> nbtfile.write_file("newnbtfile.nbt")
-     
+
  3) Creating files
- 
+
  Creating files is trickier but ultimately should give you no issue, as long as
  you have read the NBT spec (hint.. it's very short). Also be sure to note that
  the NBTFile object is actually a TAG_Compound with some wrapper features, so
  you can use all the standard tag features
- 
+
     >>> from nbt import *
     >>> nbtfile = NBTFile()
- 
+
  first, don't forget to name the top level tag
- 
-    >>> nbtfile.name = TAG_String("My Top Level Tag")
+
+    >>> nbtfile.name = "My Top Level Tag"
     >>> nbtfile.tags.append(TAG_Float(name="My Float Name", value=3.152987593947))
     >>> mylist = TAG_List(name="TestList", type=TAG_Long) #type needs to be pre-declared!
-    >>> mylist.tags.append(TAG_Long(100))
-    >>> mylist.tags.extend([TAG_Long(120),TAG_Long(320),TAG_Long(19)])
+    >>> mylist.value.append(TAG_Long(100))
+    >>> mylist.value.extend([TAG_Long(120),TAG_Long(320),TAG_Long(19)])
     >>> nbtfile.tags.append(mylist)
     >>> print nbtfile.pretty_tree()
     TAG_Compound("My Top Level Tag"): 2 Entries
@@ -83,4 +83,4 @@ Usage:
         }
     }
     >>> nbtfile.write_file("mynbt.dat")
-    
+
