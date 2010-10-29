@@ -26,8 +26,8 @@ class TreeManipulationTest(unittest.TestCase):
         self.nbtfile = NBTFile()
     
     def testRootNodeSetup(self):
-        self.nbtfile.name = TAG_String("Hello World")
-        self.assertEqual(self.nbtfile.name.value, "Hello World")
+        self.nbtfile.name = "Hello World"
+        self.assertEqual(self.nbtfile.name, "Hello World")
         
     def testTagAdd(self):
         self.testRootNodeSetup()
@@ -47,7 +47,7 @@ class EmptyStringTest(unittest.TestCase):
         self.nbtfile = NBTFile(buffer=StringIO(self.golden_value))
 
     def testReadEmptyString(self):
-        self.assertEqual(self.nbtfile.name.value, "Test")
+        self.assertEqual(self.nbtfile.name, "Test")
         print self.nbtfile.tags
         self.assertEqual(self.nbtfile["empty string"].value, "")
 

@@ -19,8 +19,7 @@ class TAG(object):
 	id = None
 	
 	def __init__(self, value=None, name=None):
-		if name: self.name = TAG_String(name)
-		else: self.name = None
+		self.name = name
 		self.value = value
 	
 	#Parsers and Generators	
@@ -33,7 +32,7 @@ class TAG(object):
 	#Printing and Formatting of tree
 	def tag_info(self):
 		return self.__class__.__name__ + \
-               ('("%s")'%self.name if (self.name and self.name.value) else "") + \
+               ('(%s)' % repr(self.name)) + \
                ": " + self.__repr__()
 	
 	def pretty_tree(self, indent=0):
@@ -190,7 +189,7 @@ class TAG_Compound(TAG):
 				#print "found tag_end"
 				break
 			else:
-				name = TAG_String(buffer=buffer)
+				name = TAG_String(buffer=buffer).value
 				try:
 					#DEBUG print type, name
 					tag = TAGLIST[type.value](buffer=buffer)
@@ -202,7 +201,7 @@ class TAG_Compound(TAG):
 	def _render_buffer(self, buffer, offset=None):
 		for tag in self.tags:
 			TAG_Byte(tag.id)._render_buffer(buffer, offset)
-			tag.name._render_buffer(buffer, offset)
+			TAG_String(tag.name)._render_buffer(buffer, offset)
 			tag._render_buffer(buffer,offset)
 		buffer.write('\x00') #write TAG_END
 	
@@ -212,7 +211,7 @@ class TAG_Compound(TAG):
 			return self.tags[key]
 		elif isinstance(key, str):
 			for tag in self.tags:
-				if tag.name.value == key:
+				if tag.name == key:
 					return tag
 			else:
 				raise KeyError("A tag with this name does not exist")
@@ -255,9 +254,9 @@ class NBTFile(TAG_Compound):
 		if not file:
 			file = self.file
 		if file:
-			self.type = TAG_Byte(buffer=file)
-			if self.type.value == self.id:
-				name = TAG_String(buffer=file)
+			type = TAG_Byte(buffer=file)
+			if type.value == self.id:
+				name = TAG_String(buffer=file).value
 				self._parse_buffer(file)
 				self.name = name
 				self.file.close()
@@ -273,6 +272,6 @@ class NBTFile(TAG_Compound):
 		elif not self.file:
 			raise ValueError("Need to specify either a filename or a file")
 		#Render tree to file
-		self.type._render_buffer(self.file)
-		self.name._render_buffer(self.file)
+		TAG_Byte(self.id)._render_buffer(self.file)
+		TAG_String(self.name)._render_buffer(self.file)
 		self._render_buffer(self.file)
