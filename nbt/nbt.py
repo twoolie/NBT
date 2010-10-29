@@ -92,7 +92,7 @@ class TAG_Byte_Array(TAG):
 	id = TAG_BYTE_ARRAY
 	def __init__(self, buffer=None):
 		super(TAG_Byte_Array, self).__init__()
-		self.tags = []
+		self.value = ''
 		if buffer:
 			self._parse_buffer(buffer)
 	
@@ -102,6 +102,7 @@ class TAG_Byte_Array(TAG):
 		self.value = buffer.read(self.length.value)
 	
 	def _render_buffer(self, buffer, offset=None):
+		self.length.value = len(self.value)
 		self.length._render_buffer(buffer, offset)
 		buffer.write(self.value)
 	
@@ -248,9 +249,9 @@ class NBTFile(TAG_Compound):
 		self.type = TAG_Byte(self.id)
 		if filename:
 			self.file = GzipFile(filename, mode)
-			self.parse_file(self.file)
 		elif buffer:
 			self.file = buffer
+		self.parse_file(self.file)
 	
 	def parse_file(self, file=None):
 		if not file:
