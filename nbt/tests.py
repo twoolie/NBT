@@ -1,18 +1,21 @@
 from nbt import *
 import unittest
+from StringIO import StringIO
+from gzip import GzipFile
 
 class ReadWriteTest(unittest.TestCase):     # test that we can read the test file correctly
     def setUp(self):
         pass
     
-    def readBigTest(self):
-        mynbt = NBTFile("Bigtest.py")
+    def testReadBig(self):
+        mynbt = NBTFile("bigtest.nbt")
         self.assertTrue(mynbt.file != None)
     
-    def writeBigTest(self):
-        mynbt = NBTFile("Bigtest.py")
-        mynbt.write_file("output file.nbt")
-        self.assertTrue(True)
+    def testWriteBig(self):
+        mynbt = NBTFile("bigtest.nbt")
+        output = StringIO()
+        mynbt.write_file(file=output)
+        self.assertTrue(GzipFile("bigtest.nbt").read() == output.getvalue())
     
     def tearDown(self):
         pass
