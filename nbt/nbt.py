@@ -134,7 +134,7 @@ class TAG_String(TAG):
 		
 class TAG_List(TAG):
 	id = TAG_LIST
-	def __init__(self, name=None, type=None, buffer=None):
+	def __init__(self, type=None, name=None, buffer=None):
 		super(TAG_List, self).__init__(name=name)
 		if type: 
 			self.tagID = TAG_Byte(value = type.id)
@@ -142,6 +142,8 @@ class TAG_List(TAG):
 		self.tags = []
 		if buffer:
 			self._parse_buffer(buffer)
+		if not self.tagID:
+			raise ValueError("No type specified for list")
 	
 	#Parsers and Generators	
 	def _parse_buffer(self, buffer, offset=None):
@@ -154,7 +156,10 @@ class TAG_List(TAG):
 		self.tagID._render_buffer(buffer, offset)
 		length = TAG_Int(len(self.tags))
 		length._render_buffer(buffer, offset)
-		for tag in self.tags:
+		for i, tag in enumerate(self.tags):
+			if tag.id != self.tagID.value:
+				raise ValueError("List element %d(%s) has type %d != container type %d" %
+						 (i, tag, tag.id, self.tagID.value))
 			tag._render_buffer(buffer, offset)
 	
 	#Printing and Formatting of tree
