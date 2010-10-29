@@ -40,7 +40,7 @@ class TAG(object):
 		return ("\t"*indent) + self.tag_info()
 		
 class _TAG_Numeric(TAG):
-	def __init__(self, unpack_as, size, buffer=None, value=None, name=None):
+	def __init__(self, unpack_as, size, value=None, name=None, buffer=None):
 		super(_TAG_Numeric, self).__init__(value, name)
 		self.unpack_as = unpack_as
 		self.size = size
@@ -61,32 +61,32 @@ class _TAG_Numeric(TAG):
 class TAG_Byte(_TAG_Numeric):
 	id = TAG_BYTE
 	def __init__(self, value=None, name=None, buffer=None):
-		super(TAG_Byte, self).__init__(">b", 1, buffer, value, name)
+		super(TAG_Byte, self).__init__(">b", 1, value, name, buffer)
 
 class TAG_Short(_TAG_Numeric):
 	id = TAG_SHORT
 	def __init__(self, value=None, name=None, buffer=None):
-		super(TAG_Short, self).__init__(">h", 2, buffer, value, name)
+		super(TAG_Short, self).__init__(">h", 2, value, name, buffer)
 
 class TAG_Int(_TAG_Numeric):
 	id = TAG_INT
 	def __init__(self, value=None, name=None, buffer=None):
-		super(TAG_Int, self).__init__(">i", 4, buffer, value, name)
+		super(TAG_Int, self).__init__(">i", 4, value, name, buffer)
 
 class TAG_Long(_TAG_Numeric):
 	id = TAG_LONG
 	def __init__(self, value=None, name=None, buffer=None):
-		super(TAG_Long, self).__init__(">q", 8, buffer, value, name)
+		super(TAG_Long, self).__init__(">q", 8, value, name, buffer)
 
 class TAG_Float(_TAG_Numeric):
 	id = TAG_FLOAT
 	def __init__(self, value=None, name=None, buffer=None):
-		super(TAG_Float, self).__init__(">f", 4, buffer, value, name)
+		super(TAG_Float, self).__init__(">f", 4, value, name, buffer)
 
 class TAG_Double(_TAG_Numeric):
 	id = TAG_DOUBLE
 	def __init__(self, value=None, name=None, buffer=None):
-		super(TAG_Double, self).__init__(">d", 8, buffer, value, name)
+		super(TAG_Double, self).__init__(">d", 8, value, name, buffer)
 
 class TAG_Byte_Array(TAG):
 	id = TAG_BYTE_ARRAY
@@ -260,9 +260,9 @@ class NBTFile(TAG_Compound):
 				raise ValueError("First record is not a Compound Tag")
 		else: ValueError("need a file!")
 
-	def write_file(self, filename=None, file=None):
-		if file:
-			self.file = file
+	def write_file(self, filename=None, buffer=None):
+		if buffer:
+			self.file = buffer
 		elif filename:
 			self.file = GzipFile(filename, "wb")
 		elif not self.file:

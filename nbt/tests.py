@@ -14,7 +14,7 @@ class ReadWriteTest(unittest.TestCase):     # test that we can read the test fil
     def testWriteBig(self):
         mynbt = NBTFile("bigtest.nbt")
         output = StringIO()
-        mynbt.write_file(file=output)
+        mynbt.write_file(buffer=output)
         self.assertTrue(GzipFile("bigtest.nbt").read() == output.getvalue())
     
     def tearDown(self):
@@ -53,7 +53,7 @@ class EmptyStringTest(unittest.TestCase):
 
     def testWriteEmptyString(self):
         buffer = StringIO()
-        self.nbtfile.write_file(file=buffer)
+        self.nbtfile.write_file(buffer=buffer)
         self.assertEqual(buffer.getvalue(), self.golden_value)
 
     def tearDown(self):
