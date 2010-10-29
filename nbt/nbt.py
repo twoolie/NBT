@@ -98,17 +98,17 @@ class TAG_Byte_Array(TAG):
 	
 	#Parsers and Generators	
 	def _parse_buffer(self, buffer, offset=None):
-		self.length = TAG_Int(buffer=buffer)
-		self.value = buffer.read(self.length.value)
+		length = TAG_Int(buffer=buffer)
+		self.value = buffer.read(length.value)
 	
 	def _render_buffer(self, buffer, offset=None):
-		self.length.value = len(self.value)
-		self.length._render_buffer(buffer, offset)
+		length = TAG_Int(len(self.value))
+		length._render_buffer(buffer, offset)
 		buffer.write(self.value)
 	
 	#Printing and Formatting of tree
 	def __repr__(self):
-		return "[%i bytes]" % self.length.value
+		return "[%i bytes]" % len(self.value)
 		
 class TAG_String(TAG):
 	id = TAG_STRING
@@ -119,13 +119,13 @@ class TAG_String(TAG):
 	
 	#Parsers and Generators	
 	def _parse_buffer(self, buffer, offset=None):
-		self.length = TAG_Short(buffer=buffer)
-		self.value = unicode(buffer.read(self.length.value), "utf-8")
+		length = TAG_Short(buffer=buffer)
+		self.value = unicode(buffer.read(length.value), "utf-8")
 	
 	def _render_buffer(self, buffer, offset=None):
 		save_val = self.value.encode("utf-8")
-		self.length = TAG_Short(len(save_val))
-		self.length._render_buffer(buffer, offset)
+		length = TAG_Short(len(save_val))
+		length._render_buffer(buffer, offset)
 		buffer.write(save_val)
 			
 	#Printing and Formatting of tree
@@ -139,7 +139,6 @@ class TAG_List(TAG):
 		if type: 
 			self.tagID = TAG_Byte(value = type.id)
 		else: self.tagID = None
-		self.length = None
 		self.tags = []
 		if buffer:
 			self._parse_buffer(buffer)
@@ -147,13 +146,14 @@ class TAG_List(TAG):
 	#Parsers and Generators	
 	def _parse_buffer(self, buffer, offset=None):
 		self.tagID = TAG_Byte(buffer=buffer)
-		self.length = TAG_Int(buffer=buffer)
-		for x in range(self.length.value):
+		length = TAG_Int(buffer=buffer)
+		for x in range(length.value):
 			self.tags.append(TAGLIST[self.tagID.value](buffer=buffer))
 	
 	def _render_buffer(self, buffer, offset=None):
 		self.tagID._render_buffer(buffer, offset)
-		self.length._render_buffer(buffer, offset)
+		length = TAG_Int(len(self.tags))
+		length._render_buffer(buffer, offset)
 		for tag in self.tags:
 			tag._render_buffer(buffer, offset)
 	
