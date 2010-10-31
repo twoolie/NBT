@@ -214,6 +214,18 @@ class TAG_Compound(TAG):
 		else:
 			raise ValueError("key needs to be either name of tag, or index of tag")
 
+	def __setitem__(self, key, value):
+		if isinstance(key, int):
+			# Just try it. The proper error will be raised if it doesn't work.
+			self.tags[key] = value
+		elif isinstance(key, str):
+			value.name = key
+			for i, tag in enumerate(self.tags):
+				if tag.name == key:
+					self.tags[i] = value
+					return
+			self.tags.append(value)
+
 
 	#Printing and Formatting of tree
 	def __repr__(self):
