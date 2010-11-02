@@ -1,4 +1,4 @@
-from struct import pack, unpack
+from struct import pack, unpack, calcsize
 from gzip import GzipFile
 
 TAG_END = 0
@@ -39,19 +39,18 @@ class TAG(object):
 		return ("\t"*indent) + self.tag_info()
 
 class _TAG_Numeric(TAG):
-	def __init__(self, unpack_as, size, value=None, name=None, buffer=None):
+	def __init__(self, value=None, name=None, buffer=None):
 		super(_TAG_Numeric, self).__init__(value, name)
-		self.unpack_as = unpack_as
-		self.size = size
+		self.size = calcsize(self.fmt)
 		if buffer:
 			self._parse_buffer(buffer)
 
 	#Parsers and Generators
 	def _parse_buffer(self, buffer, offset=None):
-		self.value = unpack(self.unpack_as, buffer.read(self.size))[0]
+		self.value = unpack(self.fmt, buffer.read(self.size))[0]
 
 	def _render_buffer(self, buffer, offset=None):
-		buffer.write(pack(self.unpack_as, self.value))
+		buffer.write(pack(self.fmt, self.value))
 
 	#Printing and Formatting of tree
 	def __repr__(self):
@@ -60,33 +59,27 @@ class _TAG_Numeric(TAG):
 #== Value Tags ==#
 class TAG_Byte(_TAG_Numeric):
 	id = TAG_BYTE
-	def __init__(self, value=None, name=None, buffer=None):
-		super(TAG_Byte, self).__init__(">b", 1, value, name, buffer)
+	fmt = ">b"
 
 class TAG_Short(_TAG_Numeric):
 	id = TAG_SHORT
-	def __init__(self, value=None, name=None, buffer=None):
-		super(TAG_Short, self).__init__(">h", 2, value, name, buffer)
+	fmt = ">h"
 
 class TAG_Int(_TAG_Numeric):
 	id = TAG_INT
-	def __init__(self, value=None, name=None, buffer=None):
-		super(TAG_Int, self).__init__(">i", 4, value, name, buffer)
+	fmt = ">i"
 
 class TAG_Long(_TAG_Numeric):
 	id = TAG_LONG
-	def __init__(self, value=None, name=None, buffer=None):
-		super(TAG_Long, self).__init__(">q", 8, value, name, buffer)
+	fmt = ">q"
 
 class TAG_Float(_TAG_Numeric):
 	id = TAG_FLOAT
-	def __init__(self, value=None, name=None, buffer=None):
-		super(TAG_Float, self).__init__(">f", 4, value, name, buffer)
+	fmt = ">f"
 
 class TAG_Double(_TAG_Numeric):
 	id = TAG_DOUBLE
-	def __init__(self, value=None, name=None, buffer=None):
-		super(TAG_Double, self).__init__(">d", 8, value, name, buffer)
+	fmt = ">d"
 
 class TAG_Byte_Array(TAG):
 	id = TAG_BYTE_ARRAY
