@@ -7,6 +7,8 @@ From The spec:
 
 read the full spec at http://www.minecraft.net/docs/NBT.txt
 
+** Warning: Although the API is nearing freeze, it may change slightly before the 1.0 release **
+
 Usage:
  1) Reading files.
 

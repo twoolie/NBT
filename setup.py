@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
       name='NBT',
-      version='0.5',
+      version='0.7',
       description='Named Binary Tag Reader/Writer',
       author='Thomas Woolford',
       author_email='woolford.thomas@gmail.com',
@@ -12,5 +12,4 @@ setup(
       license = open("LICENSE.txt").read(),
       long_description = open("README.txt").read(),
       packages=['nbt'],
-      package_data={'mypkg': ['*.nbt']},
      )
