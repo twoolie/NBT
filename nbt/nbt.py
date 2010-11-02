@@ -57,6 +57,7 @@ class _TAG_Numeric(TAG):
 	def __repr__(self):
 		return str(self.value)
 
+#== Value Tags ==#
 class TAG_Byte(_TAG_Numeric):
 	id = TAG_BYTE
 	def __init__(self, value=None, name=None, buffer=None):
@@ -131,6 +132,7 @@ class TAG_String(TAG):
 	def __repr__(self):
 		return self.value
 
+#== Collection Tags ==#
 class TAG_List(TAG):
 	id = TAG_LIST
 	def __init__(self, type=None, value=None, name=None, buffer=None):
@@ -138,6 +140,7 @@ class TAG_List(TAG):
 		if type:
 			self.tagID = type.id
 		else: self.tagID = None
+		self.tags = []
 		if buffer:
 			self._parse_buffer(buffer)
 		if not self.tagID:
@@ -146,16 +149,16 @@ class TAG_List(TAG):
 	#Parsers and Generators
 	def _parse_buffer(self, buffer, offset=None):
 		self.tagID = TAG_Byte(buffer=buffer).value
-		self.value = []
+		self.tags = []
 		length = TAG_Int(buffer=buffer)
 		for x in range(length.value):
-			self.value.append(TAGLIST[self.tagID](buffer=buffer))
+			self.tags.append(TAGLIST[self.tagID](buffer=buffer))
 
 	def _render_buffer(self, buffer, offset=None):
 		TAG_Byte(self.tagID)._render_buffer(buffer, offset)
-		length = TAG_Int(len(self.value))
+		length = TAG_Int(len(self.tags))
 		length._render_buffer(buffer, offset)
-		for i, tag in enumerate(self.value):
+		for i, tag in enumerate(self.tags):
 			if tag.id != self.tagID:
 				raise ValueError("List element %d(%s) has type %d != container type %d" %
 						 (i, tag, tag.id, self.tagID))

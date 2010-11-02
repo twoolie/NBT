@@ -36,7 +36,7 @@ Usage:
 
     >>> import nbt
     >>> nbtfile = nbt.NBTFile("bigtest.nbt",'rb')
-    >>> nbtfile["listTest (compound)"].value[0]["name"].value = "Different name"
+    >>> nbtfile["listTest (compound)"].tags[0]["name"].value = "Different name"
     >>> nbtfile.write_file("newnbtfile.nbt")
 
  3) Creating files
@@ -54,8 +54,8 @@ Usage:
     >>> nbtfile.name = "My Top Level Tag"
     >>> nbtfile.tags.append(TAG_Float(name="My Float Name", value=3.152987593947))
     >>> mylist = TAG_List(name="TestList", type=TAG_Long) #type needs to be pre-declared!
-    >>> mylist.value.append(TAG_Long(100))
-    >>> mylist.value.extend([TAG_Long(120),TAG_Long(320),TAG_Long(19)])
+    >>> mylist.tags.append(TAG_Long(100))
+    >>> mylist.tags.extend([TAG_Long(120),TAG_Long(320),TAG_Long(19)])
     >>> nbtfile.tags.append(mylist)
     >>> print nbtfile.pretty_tree()
     TAG_Compound("My Top Level Tag"): 2 Entries

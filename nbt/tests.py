@@ -1,4 +1,5 @@
 from nbt import *
+from nbt import _TAG_Numeric
 import unittest
 from StringIO import StringIO
 from gzip import GzipFile
@@ -29,11 +30,13 @@ class TreeManipulationTest(unittest.TestCase):
         self.nbtfile.name = "Hello World"
         self.assertEqual(self.nbtfile.name, "Hello World")
 
-    def testTagAdd(self):
-        self.testRootNodeSetup()
-        #try a simple byte tag
-        self.nbtfile.tags.append(TAG_Byte(name="TestByte", value=10))
-        self.assertEqual(self.nbtfile["TestByte"].value, 10)
+    def testTagNumeric(self):
+        for tag in TAGLIST:
+            if isinstance(TAGLIST[tag], _TAG_Numeric):
+                tagobj = TAGLIST[tag](name="Test", value=10)
+                self.assertEqual(byte.name, "Test", "Name not set correctly for %s" % TAGLIST[tag].__class__.__name__)
+                self.assertEqual(byte.value, 10, "Value not set correctly for %s" % TAGLIST[tag].__class__.__name__)
+                self.nbtfile.tags.append(tagobj)
 
     #etcetera..... will finish later
 
