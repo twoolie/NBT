@@ -5,12 +5,11 @@ from StringIO import StringIO
 from gzip import GzipFile
 
 class ReadWriteTest(unittest.TestCase):     # test that we can read the test file correctly
-    def setUp(self):
-        pass
 
     def testReadBig(self):
         mynbt = NBTFile("bigtest.nbt")
-        self.assertTrue(mynbt.file != None)
+        self.assertTrue(mynbt.filename != None)
+        self.assertEqual(len(mynbt.tags), 11)
 
     def testWriteBig(self):
         mynbt = NBTFile("bigtest.nbt")
@@ -18,8 +17,9 @@ class ReadWriteTest(unittest.TestCase):     # test that we can read the test fil
         mynbt.write_file(buffer=output)
         self.assertTrue(GzipFile("bigtest.nbt").read() == output.getvalue())
 
-    def tearDown(self):
-        pass
+    def testWriteback(self):
+        mynbt = NBTFile("bigtest.nbt")
+        mynbt.write_file()
 
 class TreeManipulationTest(unittest.TestCase):
 
@@ -51,16 +51,12 @@ class EmptyStringTest(unittest.TestCase):
 
     def testReadEmptyString(self):
         self.assertEqual(self.nbtfile.name, "Test")
-        print self.nbtfile.tags
         self.assertEqual(self.nbtfile["empty string"].value, "")
 
     def testWriteEmptyString(self):
         buffer = StringIO()
         self.nbtfile.write_file(buffer=buffer)
         self.assertEqual(buffer.getvalue(), self.golden_value)
-
-    def tearDown(self):
-        pass
 
 if __name__ == '__main__':
     unittest.main()

@@ -243,6 +243,7 @@ class NBTFile(TAG_Compound):
 	def __init__(self, filename=None, mode=None, buffer=None):
 		super(NBTFile,self).__init__()
 		self.__class__.__name__ = "TAG_Compound"
+		self.filename = filename
 		self.type = TAG_Byte(self.id)
 		if filename:
 			self.file = GzipFile(filename, mode)
@@ -250,8 +251,12 @@ class NBTFile(TAG_Compound):
 			self.file = buffer
 		else:
 			self.file = None
+		#parse the file given intitially
 		if self.file:
 			self.parse_file(self.file)
+			if filename and 'close' in dir(self.file):
+				self.file.close()
+			self.file = None
 
 	def parse_file(self, file=None):
 		if not file:
@@ -272,6 +277,8 @@ class NBTFile(TAG_Compound):
 			self.file = buffer
 		elif filename:
 			self.file = GzipFile(filename, "wb")
+		elif self.filename:
+			self.file = GzipFile(self.filename, "wb")
 		elif not self.file:
 			raise ValueError("Need to specify either a filename or a file")
 		#Render tree to file
