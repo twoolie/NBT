@@ -3,6 +3,25 @@ from nbt import _TAG_Numeric
 import unittest
 from StringIO import StringIO
 from gzip import GzipFile
+import tempfile
+
+class BugfixTest(unittest.TestCase):
+    """
+    Bugfix regression tests.
+
+    These tend to not fit into nice categories.
+    """
+
+    def test_issue4(self):
+        """
+        Opening an empty file causes an uncaught exception.
+
+        https://github.com/twoolie/NBT/issues/issue/4
+        """
+
+        temp = tempfile.NamedTemporaryFile()
+        temp.flush()
+        tag = NBTFile(temp.name)
 
 class ReadWriteTest(unittest.TestCase):     # test that we can read the test file correctly
 
