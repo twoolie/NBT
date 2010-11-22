@@ -32,7 +32,7 @@ class TAG(object):
 	#Printing and Formatting of tree
 	def tag_info(self):
 		return self.__class__.__name__ + \
-               ('(%s)' % repr(self.name)) + \
+               ('("%s")'%self.name if self.name else "") + \
                ": " + self.__repr__()
 
 	def pretty_tree(self, indent=0):
@@ -250,6 +250,7 @@ class NBTFile(TAG_Compound):
 		self.__class__.__name__ = "TAG_Compound"
 		self.filename = filename
 		self.type = TAG_Byte(self.id)
+		#make a file object
 		if filename:
 			self.file = GzipFile(filename, mode)
 		elif buffer:
@@ -258,15 +259,17 @@ class NBTFile(TAG_Compound):
 			self.file = None
 		#parse the file given intitially
 		if self.file:
-			self.parse_file(self.file)
+			self.parse_file()
 			if filename and 'close' in dir(self.file):
 				self.file.close()
 			self.file = None
 
-	def parse_file(self, file=None):
-		if not file:
-			file = self.file
-		if file:
+	def parse_file(self, filename=None, buffer=None):
+		if filename:
+			self.file = GzipFile(filename, 'rb')
+		if buffer:
+			self.file = buffer
+		if self.file:
 			type = TAG_Byte(buffer=file)
 			if type.value == self.id:
 				name = TAG_String(buffer=file).value
@@ -290,3 +293,8 @@ class NBTFile(TAG_Compound):
 		TAG_Byte(self.id)._render_buffer(self.file)
 		TAG_String(self.name)._render_buffer(self.file)
 		self._render_buffer(self.file)
+		#make sure the file is complete
+		if 'flush' in dir(self.file): 
+			self.file.flush()
+		if filename and 'close' in dir(self.file): 
+			self.file.close()
