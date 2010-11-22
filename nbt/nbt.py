@@ -1,5 +1,6 @@
 from struct import pack, unpack, calcsize
 from gzip import GzipFile
+from UserDict import DictMixin
 
 TAG_END = 0
 TAG_BYTE = 1
@@ -169,7 +170,7 @@ class TAG_List(TAG):
 			output.append(("\t"*indent) + "}")
 		return '\n'.join(output)
 
-class TAG_Compound(TAG):
+class TAG_Compound(TAG, DictMixin):
 	id = TAG_COMPOUND
 	def __init__(self, buffer=None):
 		super(TAG_Compound, self).__init__()
@@ -201,7 +202,10 @@ class TAG_Compound(TAG):
 			tag._render_buffer(buffer,offset)
 		buffer.write('\x00') #write TAG_END
 
-	#Accessors
+	# Dict compatibility.
+	# DictMixin requires at least __getitem__, and for more functionality,
+	# __setitem__, __delitem__, and keys.
+
 	def __getitem__(self, key):
 		if isinstance(key,int):
 			return self.tags[key]
@@ -225,6 +229,21 @@ class TAG_Compound(TAG):
 					self.tags[i] = value
 					return
 			self.tags.append(value)
+
+	def __delitem__(self, key):
+		if isinstance(key, int):
+			self.tags = self.tags[:key] + self.tags[key:]
+		elif isinstance(key, str):
+			for i, tag in enumerate(self.tags):
+				if tag.name == key:
+					self.tags = self.tags[:i] + self.tags[i:]
+					return
+			raise KeyError("A tag with this name does not exist")
+		else:
+			raise ValueError("key needs to be either name of tag, or index of tag")
+
+	def keys(self):
+		return [tag.name for tag in self.tags]
 
 
 	#Printing and Formatting of tree
