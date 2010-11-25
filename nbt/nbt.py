@@ -270,10 +270,10 @@ class NBTFile(TAG_Compound):
 		if buffer:
 			self.file = buffer
 		if self.file:
-			type = TAG_Byte(buffer=file)
+			type = TAG_Byte(buffer=self.file)
 			if type.value == self.id:
-				name = TAG_String(buffer=file).value
-				self._parse_buffer(file)
+				name = TAG_String(buffer=self.file).value
+				self._parse_buffer(self.file)
 				self.name = name
 				self.file.close()
 			else:
