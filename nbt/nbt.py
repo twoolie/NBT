@@ -264,7 +264,7 @@ TAGLIST = {TAG_BYTE:TAG_Byte, TAG_SHORT:TAG_Short, TAG_INT:TAG_Int, TAG_LONG:TAG
 class NBTFile(TAG_Compound):
 	"""Represents an NBT file object"""
 
-	def __init__(self, filename=None, mode=None, buffer=None):
+	def __init__(self, filename=None, mode=None, buffer=None, fileobj=None):
 		super(NBTFile,self).__init__()
 		self.__class__.__name__ = "TAG_Compound"
 		self.filename = filename
@@ -274,6 +274,8 @@ class NBTFile(TAG_Compound):
 			self.file = GzipFile(filename, mode)
 		elif buffer:
 			self.file = buffer
+		elif fileobj:
+			self.file = GzipFile(fileobj=fileobj)
 		else:
 			self.file = None
 		#parse the file given intitially
@@ -283,11 +285,13 @@ class NBTFile(TAG_Compound):
 				self.file.close()
 			self.file = None
 
-	def parse_file(self, filename=None, buffer=None):
+	def parse_file(self, filename=None, buffer=None, fileobj=None):
 		if filename:
 			self.file = GzipFile(filename, 'rb')
-		if buffer:
+		elif buffer:
 			self.file = buffer
+		elif fileobj:
+			self.file = GzipFile(fileobj=fileobj)
 		if self.file:
 			type = TAG_Byte(buffer=self.file)
 			if type.value == self.id:
@@ -299,11 +303,13 @@ class NBTFile(TAG_Compound):
 				raise ValueError("First record is not a Compound Tag")
 		else: ValueError("need a file!")
 
-	def write_file(self, filename=None, buffer=None):
+	def write_file(self, filename=None, buffer=None, fileobj=None):
 		if buffer:
 			self.file = buffer
 		elif filename:
 			self.file = GzipFile(filename, "wb")
+		elif fileobj:
+			self.file = GzipFile(fileobj=fileobj)
 		elif self.filename:
 			self.file = GzipFile(self.filename, "wb")
 		elif not self.file:
