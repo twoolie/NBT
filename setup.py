@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
       name='NBT',
-      version='0.7',
+      version='0.9',
       description='Named Binary Tag Reader/Writer',
       author='Thomas Woolford',
       author_email='woolford.thomas@gmail.com',
