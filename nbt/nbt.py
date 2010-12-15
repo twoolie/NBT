@@ -1,4 +1,4 @@
-from struct import pack, unpack, calcsize
+from struct import pack, unpack, calcsize, error as StructError
 from gzip import GzipFile
 from UserDict import DictMixin
 
@@ -13,6 +13,10 @@ TAG_BYTE_ARRAY = 7
 TAG_STRING = 8
 TAG_LIST = 9
 TAG_COMPOUND = 10
+
+class MalformedFileError(Exception):
+	"""Exception raised on parse error."""
+	pass
 
 class TAG(object):
 	"""Each Tag needs to take a file-like object for reading and writing.
@@ -114,7 +118,10 @@ class TAG_String(TAG):
 	#Parsers and Generators
 	def _parse_buffer(self, buffer, offset=None):
 		length = TAG_Short(buffer=buffer)
-		self.value = unicode(buffer.read(length.value), "utf-8")
+		read = buffer.read(length.value)
+		if len(read) != length.value:
+			raise StructError()
+		self.value = unicode(read, "utf-8")
 
 	def _render_buffer(self, buffer, offset=None):
 		save_val = self.value.encode("utf-8")
@@ -293,14 +300,17 @@ class NBTFile(TAG_Compound):
 		elif fileobj:
 			self.file = GzipFile(fileobj=fileobj)
 		if self.file:
-			type = TAG_Byte(buffer=self.file)
-			if type.value == self.id:
-				name = TAG_String(buffer=self.file).value
-				self._parse_buffer(self.file)
-				self.name = name
-				self.file.close()
-			else:
-				raise ValueError("First record is not a Compound Tag")
+			try:
+				type = TAG_Byte(buffer=self.file)
+				if type.value == self.id:
+					name = TAG_String(buffer=self.file).value
+					self._parse_buffer(self.file)
+					self.name = name
+					self.file.close()
+				else:
+					raise MalformedFileError("First record is not a Compound Tag")
+			except StructError as e:
+				raise MalformedFileError("Partial File Parse: file possibly truncated.")
 		else: ValueError("need a file!")
 
 	def write_file(self, filename=None, buffer=None, fileobj=None):
