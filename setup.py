@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 from distutils.core import setup
+from nbt import VERSION
 
 setup(
       name='NBT',
-      version='0.9',
+      version=".".join(str(x) for x in VERSION),
       description='Named Binary Tag Reader/Writer',
       author='Thomas Woolford',
       author_email='woolford.thomas@gmail.com',
