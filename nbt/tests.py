@@ -16,6 +16,17 @@ class BugfixTest(unittest.TestCase):
         temp.seek(0)
         self.assertRaises(MalformedFileError, NBTFile, buffer=temp)
 
+    def testProperlyClosed(self):
+        """
+        test that files opened from a file name are closed after 
+        being written to. i.e. will read correctly in the future
+        """
+        #open the file
+        f = NBTFile("bigtest.nbt")
+        f.write_file()
+        # make sure it can be read again directly after
+        f = NBTFile("bigtest.nbt")
+
 class ReadWriteTest(unittest.TestCase):     # test that we can read the test file correctly
 
     def testReadBig(self):
@@ -27,7 +38,7 @@ class ReadWriteTest(unittest.TestCase):     # test that we can read the test fil
         mynbt = NBTFile("bigtest.nbt")
         output = StringIO()
         mynbt.write_file(buffer=output)
-        self.assertTrue(GzipFile("bigtest.nbt").read() == output.getvalue())
+        self.assertEqual(GzipFile("bigtest.nbt").read(), output.getvalue())
 
     def testWriteback(self):
         mynbt = NBTFile("bigtest.nbt")

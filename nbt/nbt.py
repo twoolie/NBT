@@ -317,6 +317,7 @@ class NBTFile(TAG_Compound):
 		if buffer:
 			self.file = buffer
 		elif filename:
+			self.filename = filename
 			self.file = GzipFile(filename, "wb")
 		elif fileobj:
 			self.file = GzipFile(fileobj=fileobj)
@@ -331,5 +332,5 @@ class NBTFile(TAG_Compound):
 		#make sure the file is complete
 		if 'flush' in dir(self.file): 
 			self.file.flush()
-		if filename and 'close' in dir(self.file): 
+		if self.filename and 'close' in dir(self.file): 
 			self.file.close()
