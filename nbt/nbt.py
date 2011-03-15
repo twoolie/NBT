@@ -338,6 +338,17 @@ class NBTFile(TAG_Compound):
 			self.file.close()
 
 ### WARNING! NOT EXTENSIVELY TESTED! ###
+class Chunk(object):
+	def __init__(self, x, z, length):
+		self.x = x if x else 0
+		self.z = z if z else 0
+		self.length = length if length else 0
+	
+	def toString(self):
+		return "("+str(self.x)+","+str(self.z)+"): "+str(self.length)
+
+
+
 class RegionFile(object):
 	"""A convenience class for extracting NBT files from the new minecraft Region Format"""
 	
@@ -358,6 +369,19 @@ class RegionFile(object):
 
 	def parse_header(self):
 		pass
+	
+	def get_chunks(self):
+		index = 0
+		self.file.seek(index)
+		chunks = []
+		while (index < 4096):
+			offset, length = unpack(">IB", "\0"+self.file.read(4))
+			if offset:
+				x = (index/4) % 32
+				z = int(index/4)/32
+				chunks.append(Chunk(x,z,length))
+			index += 4
+		return chunks
 	
 	@classmethod
 	def getchunk(path, x, z):
