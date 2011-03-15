@@ -396,13 +396,12 @@ class RegionFile(object):
 				self.file.seek(0)
 				found = True
 				for intersect_offset, intersect_len in ( (extent_offset, extent_len)
-									for extent_offset, extent_len 
-									in (unpack(">IB", "\0"+self.file.read(4)) for block in xrange(1024))
-									if extent_offset != 0 and ( sector >= extent_offset < (sector+nsectors))):
-					#move foward to end of intersect
-					sector = intersect_offset + intersect_len
-					found = False
-					break
+					for extent_offset, extent_len in (unpack(">IB", "\0"+self.file.read(4)) for block in xrange(1024))
+						if extent_offset != 0 and ( sector >= extent_offset < (sector+nsectors))):
+							#move foward to end of intersect
+							sector = intersect_offset + intersect_len
+							found = False
+							break
 				if found:
 					break
 		
@@ -418,5 +417,4 @@ class RegionFile(object):
 		#write timestamp
 		self.file.seek(4096+4*(x+z*32))
 		timestamp = time.mktime(datetime.datetime.now().timetuple())
-		self.file.write(pack(">I", (timestamp,))
-			
+		self.file.write(pack(">I", (timestamp,)))
