@@ -1,5 +1,6 @@
 from struct import pack, unpack, calcsize, error as StructError
 from gzip import GzipFile
+import zlib
 from UserDict import DictMixin
 from StringIO import StringIO
 import os, io, math, time, datetime
@@ -396,9 +397,21 @@ class RegionFile(object):
 		block = 4*(x+z*32)
 		self.file.seek(block)
 		offset, length = unpack(">IB", "\0"+self.file.read(4))
+		offset = offset * 1024*4 # offset is in 4KiB sectors
 		if offset:
 			self.file.seek(offset)
-			return NBTFile(fileobj=self.file)
+			length = unpack(">I", self.file.read(4))
+			length = length[0] # For some reason, this is coming back as a tuple
+			compression = unpack(">B", self.file.read(1))
+			compression = compression[0]
+			chunk = self.file.read(length-1)
+			if (compression == 2):
+				chunk = zlib.decompress(chunk)
+			else:
+				chunk = GzipFile(chunk)
+			
+			chunk = StringIO(chunk)
+			return NBTFile(buffer=chunk)
 		else:
 			return None
 	
