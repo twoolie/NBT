@@ -356,6 +356,9 @@ class RegionFile(object):
 		if self.file:
 			self.file.close()
 
+	def parse_header(self):
+		pass
+	
 	@classmethod
 	def getchunk(path, x, z):
 		pass
