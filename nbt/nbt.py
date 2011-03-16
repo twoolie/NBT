@@ -407,11 +407,11 @@ class RegionFile(object):
 			chunk = self.file.read(length-1)
 			if (compression == 2):
 				chunk = zlib.decompress(chunk)
+				chunk = StringIO(chunk)
+				return NBTFile(buffer=chunk)
 			else:
 				chunk = GzipFile(chunk)
-			
-			chunk = StringIO(chunk)
-			return NBTFile(buffer=chunk)
+				return NBTFile(fileobj=chunk)
 		else:
 			return None
 	
