@@ -345,7 +345,7 @@ class Chunk(object):
 		self.z = z if z else 0
 		self.length = length if length else 0
 	
-	def toString(self):
+	def __repr__(self):
 		return "("+str(self.x)+","+str(self.z)+"): "+str(self.length)
 
 
