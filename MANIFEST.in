@@ -1,2 +1,2 @@
 include *.txt
-include nbt\bigtest.nbt
+include bigtest.nbt
