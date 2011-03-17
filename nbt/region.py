@@ -77,7 +77,7 @@ class RegionFile(object):
 		""" A smart chunk writer that uses extents to trade off between fragmentation and cpu time"""
 		data = StringIO()
 		data.seek(0)
-		nbtfile.write_file(fileobj = data) #render to buffer
+		nbt_file.write_file(fileobj = data) #render to buffer
 		nsectors = int(math.ceil(data.len/4096))
 		
 		#if it will fit back in it's orriginal slot:
