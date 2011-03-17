@@ -90,8 +90,8 @@ class TAG_Double(_TAG_Numeric):
 
 class TAG_Byte_Array(TAG):
 	id = TAG_BYTE_ARRAY
-	def __init__(self, buffer=None):
-		super(TAG_Byte_Array, self).__init__()
+	def __init__(self, name=None, buffer=None):
+		super(TAG_Byte_Array, self).__init__(name=name)
 		self.value = ''
 		if buffer:
 			self._parse_buffer(buffer)
