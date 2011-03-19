@@ -63,9 +63,13 @@ class RegionFile(object):
 			compression = unpack(">B", self.file.read(1))
 			compression = compression[0]
 			chunk = self.file.read(length-1)
-			chunk = zlib.decompress(chunk)
-			chunk = StringIO(chunk)
-			return NBTFile(buffer=chunk)
+			if (compression == 2):
+				chunk = zlib.decompress(chunk)
+				chunk = StringIO(chunk)
+				return NBTFile(buffer=chunk) #pass uncompressed
+			else:
+				chunk = StringIO(chunk)
+				return NBTFile(fileobj=chunk) #pass compressed; will be filtered through Gzip
 		else:
 			return None
 	
