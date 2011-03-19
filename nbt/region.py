@@ -76,11 +76,14 @@ class RegionFile(object):
 	def write_chunk(self, x, z, nbt_file):
 		""" A smart chunk writer that uses extents to trade off between fragmentation and cpu time"""
 		data = StringIO()
-		data.seek(0)
-		nbt_file.write_file(fileobj = data) #render to buffer
-		nsectors = int(math.ceil(data.len/4096))
+		nbt_file.write_file(buffer = data) #render to buffer; uncompressed
 		
-		#if it will fit back in it's orriginal slot:
+		compressed = zlib.compress(data.getvalue()) #use zlib compression, rather than Gzip
+		data = StringIO(compressed)
+		
+		nsectors = int(math.ceil((data.len+0.001)/4096))
+		
+		#if it will fit back in it's original slot:
 		self.file.seek(4*(x+z*32))
 		offset, length = unpack(">IB", "\0"+self.file.read(4))
 		if nsectors <= length:
