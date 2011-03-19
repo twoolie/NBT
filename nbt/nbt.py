@@ -323,7 +323,7 @@ class NBTFile(TAG_Compound):
 			self.filename = filename
 			self.file = GzipFile(filename, "wb")
 		elif fileobj:
-			self.file = GzipFile(fileobj=fileobj)
+			self.file = GzipFile(fileobj=fileobj, mode="wb")
 		elif self.filename:
 			self.file = GzipFile(self.filename, "wb")
 		elif not self.file:
