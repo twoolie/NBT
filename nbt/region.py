@@ -115,14 +115,15 @@ class RegionFile(object):
 
 		#write out chunk to region
 		self.file.seek(sector*4096)
-		self.file.write(pack(">I", (data.len,))) #length field
-		self.dile.write(data.getvalue()) #compressed data
+		self.file.write(pack(">I", data.len+1)) #length field
+		self.file.write(pack(">B", 2)) #compression field
+		self.file.write(data.getvalue()) #compressed data
 		
 		#seek to header record and write offset and length records
 		self.file.seek(4*(x+z*32))
-		self.file.write(pack(">IB", (sector, length))[1:])
+		self.file.write(pack(">IB", sector, nsectors)[1:])
 		
 		#write timestamp
 		self.file.seek(4096+4*(x+z*32))
 		timestamp = time.mktime(datetime.datetime.now().timetuple())
-		self.file.write(pack(">I", (timestamp,)))
+		self.file.write(pack(">I", timestamp))
