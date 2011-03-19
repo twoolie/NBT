@@ -86,26 +86,33 @@ class RegionFile(object):
 		#if it will fit back in it's original slot:
 		self.file.seek(4*(x+z*32))
 		offset, length = unpack(">IB", "\0"+self.file.read(4))
-		if nsectors <= length:
-			sector = offset
-		
-		#traverse extents to find first-fit
+		if (offset == 0 and length == 0):
+			# This chunk hasn't been generated yet
+			# This chunk should just be appended to the end of the file
+			self.file.seek(0,2) # go to the end of the file
+			file_length = self.file.tell()-1 # current offset is file length
+			total_sectors = file_length/4096
+			sector = total_sectors+1
 		else:
-			sector= 2 #start at sector 2, first sector after header
-			while 1:
-				#check if extent is used, else move foward in extent list by extent length
-				self.file.seek(0)
-				found = True
-				for intersect_offset, intersect_len in ( (extent_offset, extent_len)
-					for extent_offset, extent_len in (unpack(">IB", "\0"+self.file.read(4)) for block in xrange(1024))
-						if extent_offset != 0 and ( sector >= extent_offset < (sector+nsectors))):
-							#move foward to end of intersect
-							sector = intersect_offset + intersect_len
-							found = False
-							break
-				if found:
-					break
-		
+			if nsectors <= length:
+				sector = offset
+			else:
+				#traverse extents to find first-fit
+				sector= 2 #start at sector 2, first sector after header
+				while 1:
+					#check if extent is used, else move foward in extent list by extent length
+					self.file.seek(0)
+					found = True
+					for intersect_offset, intersect_len in ( (extent_offset, extent_len)
+						for extent_offset, extent_len in (unpack(">IB", "\0"+self.file.read(4)) for block in xrange(1024))
+							if extent_offset != 0 and ( sector >= extent_offset < (sector+nsectors))):
+								#move foward to end of intersect
+								sector = intersect_offset + intersect_len
+								found = False
+								break
+					if found:
+						break
+
 		#write out chunk to region
 		self.file.seek(sector*4096)
 		self.file.write(pack(">I", (data.len,))) #length field
