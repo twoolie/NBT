@@ -14,7 +14,7 @@ class RegionFile(object):
 	def __init__(self, filename=None, fileobj=None):
 		if filename:
 			self.filename = filename
-			self.file = open(filename, 'rb')
+			self.file = open(filename, 'r+b')
 		if fileobj:
 			self.file = fileobj
 		self.chunks = []
