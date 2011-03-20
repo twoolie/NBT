@@ -184,6 +184,7 @@ class TAG_Compound(TAG, DictMixin):
 	def __init__(self, buffer=None):
 		super(TAG_Compound, self).__init__()
 		self.tags = []
+		self.name = ""
 		if buffer:
 			self._parse_buffer(buffer)
 
