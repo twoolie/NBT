@@ -86,6 +86,7 @@ class RegionFile(object):
 		#if it will fit back in it's original slot:
 		self.file.seek(4*(x+z*32))
 		offset, length = unpack(">IB", "\0"+self.file.read(4))
+		pad_end = False
 		if (offset == 0 and length == 0):
 			# This chunk hasn't been generated yet
 			# This chunk should just be appended to the end of the file
@@ -93,6 +94,7 @@ class RegionFile(object):
 			file_length = self.file.tell()-1 # current offset is file length
 			total_sectors = file_length/4096
 			sector = total_sectors+1
+			pad_end = True
 		else:
 			if nsectors <= length:
 				sector = offset
@@ -118,6 +120,10 @@ class RegionFile(object):
 		self.file.write(pack(">I", data.len+1)) #length field
 		self.file.write(pack(">B", 2)) #compression field
 		self.file.write(data.getvalue()) #compressed data
+		if pad_end:
+			# Write zeros up to the end of the chunk
+			self.file.seek((sector+nsectors)*4096-1)
+			self.file.write(chr(0))
 		
 		#seek to header record and write offset and length records
 		self.file.seek(4*(x+z*32))
