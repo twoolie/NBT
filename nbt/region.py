@@ -5,6 +5,18 @@ from gzip import GzipFile
 import zlib
 from StringIO import StringIO
 import math, time, datetime
+from os.path import getsize
+
+class RegionHeaderError(Exception):
+	"""Error in the header of the region file for a given chunk"""
+	def __init__(self, msg):
+		self.msg = msg
+
+class ChunkDataError(Exception):
+	"""Error in the data of a chunk, included the bytes of lenght and byte version"""
+	def __init__(self, msg):
+		self.msg = msg
+		
 
 class RegionFile(object):
 	"""
@@ -56,10 +68,21 @@ class RegionFile(object):
 		self.file.seek(block)
 		offset, length = unpack(">IB", "\0"+self.file.read(4))
 		offset = offset * 1024*4 # offset is in 4KiB sectors
+		if offset >= getsize(self.filename) - 1024*4: # mininmun chunk size = 1 sector
+			raise RegionHeaderError('The offset of the chunk is outside the file')
+
 		if offset:
 			self.file.seek(offset)
 			length = unpack(">I", self.file.read(4))
 			length = length[0] # For some reason, this is coming back as a tuple
+			if length == 0: # no chunk can be 0 length!
+				raise ChunkDataError('The length of the chunk is 0')
+
+			if length > 32768 + 16384 + 16384 + 16384 + 256 + 1024: 
+			# aprox size of an uncompressed chunk: blocks + data + skylight + block light + heightmap + entities(~1024?)
+			# also a chunk can't be bigger than 1MB
+				raise ChunkDataError('The length of the chunk is too big')
+
 			compression = unpack(">B", self.file.read(1))
 			compression = compression[0]
 			chunk = self.file.read(length-1)
