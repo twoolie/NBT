@@ -1,6 +1,6 @@
 #
 # For more info of the region file format look:
-# http://www.minecraftforum.net/viewtopic.php?f=25&t=120160
+# http://www.minecraftwiki.net/wiki/Beta_Level_Format
 # 
 
 from nbt import NBTFile
