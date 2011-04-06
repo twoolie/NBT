@@ -9,7 +9,7 @@ from struct import pack, unpack
 from gzip import GzipFile
 import zlib
 from StringIO import StringIO
-import math, time, datetime
+import math, time
 
 class RegionFile(object):
 	"""
@@ -136,7 +136,7 @@ class RegionFile(object):
 		
 		#write timestamp
 		self.file.seek(4096+4*(x+z*32))
-		timestamp = time.mktime(datetime.datetime.now().timetuple())
+		timestamp = int(time.time())
 		self.file.write(pack(">I", timestamp))
 
 
