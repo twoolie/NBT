@@ -12,6 +12,11 @@ class RegionHeaderError(Exception):
 	def __init__(self, msg):
 		self.msg = msg
 
+class ChunkHeaderError(Exception):
+	"""Error in the header of a chunk"""
+	def __init__(self, msg):
+		self.msg = msg
+
 class ChunkDataError(Exception):
 	"""Error in the data of a chunk, included the bytes of length and byte version"""
 	def __init__(self, msg):
@@ -31,21 +36,39 @@ class RegionFile(object):
 			self.file = fileobj
 		self.chunks = []
 		self.header = {}
+		self.chunk_headers = {}
 		self.extents = None
 		if self.file:
+			self.size = getsize(self.filename)
 			self.parse_header()
+			self.parse_chunk_headers()
 
 	def __del__(self):
 		if self.file:
 			self.file.close()
 
 	def parse_header(self):
+		""" 
+		Reads the region header and stores: offset, length and status.
+		
+		Status is a number representing:
+		-2 = Error, chunk inside the region file of the region file
+		-1 = Error, chunk partially/completely outside of file
+		0  = Ok
+		1  = Chunk non-existant yet
+		"""
 		for index in range(0,4096,4):
 			self.file.seek(index)
 			offset, length = unpack(">IB", "\0"+self.file.read(4))
+			self.file.seek(index + 4096)
+			timestamp = unpack(">I", self.file.read(4))
 			x = (index/4) % 32
 			z = int(index/4)/32
-			if (offset + length)*4 > getsize(self.filename): # offset outside of file
+
+			if offset < 2: # chunk inside the header of the region file
+				status = -2
+
+			elif (offset + length)*4 > self.size: # chunk outside of file
 				status = -1
 
 			elif offset == 0: # no created yet
@@ -54,8 +77,50 @@ class RegionFile(object):
 			else:
 				status = 0 # everything ok
 
-			self.header[x,z] = (offset, length, status)
+			self.header[x,z] = (offset, length, timestamp, status)
 
+	def parse_chunk_headers(self):
+		for x in range(32):
+			for z in range(32):
+				offset, region_header_length, timestamp, status = self.header[x,z]
+
+				if status == 1: # chunk not created yet
+					length = None
+					compression = None
+					status = None
+
+				if status == 0: # there is a chunk!
+					self.file.seek(offset*4096) # offset comes in blocks of 4096 bytes
+					length = unpack(">I", self.file.read(4))
+					length = length[0] # For some reason, this is coming back as a tuple
+
+					compression = unpack(">B",self.file.read(1))
+					# TODO TODO TODO check if the region_file_length and the chunk header length are compatible
+					status = 0
+
+				if status == -1: # error, chunk partially/completely outside the file
+					if offset*4096 + 5 < self.size: # if possible read it, just in case it's useful
+						self.file.seek(offset*4096) # offset comes in blocks of 4096 bytes
+						length = unpack(">I", self.file.read(4))
+						length = length[0] # For some reason, this is coming back as a tuple
+						compression = unpack(">B",self.file.read(1))
+					
+					else:
+						length = None
+						compression = None
+						status = -1
+
+				if status == -2: # error, chunk in the header of the region file
+					length = None
+					compression = None
+					status = -2
+		
+				self.chunk_headers[x, z] = (length, compression, status)
+
+
+	def locate_free_space(self):
+		pass
+	
 	def get_chunks(self):
 		index = 0
 		self.file.seek(index)
@@ -79,7 +144,7 @@ class RegionFile(object):
 
 	def get_chunk(self, x, z):
 		#read metadata block
-		offset, length, status = self.header[x, z]
+		offset, length, timestamp, status = self.header[x, z]
 		if status == 1:
 			return None
 
