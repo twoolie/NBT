@@ -13,7 +13,7 @@ class RegionHeaderError(Exception):
 		self.msg = msg
 
 class ChunkDataError(Exception):
-	"""Error in the data of a chunk, included the bytes of lenght and byte version"""
+	"""Error in the data of a chunk, included the bytes of length and byte version"""
 	def __init__(self, msg):
 		self.msg = msg
 		
@@ -30,6 +30,7 @@ class RegionFile(object):
 		if fileobj:
 			self.file = fileobj
 		self.chunks = []
+		self.header = {}
 		self.extents = None
 		if self.file:
 			self.parse_header()
@@ -39,8 +40,22 @@ class RegionFile(object):
 			self.file.close()
 
 	def parse_header(self):
-		pass
-	
+		for index in range(0,4096,4):
+			self.file.seek(index)
+			offset, length = unpack(">IB", "\0"+self.file.read(4))
+			x = (index/4) % 32
+			z = int(index/4)/32
+			if (offset + length)*4 > getsize(self.filename): # offset outside of file
+				status = -1
+
+			elif offset == 0: # no created yet
+				status = 1
+
+			else:
+				status = 0 # everything ok
+
+			self.header[x,z] = (offset, length, status)
+
 	def get_chunks(self):
 		index = 0
 		self.file.seek(index)
@@ -64,24 +79,19 @@ class RegionFile(object):
 
 	def get_chunk(self, x, z):
 		#read metadata block
-		block = 4*(x+z*32)
-		self.file.seek(block)
-		offset, length = unpack(">IB", "\0"+self.file.read(4))
-		offset = offset * 1024*4 # offset is in 4KiB sectors
-		if offset >= getsize(self.filename) - 1024*4: # mininmun chunk size = 1 sector
-			raise RegionHeaderError('The offset of the chunk is outside the file')
+		offset, length, status = self.header[x, z]
+		if status == 1:
+			return None
 
-		if offset:
-			self.file.seek(offset)
+		elif status == -1:
+			raise RegionHeaderError('The chunk is partially/completely outside the file')
+
+		elif status == 0:
+			self.file.seek(offset*4*1024) # offset comes in blocks of 4096 bytes
 			length = unpack(">I", self.file.read(4))
 			length = length[0] # For some reason, this is coming back as a tuple
 			if length == 0: # no chunk can be 0 length!
 				raise ChunkDataError('The length of the chunk is 0')
-
-			if length > 32768 + 16384 + 16384 + 16384 + 256 + 1024: 
-			# aprox size of an uncompressed chunk: blocks + data + skylight + block light + heightmap + entities(~1024?)
-			# also a chunk can't be bigger than 1MB
-				raise ChunkDataError('The length of the chunk is too big')
 
 			compression = unpack(">B", self.file.read(1))
 			compression = compression[0]
