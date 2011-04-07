@@ -89,7 +89,7 @@ class RegionFile(object):
 					status = None
 
 				elif status == 0: # there is a chunk!
-					self.file.seek(offset*4096) # offset comes in blocks of 4096 bytes
+					self.file.seek(offset*4096) # offset comes in sectors of 4096 bytes
 					length = unpack(">I", self.file.read(4))
 					length = length[0] # unpack always returns a tuple, even unpacking one element
 					compression = unpack(">B",self.file.read(1))
@@ -103,7 +103,7 @@ class RegionFile(object):
 
 				elif status == -1: # error, chunk partially/completely outside the file
 					if offset*4096 + 5 < self.size: # if possible read it, just in case it's useful
-						self.file.seek(offset*4096) # offset comes in blocks of 4096 bytes
+						self.file.seek(offset*4096) # offset comes in sectors of 4096 bytes
 						length = unpack(">I", self.file.read(4))
 						length = length[0] # unpack always returns a tuple, even unpacking one element
 						compression = unpack(">B",self.file.read(1))
@@ -163,7 +163,7 @@ class RegionFile(object):
 			if chunk_header_status == -3: # no chunk can be 0 length!
 				raise ChunkHeaderError('The length of the chunk is 0')
 
-			self.file.seek(offset*4*1024 + 5) # offset comes in blocks of 4096 bytes + length bytes + compression byte
+			self.file.seek(offset*4*1024 + 5) # offset comes in sectors of 4096 bytes + length bytes + compression byte
 			chunk = self.file.read(length-1)
 
 			if (compression == 2):
@@ -199,18 +199,18 @@ class RegionFile(object):
 		nsectors = int(math.ceil((data.len+0.001)/4096))
 		
 		#if it will fit back in it's original slot:
-		self.file.seek(4*(x+z*32))
-		offset, length = unpack(">IB", "\0"+self.file.read(4))
+		offset, length, timestamp, status = self.header[x, z]
 		pad_end = False
-		if (offset == 0 and length == 0):
-			# This chunk hasn't been generated yet
+		if status in (1,-1,-2): # don't trust bad headers, write at the end.
+			# This chunk hasn't been generated yet, or the header is wrong
 			# This chunk should just be appended to the end of the file
 			self.file.seek(0,2) # go to the end of the file
 			file_length = self.file.tell()-1 # current offset is file length
 			total_sectors = file_length/4096
 			sector = total_sectors+1
 			pad_end = True
-		else:
+		elif status == 0:
+			# TODO TODO TODO Check if chunk_status says that the lengths are incompatible (status = -3)
 			if nsectors <= length:
 				sector = offset
 			else:
@@ -218,6 +218,7 @@ class RegionFile(object):
 				sector= 2 #start at sector 2, first sector after header
 				while 1:
 					#check if extent is used, else move foward in extent list by extent length
+					# leave this like this or update to use self.header?
 					self.file.seek(0)
 					found = True
 					for intersect_offset, intersect_len in ( (extent_offset, extent_len)
