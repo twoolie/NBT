@@ -21,7 +21,7 @@ class ChunkDataError(Exception):
 	"""Error in the data of a chunk, included the bytes of length and byte version"""
 	def __init__(self, msg):
 		self.msg = msg
-		
+
 
 class RegionFile(object):
 	"""
@@ -64,8 +64,7 @@ class RegionFile(object):
 			timestamp = unpack(">I", self.file.read(4))
 			x = (index/4) % 32
 			z = int(index/4)/32
-
-			if offset < 2: # chunk inside the header of the region file
+			if offset < 2 and offset != 0: # chunk inside the header of the region file
 				status = -2
 
 			elif (offset + length)*4 > self.size: # chunk outside of file
@@ -89,28 +88,33 @@ class RegionFile(object):
 					compression = None
 					status = None
 
-				if status == 0: # there is a chunk!
+				elif status == 0: # there is a chunk!
 					self.file.seek(offset*4096) # offset comes in blocks of 4096 bytes
 					length = unpack(">I", self.file.read(4))
-					length = length[0] # For some reason, this is coming back as a tuple
-
+					length = length[0] # unpack always returns a tuple, even unpacking one element
 					compression = unpack(">B",self.file.read(1))
+					compression = compression[0]
 					# TODO TODO TODO check if the region_file_length and the chunk header length are compatible
-					status = 0
+					if length == 0: # chunk can't be zero length
+						status = -3
+					
+					else:
+						status = 0
 
-				if status == -1: # error, chunk partially/completely outside the file
+				elif status == -1: # error, chunk partially/completely outside the file
 					if offset*4096 + 5 < self.size: # if possible read it, just in case it's useful
 						self.file.seek(offset*4096) # offset comes in blocks of 4096 bytes
 						length = unpack(">I", self.file.read(4))
-						length = length[0] # For some reason, this is coming back as a tuple
+						length = length[0] # unpack always returns a tuple, even unpacking one element
 						compression = unpack(">B",self.file.read(1))
-					
+						compression = compression[0]
+
 					else:
 						length = None
 						compression = None
 						status = -1
 
-				if status == -2: # error, chunk in the header of the region file
+				elif status == -2: # error, chunk in the header of the region file
 					length = None
 					compression = None
 					status = -2
@@ -144,30 +148,43 @@ class RegionFile(object):
 
 	def get_chunk(self, x, z):
 		#read metadata block
-		offset, length, timestamp, status = self.header[x, z]
-		if status == 1:
+		offset, length, timestamp, region_header_status = self.header[x, z]
+		if region_header_status == 1:
 			return None
+			
+		elif region_header_status == -2:
+			raise RegionHeaderError('The chunk is in the region header')
 
-		elif status == -1:
+		elif region_header_status == -1:
 			raise RegionHeaderError('The chunk is partially/completely outside the file')
 
-		elif status == 0:
-			self.file.seek(offset*4*1024) # offset comes in blocks of 4096 bytes
-			length = unpack(">I", self.file.read(4))
-			length = length[0] # For some reason, this is coming back as a tuple
-			if length == 0: # no chunk can be 0 length!
-				raise ChunkDataError('The length of the chunk is 0')
+		elif region_header_status == 0:
+			length, compression, chunk_header_status = self.chunk_headers[x, z]
+			if chunk_header_status == -3: # no chunk can be 0 length!
+				raise ChunkHeaderError('The length of the chunk is 0')
 
-			compression = unpack(">B", self.file.read(1))
-			compression = compression[0]
+			self.file.seek(offset*4*1024 + 5) # offset comes in blocks of 4096 bytes + length bytes + compression byte
 			chunk = self.file.read(length-1)
+
 			if (compression == 2):
-				chunk = zlib.decompress(chunk)
+				try:
+					chunk = zlib.decompress(chunk)
+				except Exception, e:
+					raise ChunkDataError(str(e))
+					
 				chunk = StringIO(chunk)
-				return NBTFile(buffer=chunk) #pass uncompressed
+				return NBTFile(buffer=chunk) # pass uncompressed
+				
+			elif (compression == 1):
+				chunk = StringIO(chunk)
+				try:
+					return NBTFile(fileobj=chunk) # pass compressed; will be filtered through Gzip
+				except Exception, e:
+					raise ChunkDataError(str(e))
+					
 			else:
-				chunk = StringIO(chunk)
-				return NBTFile(fileobj=chunk) #pass compressed; will be filtered through Gzip
+				raise ChunkDataError('Unknown chunk compression')
+				
 		else:
 			return None
 	
