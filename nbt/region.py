@@ -48,6 +48,19 @@ class RegionFile(object):
 			self.parse_header()
 			self.parse_chunk_headers()
 
+		# Status is a number representing:
+		# -3 = Error, chunk header has a 0 length
+		# -2 = Error, chunk inside the header of the region file
+		# -1 = Error, chunk partially/completely outside of file
+		#  0 = Ok
+		#  1 = Chunk non-existant yet
+
+		self.ChunkZeroLength = -3
+		self.ChunkInHeader = -2
+		self.ChunkOutOfFile = -1
+		self.ChunkOK = 0
+		self.ChunkNotCreated = 1
+
 	def __del__(self):
 		if self.file:
 			self.file.close()
@@ -56,11 +69,6 @@ class RegionFile(object):
 		""" 
 		Reads the region header and stores: offset, length and status.
 		
-		Status is a number representing:
-		-2 = Error, chunk inside the region file of the region file
-		-1 = Error, chunk partially/completely outside of file
-		0  = Ok
-		1  = Chunk non-existant yet
 		"""
 		for index in range(0,4096,4):
 			self.file.seek(index)
@@ -69,17 +77,17 @@ class RegionFile(object):
 			timestamp = unpack(">I", self.file.read(4))
 			x = (index/4) % 32
 			z = int(index/4)/32
-			if offset < 2 and offset != 0: # chunk inside the header of the region file
-				status = -2
+			if offset < 2 and offset != 0:
+				status = self.ChunkInHeader
 
-			elif (offset + length)*4 > self.size: # chunk outside of file
-				status = -1
+			elif (offset + length)*4 > self.size:
+				status = self.ChunkOutOfFile
 
-			elif offset == 0: # no created yet
-				status = 1
+			elif offset == 0:
+				status = self.ChunkNotCreated
 
 			else:
-				status = 0 # everything ok
+				status = self.ChunkOK
 
 			self.header[x,z] = (offset, length, timestamp, status)
 
@@ -88,12 +96,12 @@ class RegionFile(object):
 			for z in range(32):
 				offset, region_header_length, timestamp, status = self.header[x,z]
 
-				if status == 1: # chunk not created yet
+				if status == self.ChunkNotCreated:
 					length = None
 					compression = None
-					status = None
+					chunk_status = self.ChunkNotCreated
 
-				elif status == 0: # there is a chunk!
+				elif status == self.ChunkOK:
 					self.file.seek(offset*4096) # offset comes in sectors of 4096 bytes
 					length = unpack(">I", self.file.read(4))
 					length = length[0] # unpack always returns a tuple, even unpacking one element
@@ -101,30 +109,31 @@ class RegionFile(object):
 					compression = compression[0]
 					# TODO TODO TODO check if the region_file_length and the chunk header length are compatible
 					if length == 0: # chunk can't be zero length
-						status = -3
+						chunk_status = self.ChunkZeroLength
 					
 					else:
-						status = 0
+						chunk_status = self.ChunkOK
 
-				elif status == -1: # error, chunk partially/completely outside the file
+				elif status == self.ChunkOutOfFile:
 					if offset*4096 + 5 < self.size: # if possible read it, just in case it's useful
 						self.file.seek(offset*4096) # offset comes in sectors of 4096 bytes
 						length = unpack(">I", self.file.read(4))
 						length = length[0] # unpack always returns a tuple, even unpacking one element
 						compression = unpack(">B",self.file.read(1))
 						compression = compression[0]
+						status = self.ChunkOutOfFile
 
 					else:
 						length = None
 						compression = None
-						status = -1
+						chunk_status = self.ChunkOutOfFile
 
-				elif status == -2: # error, chunk in the header of the region file
+				elif status == self.ChunkInHeader:
 					length = None
 					compression = None
-					status = -2
+					chunk_status = self.ChunkInHeader
 		
-				self.chunk_headers[x, z] = (length, compression, status)
+				self.chunk_headers[x, z] = (length, compression, chunk_status)
 
 
 	def locate_free_space(self):
@@ -157,15 +166,15 @@ class RegionFile(object):
 		if region_header_status == 1:
 			return None
 			
-		elif region_header_status == -2:
+		elif region_header_status == self.ChunkInHeader:
 			raise RegionHeaderError('The chunk is in the region header')
 
-		elif region_header_status == -1:
+		elif region_header_status == self.ChunkOutOfFile:
 			raise RegionHeaderError('The chunk is partially/completely outside the file')
 
-		elif region_header_status == 0:
+		elif region_header_status == self.ChunkOK:
 			length, compression, chunk_header_status = self.chunk_headers[x, z]
-			if chunk_header_status == -3: # no chunk can be 0 length!
+			if chunk_header_status == self.ChunkZeroLength:
 				raise ChunkHeaderError('The length of the chunk is 0')
 
 			self.file.seek(offset*4*1024 + 5) # offset comes in sectors of 4096 bytes + length bytes + compression byte
@@ -174,11 +183,10 @@ class RegionFile(object):
 			if (compression == 2):
 				try:
 					chunk = zlib.decompress(chunk)
+					chunk = StringIO(chunk)
+					return NBTFile(buffer=chunk) # pass uncompressed
 				except Exception, e:
 					raise ChunkDataError(str(e))
-					
-				chunk = StringIO(chunk)
-				return NBTFile(buffer=chunk) # pass uncompressed
 				
 			elif (compression == 1):
 				chunk = StringIO(chunk)
@@ -188,7 +196,7 @@ class RegionFile(object):
 					raise ChunkDataError(str(e))
 					
 			else:
-				raise ChunkDataError('Unknown chunk compression')
+				raise ChunkDataError('Unknown chunk compression/format')
 				
 		else:
 			return None
