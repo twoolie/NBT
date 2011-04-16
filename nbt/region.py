@@ -214,7 +214,8 @@ class RegionFile(object):
 		#if it will fit back in it's original slot:
 		offset, length, timestamp, status = self.header[x, z]
 		pad_end = False
-		if status in (1,-1,-2): # don't trust bad headers, write at the end.
+		if status in (self.ChunkNotCreated,self.ChunkOutOfFile,self.ChunkInHeader):
+			# don't trust bad headers, write at the end.
 			# This chunk hasn't been generated yet, or the header is wrong
 			# This chunk should just be appended to the end of the file
 			self.file.seek(0,2) # go to the end of the file
@@ -223,7 +224,7 @@ class RegionFile(object):
 			sector = total_sectors+1
 			pad_end = True
 		elif status == 0:
-			# TODO TODO TODO Check if chunk_status says that the lengths are incompatible (status = -3)
+			# TODO TODO TODO Check if chunk_status says that the lengths are incompatible (status = self.ChunkZeroLength)
 			if nsectors <= length:
 				sector = offset
 			else:
