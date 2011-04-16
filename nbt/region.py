@@ -49,11 +49,11 @@ class RegionFile(object):
 		#  0 = Ok
 		#  1 = Chunk non-existant yet
 
-		self.ChunkZeroLength = -3
-		self.ChunkInHeader = -2
-		self.ChunkOutOfFile = -1
-		self.ChunkOK = 0
-		self.ChunkNotCreated = 1
+		self.STATUS_CHUNK_ZERO_LENGTH = -3
+		self.STATUS_CHUNK_IN_HEADER = -2
+		self.STATUS_CHUNK_OUT_OF_FILE = -1
+		self.STATUS_CHUNK_OK = 0
+		self.STATUS_CHUNK_NOT_CREATED = 1
 		
 		self.chunks = []
 		self.header = {}
@@ -82,16 +82,16 @@ class RegionFile(object):
 			x = (index/4) % 32
 			z = int(index/4)/32
 			if offset < 2 and offset != 0:
-				status = self.ChunkInHeader
+				status = self.STATUS_CHUNK_IN_HEADER
 
 			elif (offset + length)*4 > self.size:
-				status = self.ChunkOutOfFile
+				status = self.STATUS_CHUNK_OUT_OF_FILE
 
 			elif offset == 0:
-				status = self.ChunkNotCreated
+				status = self.STATUS_CHUNK_OUT_OF_FILE
 
 			else:
-				status = self.ChunkOK
+				status = self.STATUS_CHUNK_OK
 
 			self.header[x,z] = (offset, length, timestamp, status)
 
@@ -103,9 +103,9 @@ class RegionFile(object):
 				if status == self.ChunkNotCreated:
 					length = None
 					compression = None
-					chunk_status = self.ChunkNotCreated
+					chunk_status = self.STATUS_CHUNK_NOT_CREATED
 
-				elif status == self.ChunkOK:
+				elif status == self.STATUS_CHUNK_OK:
 					self.file.seek(offset*4096) # offset comes in sectors of 4096 bytes
 					length = unpack(">I", self.file.read(4))
 					length = length[0] # unpack always returns a tuple, even unpacking one element
@@ -118,7 +118,7 @@ class RegionFile(object):
 					else:
 						chunk_status = self.ChunkOK
 
-				elif status == self.ChunkOutOfFile:
+				elif status == self.STATUS_CHUNK_OUT_OF_FILE:
 					if offset*4096 + 5 < self.size: # if possible read it, just in case it's useful
 						self.file.seek(offset*4096) # offset comes in sectors of 4096 bytes
 						length = unpack(">I", self.file.read(4))
@@ -132,7 +132,7 @@ class RegionFile(object):
 						compression = None
 						chunk_status = self.ChunkOutOfFile
 
-				elif status == self.ChunkInHeader:
+				elif status == self.STATUS_CHUNK_IN_HEADER:
 					length = None
 					compression = None
 					chunk_status = self.ChunkInHeader
@@ -170,15 +170,15 @@ class RegionFile(object):
 		if region_header_status == 1:
 			return None
 			
-		elif region_header_status == self.ChunkInHeader:
+		elif region_header_status == self.STATUS_CHUNK_IN_HEADER:
 			raise RegionHeaderError('The chunk is in the region header')
 
-		elif region_header_status == self.ChunkOutOfFile:
+		elif region_header_status == self.STATUS_CHUNK_OUT_OF_FILE:
 			raise RegionHeaderError('The chunk is partially/completely outside the file')
 
-		elif region_header_status == self.ChunkOK:
+		elif region_header_status == self.STATUS_CHUNK_OK:
 			length, compression, chunk_header_status = self.chunk_headers[x, z]
-			if chunk_header_status == self.ChunkZeroLength:
+			if chunk_header_status == self.STATUS_CHUNK_ZERO_LENGTH:
 				raise ChunkHeaderError('The length of the chunk is 0')
 
 			self.file.seek(offset*4*1024 + 5) # offset comes in sectors of 4096 bytes + length bytes + compression byte
@@ -218,7 +218,7 @@ class RegionFile(object):
 		#if it will fit back in it's original slot:
 		offset, length, timestamp, status = self.header[x, z]
 		pad_end = False
-		if status in (self.ChunkNotCreated,self.ChunkOutOfFile,self.ChunkInHeader):
+		if status in (self.STATUS_CHUNK_NOT_CREATED, self.STATUS_CHUNK_OUT_OF_FILE, self.STATUS_CHUNK_IN_HEADER):
 			# don't trust bad headers, write at the end.
 			# This chunk hasn't been generated yet, or the header is wrong
 			# This chunk should just be appended to the end of the file
@@ -227,8 +227,8 @@ class RegionFile(object):
 			total_sectors = file_length/4096
 			sector = total_sectors+1
 			pad_end = True
-		elif status == 0:
-			# TODO TODO TODO Check if chunk_status says that the lengths are incompatible (status = self.ChunkZeroLength)
+		elif status == self.STATUS_CHUNK_OK:
+			# TODO TODO TODO Check if chunk_status says that the lengths are incompatible (status = self.STATUS_CHUNK_ZERO_LENGTH)
 			if nsectors <= length:
 				sector = offset
 			else:
