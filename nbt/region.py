@@ -39,15 +39,9 @@ class RegionFile(object):
 			self.file = open(filename, 'r+b')
 		if fileobj:
 			self.file = fileobj
-		self.chunks = []
-		self.header = {}
-		self.chunk_headers = {}
-		self.extents = None
-		if self.file:
-			self.size = getsize(self.filename)
-			self.parse_header()
-			self.parse_chunk_headers()
-
+			
+		# Some variables and constants
+		#
 		# Status is a number representing:
 		# -3 = Error, chunk header has a 0 length
 		# -2 = Error, chunk inside the header of the region file
@@ -60,6 +54,16 @@ class RegionFile(object):
 		self.ChunkOutOfFile = -1
 		self.ChunkOK = 0
 		self.ChunkNotCreated = 1
+		
+		self.chunks = []
+		self.header = {}
+		self.chunk_headers = {}
+		self.extents = None
+		if self.file:
+			self.size = getsize(self.filename)
+			self.parse_header()
+			self.parse_chunk_headers()
+
 
 	def __del__(self):
 		if self.file:
