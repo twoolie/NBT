@@ -100,7 +100,7 @@ class RegionFile(object):
 			for z in range(32):
 				offset, region_header_length, timestamp, status = self.header[x,z]
 
-				if status == self.ChunkNotCreated:
+				if status == self.STATUS_CHUNK_NOT_CREATED:
 					length = None
 					compression = None
 					chunk_status = self.STATUS_CHUNK_NOT_CREATED
@@ -113,10 +113,10 @@ class RegionFile(object):
 					compression = compression[0]
 					# TODO TODO TODO check if the region_file_length and the chunk header length are compatible
 					if length == 0: # chunk can't be zero length
-						chunk_status = self.ChunkZeroLength
+						chunk_status = self.STATUS_CHUNK_ZERO_LENGTH
 					
 					else:
-						chunk_status = self.ChunkOK
+						chunk_status = self.STATUS_CHUNK_OK
 
 				elif status == self.STATUS_CHUNK_OUT_OF_FILE:
 					if offset*4096 + 5 < self.size: # if possible read it, just in case it's useful
@@ -125,17 +125,17 @@ class RegionFile(object):
 						length = length[0] # unpack always returns a tuple, even unpacking one element
 						compression = unpack(">B",self.file.read(1))
 						compression = compression[0]
-						status = self.ChunkOutOfFile
+						chunk_status = self.STATUS_CHUNK_OUT_OF_FILE
 
 					else:
 						length = None
 						compression = None
-						chunk_status = self.ChunkOutOfFile
+						chunk_status = self.STATUS_CHUNK_OUT_OF_FILE
 
 				elif status == self.STATUS_CHUNK_IN_HEADER:
 					length = None
 					compression = None
-					chunk_status = self.ChunkInHeader
+					chunk_status = self.STATUS_CHUNK_IN_HEADER
 		
 				self.chunk_headers[x, z] = (length, compression, chunk_status)
 
