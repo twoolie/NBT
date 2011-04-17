@@ -88,7 +88,7 @@ class RegionFile(object):
 				status = self.STATUS_CHUNK_OUT_OF_FILE
 
 			elif offset == 0:
-				status = self.STATUS_CHUNK_OUT_OF_FILE
+				status = self.STATUS_CHUNK_NOT_CREATED
 
 			else:
 				status = self.STATUS_CHUNK_OK
