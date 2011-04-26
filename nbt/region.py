@@ -152,7 +152,7 @@ class RegionFile(object):
 			if offset:
 				x = (index/4) % 32
 				z = int(index/4)/32
-				chunks.append(Chunk(x,z,length))
+				chunks.append({'x':x,'z':z,'length':length})
 			index += 4
 		return chunks
 	

@@ -112,7 +112,7 @@ class Chunk(object):
 		return im
 
 	def __repr__(self):
-		return "("+str(self.coords[0])+","+str(self.coords[1])+")"
+		return "Chunk("+str(self.coords[0])+","+str(self.coords[1])+")"
 
 """ Convenience class for dealing with a Block/data byte array """
 class BlockArray(object):
