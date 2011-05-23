@@ -81,13 +81,13 @@ class RegionFile(object):
 			timestamp = unpack(">I", self.file.read(4))
 			x = (index/4) % 32
 			z = int(index/4)/32
-			if offset < 2 and offset != 0:
+			if offset == 0 and length == 0:
+				status = self.STATUS_CHUNK_NOT_CREATED
+
+			elif offset < 2 and offset != 0:
 				status = self.STATUS_CHUNK_IN_HEADER
 
 			elif (offset + length)*4 > self.size:
-				status = self.STATUS_CHUNK_OUT_OF_FILE
-
-			elif offset == 0:
 				status = self.STATUS_CHUNK_OUT_OF_FILE
 
 			else:
@@ -167,7 +167,7 @@ class RegionFile(object):
 	def get_chunk(self, x, z):
 		#read metadata block
 		offset, length, timestamp, region_header_status = self.header[x, z]
-		if region_header_status == 1:
+		if region_header_status == self.STATUS_CHUNK_NOT_CREATED:
 			return None
 			
 		elif region_header_status == self.STATUS_CHUNK_IN_HEADER:
