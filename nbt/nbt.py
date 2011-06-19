@@ -337,7 +337,7 @@ class NBTFile(TAG_Compound):
 		if self.filename and 'close' in dir(self.file): 
 			self.file.close()
 
-### WARNING! NOT EXTENSIVELY TESTED! ###
+### WARNING! NOT TESTED! ###
 class RegionFile(object):
 	"""A convenience class for extracting NBT files from the new minecraft Region Format"""
 	
@@ -418,5 +418,4 @@ class RegionFile(object):
 		#write timestamp
 		self.file.seek(4096+4*(x+z*32))
 		timestamp = time.mktime(datetime.datetime.now().timetuple())
-		self.file.write(pack(">I", (timestamp,))
-			
+		self.file.write(pack(">I", (timestamp,)))
