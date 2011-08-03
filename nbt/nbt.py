@@ -33,7 +33,7 @@ class TAG(object):
 	def _parse_buffer(self, buffer):
 		raise NotImplementedError(self.__class__.__name__)
 
-	def _render_buffer(self, buffer, offset=None):
+	def _render_buffer(self, buffer):
 		raise NotImplementedError(self.__class__.__name__)
 
 	#Printing and Formatting of tree
@@ -53,10 +53,10 @@ class _TAG_Numeric(TAG):
 			self._parse_buffer(buffer)
 
 	#Parsers and Generators
-	def _parse_buffer(self, buffer, offset=None):
+	def _parse_buffer(self, buffer):
 		self.value = unpack(self.fmt, buffer.read(self.size))[0]
 
-	def _render_buffer(self, buffer, offset=None):
+	def _render_buffer(self, buffer):
 		buffer.write(pack(self.fmt, self.value))
 
 	#Printing and Formatting of tree
@@ -96,13 +96,13 @@ class TAG_Byte_Array(TAG):
 			self._parse_buffer(buffer)
 
 	#Parsers and Generators
-	def _parse_buffer(self, buffer, offset=None):
+	def _parse_buffer(self, buffer):
 		length = TAG_Int(buffer=buffer)
 		self.value = buffer.read(length.value)
 
-	def _render_buffer(self, buffer, offset=None):
+	def _render_buffer(self, buffer):
 		length = TAG_Int(len(self.value))
-		length._render_buffer(buffer, offset)
+		length._render_buffer(buffer)
 		buffer.write(self.value)
 
 	#Printing and Formatting of tree
@@ -117,17 +117,17 @@ class TAG_String(TAG):
 			self._parse_buffer(buffer)
 
 	#Parsers and Generators
-	def _parse_buffer(self, buffer, offset=None):
+	def _parse_buffer(self, buffer):
 		length = TAG_Short(buffer=buffer)
 		read = buffer.read(length.value)
 		if len(read) != length.value:
 			raise StructError()
 		self.value = unicode(read, "utf-8")
 
-	def _render_buffer(self, buffer, offset=None):
+	def _render_buffer(self, buffer):
 		save_val = self.value.encode("utf-8")
 		length = TAG_Short(len(save_val))
-		length._render_buffer(buffer, offset)
+		length._render_buffer(buffer)
 		buffer.write(save_val)
 
 	#Printing and Formatting of tree
@@ -149,22 +149,22 @@ class TAG_List(TAG):
 			raise ValueError("No type specified for list")
 
 	#Parsers and Generators
-	def _parse_buffer(self, buffer, offset=None):
+	def _parse_buffer(self, buffer:
 		self.tagID = TAG_Byte(buffer=buffer).value
 		self.tags = []
 		length = TAG_Int(buffer=buffer)
 		for x in range(length.value):
 			self.tags.append(TAGLIST[self.tagID](buffer=buffer))
 
-	def _render_buffer(self, buffer, offset=None):
-		TAG_Byte(self.tagID)._render_buffer(buffer, offset)
+	def _render_buffer(self, buffer):
+		TAG_Byte(self.tagID)._render_buffer(buffer)
 		length = TAG_Int(len(self.tags))
-		length._render_buffer(buffer, offset)
+		length._render_buffer(buffer)
 		for i, tag in enumerate(self.tags):
 			if tag.id != self.tagID:
 				raise ValueError("List element %d(%s) has type %d != container type %d" %
 						 (i, tag, tag.id, self.tagID))
-			tag._render_buffer(buffer, offset)
+			tag._render_buffer(buffer)
 
 	#Printing and Formatting of tree
 	def __repr__(self):
@@ -187,7 +187,7 @@ class TAG_Compound(TAG, DictMixin):
 			self._parse_buffer(buffer)
 
 	#Parsers and Generators
-	def _parse_buffer(self, buffer, offset=None):
+	def _parse_buffer(self, buffer):
 		while True:
 			type = TAG_Byte(buffer=buffer)
 			if type.value == TAG_END:
@@ -203,11 +203,11 @@ class TAG_Compound(TAG, DictMixin):
 				except KeyError:
 					raise ValueError("Unrecognised tag type")
 
-	def _render_buffer(self, buffer, offset=None):
+	def _render_buffer(self, buffer):
 		for tag in self.tags:
-			TAG_Byte(tag.id)._render_buffer(buffer, offset)
-			TAG_String(tag.name)._render_buffer(buffer, offset)
-			tag._render_buffer(buffer,offset)
+			TAG_Byte(tag.id)._render_buffer(buffer)
+			TAG_String(tag.name)._render_buffer(buffer)
+			tag._render_buffer(buffer)
 		buffer.write('\x00') #write TAG_END
 
 	# Dict compatibility.
