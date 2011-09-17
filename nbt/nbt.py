@@ -149,7 +149,7 @@ class TAG_List(TAG):
 			raise ValueError("No type specified for list")
 
 	#Parsers and Generators
-	def _parse_buffer(self, buffer:
+	def _parse_buffer(self, buffer):
 		self.tagID = TAG_Byte(buffer=buffer).value
 		self.tags = []
 		length = TAG_Int(buffer=buffer)
