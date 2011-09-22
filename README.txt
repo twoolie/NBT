@@ -12,7 +12,7 @@ read the full spec at http://www.minecraft.net/docs/NBT.txt
 Usage:
  1) Reading files.
 
- the easiest way to read an nbt file is to instantiate an NBTFile object e.g.
+ The easiest way to read an nbt file is to instantiate an NBTFile object e.g.
 
     >>> import nbt
     >>> nbtfile = nbt.NBTFile("bigtest.nbt",'rb')
@@ -28,6 +28,15 @@ Usage:
     >>> [tag.value for tag in nbtfile["listTest (long)"].value]
     [11, 12, 13, 14, 15]
 
+ Files can also be read from a fileobj (file-like object that contains a compressed
+ stream) or a buffer (file-like object that contains an uncompressed stream of NBT
+ Tags) which can be accomplished thusly:
+
+    >>> import nbt
+    >>> nbtfile = NBTFile(fileobj=previously_opened_file)
+    # or....
+    >>> nbtfile = NBTFile(buffer=net_socket.makefile())
+
  2) Writing files.
 
  Writing files is easy too! if you have a NBTFile object, simply call it's
@@ -40,6 +49,11 @@ Usage:
     >>> nbtfile = nbt.NBTFile("bigtest.nbt",'rb')
     >>> nbtfile["listTest (compound)"].tags[0]["name"].value = "Different name"
     >>> nbtfile.write_file("newnbtfile.nbt")
+
+ It is also possible to write to a buffer or fileobj using the same keyword args.
+
+    >>> nbtfile.write_file(fileobj = my_file) #compressed
+    >>> nbtfile.write_file(buffer = sock.makefile()) #uncompressed
 
  3) Creating files
 
@@ -85,4 +99,3 @@ Usage:
         }
     }
     >>> nbtfile.write_file("mynbt.dat")
-
