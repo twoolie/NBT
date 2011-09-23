@@ -1,5 +1,5 @@
 from nbt import *
-from nbt import _TAG_Numeric
+from nbt.nbt import _TAG_Numeric
 import unittest
 from StringIO import StringIO
 from gzip import GzipFile
@@ -23,6 +23,7 @@ class BugfixTest(unittest.TestCase):
         """
         #open the file
         f = NBTFile("bigtest.nbt")
+        print "'" + f.filename + "'"
         f.write_file()
         # make sure it can be read again directly after
         f = NBTFile("bigtest.nbt")

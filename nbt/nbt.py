@@ -1,8 +1,8 @@
 from struct import pack, unpack, calcsize, error as StructError
 from gzip import GzipFile
+import zlib
 from UserDict import DictMixin
-from StringIO import StringIO
-import os, io, math, time, datetime
+import os, io
 
 TAG_END = 0
 TAG_BYTE = 1
@@ -90,8 +90,8 @@ class TAG_Double(_TAG_Numeric):
 
 class TAG_Byte_Array(TAG):
 	id = TAG_BYTE_ARRAY
-	def __init__(self, name=None, value=None, buffer=None):
-		super(TAG_Byte_Array, self).__init__()
+	def __init__(self, name=None, buffer=None):
+		super(TAG_Byte_Array, self).__init__(name=name)
 		if buffer:
 			self._parse_buffer(buffer)
 
@@ -183,6 +183,7 @@ class TAG_Compound(TAG, DictMixin):
 	def __init__(self, buffer=None):
 		super(TAG_Compound, self).__init__()
 		self.tags = []
+		self.name = ""
 		if buffer:
 			self._parse_buffer(buffer)
 
@@ -272,14 +273,14 @@ TAGLIST = {TAG_BYTE:TAG_Byte, TAG_SHORT:TAG_Short, TAG_INT:TAG_Int, TAG_LONG:TAG
 class NBTFile(TAG_Compound):
 	"""Represents an NBT file object"""
 
-	def __init__(self, filename=None, mode=None, buffer=None, fileobj=None):
+	def __init__(self, filename=None, buffer=None, fileobj=None):
 		super(NBTFile,self).__init__()
 		self.__class__.__name__ = "TAG_Compound"
 		self.filename = filename
 		self.type = TAG_Byte(self.id)
 		#make a file object
 		if filename:
-			self.file = GzipFile(filename, mode)
+			self.file = GzipFile(filename, 'rb')
 		elif buffer:
 			self.file = buffer
 		elif fileobj:
@@ -289,7 +290,7 @@ class NBTFile(TAG_Compound):
 		#parse the file given intitially
 		if self.file:
 			self.parse_file()
-			if filename and 'close' in dir(self.file):
+			if self.filename and 'close' in dir(self.file):
 				self.file.close()
 			self.file = None
 
@@ -316,12 +317,14 @@ class NBTFile(TAG_Compound):
 
 	def write_file(self, filename=None, buffer=None, fileobj=None):
 		if buffer:
+			self.filename = None
 			self.file = buffer
 		elif filename:
 			self.filename = filename
 			self.file = GzipFile(filename, "wb")
 		elif fileobj:
-			self.file = GzipFile(fileobj=fileobj)
+			self.filename = None
+			self.file = GzipFile(fileobj=fileobj, mode="wb")
 		elif self.filename:
 			self.file = GzipFile(self.filename, "wb")
 		elif not self.file:
@@ -333,88 +336,5 @@ class NBTFile(TAG_Compound):
 		#make sure the file is complete
 		if 'flush' in dir(self.file): 
 			self.file.flush()
-		if self.filename and 'close' in dir(self.file): 
+		if self.filename and 'close' in dir(self.file):
 			self.file.close()
-
-### WARNING! NOT TESTED! ###
-class RegionFile(object):
-	"""A convenience class for extracting NBT files from the new minecraft Region Format"""
-	
-	def __init__(self, filename=None, fileobj=None):
-		if filename:
-			self.filename = filename
-			self.file = open(filename, 'rb')
-		if fileobj:
-			self.file = fileobj
-		self.chunks = []
-		self.extents = None
-		if self.file:
-			self.parse_header()
-
-	def __del__(self):
-		if self.file:
-			self.file.close()
-
-	@classmethod
-	def getchunk(path, x, z):
-		pass
-		
-	def get_timestamp(self, x, z):
-		self.file.seek(4096+4*(x+z*32))
-		timestamp = unpack(">I",self.file.read(4))
-
-	def get_chunk(self, x, z):
-		#read metadata block
-		block = 4*(x+z*32)
-		self.file.seek(block)
-		offset, length = unpack(">IB", "\0"+self.file.read(4))
-		if offset:
-			self.file.seek(offset)
-			return NBTFile(fileobj=self.file)
-		else:
-			return None
-	
-	def write_chunk(self, x, z, nbt_file):
-		""" A smart chunk writer that uses extents to trade off between fragmentation and cpu time"""
-		data = StringIO()
-		data.seek(0)
-		nbtfile.write_file(fileobj = data) #render to buffer
-		nsectors = int(math.ceil(data.len/4096))
-		
-		#if it will fit back in it's orriginal slot:
-		self.file.seek(4*(x+z*32))
-		offset, length = unpack(">IB", "\0"+self.file.read(4))
-		if nsectors <= length:
-			sector = offset
-		
-		#traverse extents to find first-fit
-		else:
-			sector= 2 #start at sector 2, first sector after header
-			while 1:
-				#check if extent is used, else move foward in extent list by extent length
-				self.file.seek(0)
-				found = True
-				for intersect_offset, intersect_len in ( (extent_offset, extent_len)
-									for extent_offset, extent_len 
-									in (unpack(">IB", "\0"+self.file.read(4)) for block in xrange(1024))
-									if extent_offset != 0 and ( sector >= extent_offset < (sector+nsectors))):
-					#move foward to end of intersect
-					sector = intersect_offset + intersect_len
-					found = False
-					break
-				if found:
-					break
-		
-		#write out chunk to region
-		self.file.seek(sector*4096)
-		self.file.write(pack(">I", (data.len,))) #length field
-		self.dile.write(data.getvalue()) #compressed data
-		
-		#seek to header record and write offset and length records
-		self.file.seek(4*(x+z*32))
-		self.file.write(pack(">IB", (sector, length))[1:])
-		
-		#write timestamp
-		self.file.seek(4096+4*(x+z*32))
-		timestamp = time.mktime(datetime.datetime.now().timetuple())
-		self.file.write(pack(">I", (timestamp,)))

@@ -1,2 +1,5 @@
 include *.txt
-include nbt\bigtest.nbt
+include bigtest.nbt
+include tests.py
+include examples
+include doc
