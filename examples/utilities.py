@@ -1,10 +1,21 @@
+#!/usr/bin/env python
+
 """
 Useful utility functions for handling large NBT structures elegantly and
 Pythonically.
 """
 
-# Yes, yes, I know. Fix it if you like.
-from nbt import *
+# local module
+try:
+    # Yes, yes, I know. Importing * may give namespace collisions. Fix it if you like.
+    from nbt import *
+except ImportError:
+    # nbt not in search path. Let's see if it can be found in the parent folder
+    extrasearchpath = os.path.realpath(os.path.join(sys.path[0],os.pardir))
+    if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
+        raise
+    sys.path.append(extrasearchpath)
+    from nbt import *
 
 def unpack_nbt(tag):
     """
