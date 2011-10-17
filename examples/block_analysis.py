@@ -70,6 +70,15 @@ try:
 			#print "Parsing chunk ("+str(c['x'])+", "+str(c['z'])+")"
 			
 			# Parse the blocks
+
+			# Fast code if no start or stop coordinates are specified
+			# TODO: also use this code if start/stop is specified, but the complete chunk is included
+			if (start == None and stop == None):
+				for block_id in chunk.blocks.get_all_blocks():
+					block_totals[block_id] += 1
+				continue
+			
+			# Slow code that iterates through each coordinate
 			for z in range(16):
 				world_z = z + c['z']*16 + rz*512
 				if ( (start != None and world_z < int(start[2])) or (stop != None and  world_z > int(stop[2])) ):

@@ -127,6 +127,10 @@ class BlockArray(object):
 		else:
 			self.dataList = [0]*16384 # Create an empty data list (32768 4-bit entries of zero make 16384 byte entries)
 
+	# Get all block entries
+	def get_all_blocks(self):
+		return self.blocksList
+	
 	# Get all data entries
 	def get_all_data(self):
 		bits = []
