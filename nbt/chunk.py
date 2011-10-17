@@ -118,14 +118,14 @@ class Chunk(object):
 class BlockArray(object):
 	def __init__(self, blocksBytes=None, dataBytes=None):
 		if (blocksBytes != None):
-			self.blocksList = [ord(b) for b in blocksBytes] # A list of bytes
+			self.blocksList = list(unpack("32768B", blocksBytes)) # A list of bytes
 		else:
 			self.blocksList = [0]*32768 # Create an empty block list (32768 entries of zero (air))
 		
 		if (dataBytes != None):
-			self.dataList = [ord(b) for b in dataBytes]
+			self.dataList = list(unpack("16384B", dataBytes))
 		else:
-			self.dataList = [0]*32768 # Create an empty data list (32768 entries of zero)
+			self.dataList = [0]*16384 # Create an empty data list (32768 4-bit entries of zero make 16384 byte entries)
 
 	# Get all data entries
 	def get_all_data(self):
@@ -161,7 +161,7 @@ class BlockArray(object):
 
 	def get_data_byte_array(self, buffer=False):
 		if buffer:
-			length = len(self.dataList)/2
+			length = len(self.dataList)
 			return StringIO(pack(">i", length)+self.get_data_byte_array())
 		else:
 			return array.array('B', self.dataList).tostring()
