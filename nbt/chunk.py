@@ -110,6 +110,9 @@ class Chunk(object):
 				pixels += pack("BBB", rgb[0], rgb[1], rgb[2])
 		im = Image.fromstring('RGB', (16,16), pixels)
 		return im
+	
+	def get_coords(self):
+		return (self.coords[0].value,self.coords[1].value)
 
 	def __repr__(self):
 		return "Chunk("+str(self.coords[0])+","+str(self.coords[1])+")"
@@ -135,8 +138,11 @@ class BlockArray(object):
 	def get_all_data(self):
 		bits = []
 		for b in self.dataList:
-			bits.append((b >> 4) & 15) # Big end of the byte
+			# For some odd reason, the first byte of the Blocks arrays correspond 
+			# to the LEAST significant bits of the first byte of the Data. 
+			# NOT to the MOST significant bits, as you might expected.
 			bits.append(b & 15) # Little end of the byte
+			bits.append((b >> 4) & 15) # Big end of the byte
 		return bits
 	
 	# Get all block entries and data entries as tuples
@@ -250,10 +256,14 @@ class BlockArray(object):
 	# Get a given X,Y,Z or a tuple of three coordinates
 	def get_data(self, x,y,z, coord=False):
 		offset = y + z*128 + x*128*16 if (coord == False) else coord[1] + coord[2]*128 + coord[0]*128*16
+		# For some odd reason, the first byte of the Blocks arrays correspond 
+		# to the LEAST significant bits of the first byte of the Data. 
+		# NOT to the MOST significant bits, as you might expected.
 		if (offset % 2 == 1):
 			# offset is odd
 			index = (offset-1)/2
 			b = self.dataList[index]
+			return (b >>4) & 15
 		else:
 			# offset is even
 			index = offset/2
