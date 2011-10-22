@@ -138,6 +138,10 @@ class BlockArray(object):
 			bits.append((b >> 4) & 15) # Big end of the byte
 			bits.append(b & 15) # Little end of the byte
 		return bits
+	
+	# Get all block entries and data entries as tuples
+	def get_all_blocks_and_data(self):
+		return zip(self.get_all_blocks(), self.get_all_data())
 
 	def get_blocks_struct(self):
 		cur_x = 0
@@ -212,10 +216,21 @@ class BlockArray(object):
 			return False
 		return True
 
-	def set_block(self, x,y,z, id):
+	def set_block(self, x,y,z, id, data=0):
 		offset = y + z*128 + x*128*16
 		self.blocksList[offset] = id
-
+		# TODO: set dataList
+		# if (offset % 2 == 1):
+		# 	# offset is odd
+		# 	index = (offset-1)/2
+		# 	b = self.dataList[index]
+		# 	return (b >>15) & 15 # Get big end of byte
+		# else:
+		# 	# offset is even
+		# 	index = offset/2
+		# 	b = self.dataList[index]
+		# 	return b & 15
+	
 	# Get a given X,Y,Z or a tuple of three coordinates
 	def get_block(self, x,y,z, coord=False):
 		"""
@@ -239,12 +254,14 @@ class BlockArray(object):
 			# offset is odd
 			index = (offset-1)/2
 			b = self.dataList[index]
-			return (b >>15) & 15 # Get big end of byte
 		else:
 			# offset is even
 			index = offset/2
 			b = self.dataList[index]
 			return b & 15
+	
+	def get_block_and_data(self, x,y,z, coord=False):
+		return (self.get_block(x,y,z,coord),self.get_data(x,y,z,coord))
 
 ## Color functions for map generation ##
 
