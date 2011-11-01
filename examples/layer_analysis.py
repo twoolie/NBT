@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-"""
-Finds the contents of the different blocks in a level, taking different data values (sub block types) into account.
-"""
+
 import locale, os, sys
 
 # local module

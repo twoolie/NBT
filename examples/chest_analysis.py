@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-
+"""
+Finds and prints the contents of chests (including minecart chests)
+"""
 import locale, os, sys
 
 # local module

@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 import locale, os, sys
+"""
+Finds and prints different entities in a game file, including mobs, items, and vehicles.
+"""
 
 # local module
 try:
