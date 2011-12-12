@@ -166,6 +166,12 @@ class TAG_List(TAG):
 						 (i, tag, tag.id, self.tagID))
 			tag._render_buffer(buffer)
 
+	def __iter__(self):
+		return iter(self.tags)
+	
+	def __len__(self):
+		return len(self.tags)
+
 	#Printing and Formatting of tree
 	def __repr__(self):
 		return "%i entries of type %s" % (len(self.tags), TAGLIST[self.tagID].__name__)
