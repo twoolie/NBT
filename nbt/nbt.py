@@ -117,21 +117,30 @@ class TAG_Int_Array(TAG):
 		if buffer:
 			self._parse_buffer(buffer)
 
+	def update_fmt(self, length):
+		""" Adjust struct format description to length given """
+		self.fmt = ">" + "i"*length
+		self.size = calcsize(self.fmt)
+
 	#Parsers and Generators
 	def _parse_buffer(self, buffer):
 		length = TAG_Int(buffer=buffer).value
-		self.fmt = ">" + "i"*length
-		self.size = calcsize(self.fmt)
-		self.value = unpack(self.fmt, buffer.read(self.size))
+		self.update_fmt(length)
+		self.value = list(unpack(self.fmt, buffer.read(self.size)))
 
 	def _render_buffer(self, buffer):
-		length = TAG_Int(len(self.value))
-		length._render_buffer(buffer)
+		length = len(self.value)
+		self.update_fmt(length)
+		TAG_Int(length)._render_buffer(buffer)
 		buffer.write(pack(self.fmt, self.value))
 
 	#Printing and Formatting of tree
 	def __repr__(self):
-		return repr(self.value)
+		return "[%i ints]"%len(self.value)
+
+	def pretty_tree(self, indent=0):
+		return super(TAG_Int_Array, self).pretty_tree(indent) + repr(self.value)
+
 
 class TAG_String(TAG):
 	id = TAG_STRING
