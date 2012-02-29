@@ -135,8 +135,11 @@ class BlockArray(object):
 	def get_all_data(self):
 		bits = []
 		for b in self.dataList:
-			bits.append((b >> 4) & 15) # Big end of the byte
+			# The first byte of the Blocks arrays correspond 
+			# to the LEAST significant bits of the first byte of the Data. 
+			# NOT to the MOST significant bits, as you might expected.
 			bits.append(b & 15) # Little end of the byte
+			bits.append((b >> 4) & 15) # Big end of the byte
 		return bits
 
 	def get_blocks_struct(self):
@@ -239,12 +242,12 @@ class BlockArray(object):
 			# offset is odd
 			index = (offset-1)/2
 			b = self.dataList[index]
-			return (b >>15) & 15 # Get big end of byte
+			return (b >> 4) & 15 # Get big end (first 4 bits) of byte
 		else:
 			# offset is even
 			index = offset/2
 			b = self.dataList[index]
-			return b & 15
+			return b & 15 # Get little (last 4 bits) end of byte
 
 ## Color functions for map generation ##
 
