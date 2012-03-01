@@ -222,9 +222,19 @@ class BlockArray(object):
 			return False
 		return True
 
-	def set_block(self, x,y,z, id):
+	def set_block(self, x,y,z, id, data=0):
 		offset = y + z*128 + x*128*16
 		self.blocksList[offset] = id
+		if (offset % 2 == 1):
+			# offset is odd
+			index = (offset-1)/2
+			b = self.dataList[index]
+			self.dataList[index] = (b & 240) + (data & 15) # modify lower bits, leaving higher bits in place
+		else:
+			# offset is even
+			index = offset/2
+			b = self.dataList[index]
+			self.dataList[index] = (b & 15) + (data << 4 & 240) # modify ligher bits, leaving lower bits in place
 
 	# Get a given X,Y,Z or a tuple of three coordinates
 	def get_block(self, x,y,z, coord=False):
