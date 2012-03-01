@@ -111,6 +111,9 @@ class Chunk(object):
 		im = Image.fromstring('RGB', (16,16), pixels)
 		return im
 
+	def get_coords(self):
+		return (self.coords[0].value,self.coords[1].value)
+
 	def __repr__(self):
 		return "Chunk("+str(self.coords[0])+","+str(self.coords[1])+")"
 
