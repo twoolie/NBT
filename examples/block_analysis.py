@@ -4,7 +4,7 @@ Finds the contents of the different blocks in a level, taking different data val
 """
 
 import locale, os, sys
-
+import glob
 # local module
 try:
 	import nbt
@@ -134,7 +134,7 @@ def main(world_folder, start=None, stop=None):
 		print "No such folder as "+filename
 		return 2 # ENOENT
 	
-	regions = os.listdir(os.path.join(world_folder,'region'))
+	regions = glob.glob(os.path.join(world_folder,'region','*.mcr'))
 	
 	block_data_totals = [[0]*16 for i in xrange(256)] # up to 16 data numbers in 256 block IDs
 	try:

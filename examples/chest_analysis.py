@@ -3,7 +3,7 @@
 Finds and prints the contents of chests (including minecart chests)
 """
 import locale, os, sys
-
+import glob
 # local module
 try:
 	import nbt
@@ -87,7 +87,7 @@ def print_results(chests):
 
 
 def main(world_folder):
-	regions = os.listdir(os.path.join(world_folder,'region'))
+	regions = glob.glob(os.path.join(world_folder,'region','*.mcr'))
 	
 	try:
 		for filename in regions:

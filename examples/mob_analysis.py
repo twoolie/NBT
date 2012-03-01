@@ -4,7 +4,7 @@ Finds and prints different entities in a game file, including mobs, items, and v
 """
 
 import locale, os, sys
-
+import glob
 # local module
 try:
 	import nbt
@@ -66,7 +66,7 @@ def print_results(entities):
 
 
 def main(world_folder):
-	regions = os.listdir(os.path.join(world_folder,'region'))
+	regions = glob.glob(os.path.join(world_folder,'region','*.mcr'))
 	
 	try:
 		for filename in regions:
