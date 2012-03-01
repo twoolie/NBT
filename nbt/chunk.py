@@ -145,6 +145,10 @@ class BlockArray(object):
 			bits.append((b >> 4) & 15) # Big end of the byte
 		return bits
 
+	# Get all block entries and data entries as tuples
+	def get_all_blocks_and_data(self):
+		return zip(self.get_all_blocks(), self.get_all_data())
+
 	def get_blocks_struct(self):
 		cur_x = 0
 		cur_y = 0
@@ -251,6 +255,9 @@ class BlockArray(object):
 			index = offset/2
 			b = self.dataList[index]
 			return b & 15 # Get little (last 4 bits) end of byte
+
+	def get_block_and_data(self, x,y,z, coord=False):
+		return (self.get_block(x,y,z,coord),self.get_data(x,y,z,coord))
 
 ## Color functions for map generation ##
 
