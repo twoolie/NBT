@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+"""
+Finds the contents of the different blocks in a level.
+"""
 
 import locale, os, sys
 

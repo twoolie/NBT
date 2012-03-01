@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-
-# Create a file that can be used as a basic level.dat file with all required fields
+"""
+Create a file that can be used as a basic level.dat file with all required fields
+"""
 # http://www.minecraftwiki.net/wiki/Alpha_Level_Format#level.dat_Format
 
 import time
