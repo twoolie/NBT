@@ -203,6 +203,12 @@ class TAG_List(TAG):
 	def __repr__(self):
 		return "%i entries of type %s" % (len(self.tags), TAGLIST[self.tagID].__name__)
 
+	def __iter__(self):
+		return iter(self.tags)
+
+	def __len__(self):
+		return len(self.tags)
+
 	def pretty_tree(self, indent=0):
 		output = [super(TAG_List, self).pretty_tree(indent)]
 		if len(self.tags):
