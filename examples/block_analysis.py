@@ -7,13 +7,13 @@ import locale, os, sys
 
 # local module
 try:
-    import nbt
+	import nbt
 except ImportError:
-    # nbt not in search path. Let's see if it can be found in the parent folder
-    extrasearchpath = os.path.realpath(os.path.join(sys.path[0],os.pardir))
-    if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
-        raise
-    sys.path.append(extrasearchpath)
+	# nbt not in search path. Let's see if it can be found in the parent folder
+	extrasearchpath = os.path.realpath(os.path.join(sys.path[0],os.pardir))
+	if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
+		raise
+	sys.path.append(extrasearchpath)
 from nbt.region import RegionFile
 from nbt.chunk import Chunk
 
