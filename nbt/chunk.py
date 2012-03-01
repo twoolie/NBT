@@ -245,16 +245,19 @@ class BlockArray(object):
 	# Get a given X,Y,Z or a tuple of three coordinates
 	def get_data(self, x,y,z, coord=False):
 		offset = y + z*128 + x*128*16 if (coord == False) else coord[1] + coord[2]*128 + coord[0]*128*16
+		# The first byte of the Blocks arrays correspond 
+		# to the LEAST significant bits of the first byte of the Data. 
+		# NOT to the MOST significant bits, as you might expected.
 		if (offset % 2 == 1):
 			# offset is odd
 			index = (offset-1)/2
 			b = self.dataList[index]
-			return (b >> 4) & 15 # Get big end (first 4 bits) of byte
+			return b & 15 # Get little (last 4 bits) end of byte
 		else:
 			# offset is even
 			index = offset/2
 			b = self.dataList[index]
-			return b & 15 # Get little (last 4 bits) end of byte
+			return (b >> 4) & 15 # Get big end (first 4 bits) of byte
 
 	def get_block_and_data(self, x,y,z, coord=False):
 		return (self.get_block(x,y,z,coord),self.get_data(x,y,z,coord))
