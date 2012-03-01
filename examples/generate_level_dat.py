@@ -4,20 +4,21 @@ Create a file that can be used as a basic level.dat file with all required field
 """
 # http://www.minecraftwiki.net/wiki/Alpha_Level_Format#level.dat_Format
 
+import os,sys
 import time
 import random
 
 # local module
 try:
 	# Yes, yes, I know. Importing * may give namespace collisions. Fix it if you like.
-	from nbt import *
+	from nbt.nbt import *
 except ImportError:
 	# nbt not in search path. Let's see if it can be found in the parent folder
 	extrasearchpath = os.path.realpath(os.path.join(sys.path[0],os.pardir))
 	if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
 		raise
 	sys.path.append(extrasearchpath)
-	from nbt import *
+	from nbt.nbt import *
 
 
 level = NBTFile() # Blank NBT
