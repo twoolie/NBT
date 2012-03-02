@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 """
 Prints a map of the entire world.
-
-NOTE: currently only prints a tiny map of the first chunk found. This is work in progress.
 """
 
 import locale, os, sys
