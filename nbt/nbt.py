@@ -1,3 +1,5 @@
+"""Handle the NBT (Named Binary Tag) data format"""
+
 from struct import Struct, error as StructError
 from gzip import GzipFile
 import zlib
@@ -38,21 +40,26 @@ class TAG(object):
 
 	#Printing and Formatting of tree
 	def tag_info(self):
+		"""Return Unicode string with class, name and unnested value"""
 		return self.__class__.__name__ + \
 				('(%r)' % self.name if self.name else "") + \
 				": " + self.valuestr()
 	def valuestr(self):
-		return str(self.value)
+		"""Return Unicode string of unnested value. For iterators, this returns a summary."""
+		return unicode(self.value)
 
 	def pretty_tree(self, indent=0):
+		"""Return formated Unicode string of self, where iterable items are recursively listed in detail."""
 		return ("\t"*indent) + self.tag_info()
 	
 	def __str__(self):
+		"""Return a string (ascii formated for Python 2, unicode for Python 3) with the result in human readable format. Unlike valuestr(), the result is recursive for iterators till at least one level deep."""
 		return str(self.value)
 	# Unlike regular iterators, __repr__() is not recursive.
 	# Use pretty_tree for recursive results.
 	# iterators should use __repr__ or tag_info for each item, like regular iterators
 	def __repr__(self):
+		"""Return a string (ascii formated for Python 2, unicode for Python 3) describing the class, name and id for debugging purposes."""
 		return "<%s(%r) at 0x%x>" % (self.__class__.__name__,self.name,id(self))
 
 class _TAG_Numeric(TAG):
