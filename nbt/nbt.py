@@ -147,8 +147,8 @@ class TAG_Byte_Array(TAG, MutableSequence):
 	def valuestr(self):
 		return "[%i byte(s)]" % len(self.value)
 	def __str__(self):
-		# return "".join(['\\x%02x'%ord(x) for x in self.value])
-		return '['+",".join(['0x%02x'%ord(x) for x in self.value])+']'
+		# return "'"+",".join(['\\x%02x' % x for x in self.value])+"'"
+		return '['+",".join([str(x) for x in self.value])+']'
 
 class TAG_Int_Array(TAG, MutableSequence):
 	"""TAG_Int_Array, comparable to a collections.UserList with an intrinsic name whose values must be integers"""
