@@ -257,7 +257,7 @@ class TAG_Compound(TAG, DictMixin):
 	def __getitem__(self, key):
 		if isinstance(key, int):
 			return self.tags[key]
-		elif isinstance(key, str):
+		elif isinstance(key, basestring):
 			for tag in self.tags:
 				if tag.name == key:
 					return tag
@@ -270,7 +270,7 @@ class TAG_Compound(TAG, DictMixin):
 		if isinstance(key, int):
 			# Just try it. The proper error will be raised if it doesn't work.
 			self.tags[key] = value
-		elif isinstance(key, str):
+		elif isinstance(key, basestring):
 			value.name = key
 			for i, tag in enumerate(self.tags):
 				if tag.name == key:
@@ -281,7 +281,7 @@ class TAG_Compound(TAG, DictMixin):
 	def __delitem__(self, key):
 		if isinstance(key, int):
 			self.tags = self.tags[:key] + self.tags[key:]
-		elif isinstance(key, str):
+		elif isinstance(key, basestring):
 			for i, tag in enumerate(self.tags):
 				if tag.name == key:
 					self.tags = self.tags[:i] + self.tags[i:]
