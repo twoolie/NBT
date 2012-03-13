@@ -145,7 +145,7 @@ class TAG_Int_Array(TAG, MutableSequence):
 
 	def update_fmt(self, length):
 		""" Adjust struct format description to length given """
-		self.fmt = ">" + "i"*length
+		self.fmt = ">" + str(length) + "i"
 		self.size = calcsize(self.fmt)
 
 	#Parsers and Generators
