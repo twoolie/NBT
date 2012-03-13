@@ -278,8 +278,7 @@ class TAG_List(TAG, MutableSequence):
 		return len(self.tags)
 
 	def __iter__(self):
-		for key in self.tags:
-			yield key.name
+		return iter(self.tags)
 
 	def __contains__(self, item):
 		return item in self.tags
@@ -353,7 +352,8 @@ class TAG_Compound(TAG, MutableMapping):
 		return len(self.tags)
 	
 	def __iter__(self):
-		return iter(self.tags)
+		for key in self.tags:
+			yield key.name
 	
 	def __contains__(self, key):
 		if isinstance(key, int):
