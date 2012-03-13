@@ -4,11 +4,11 @@
 # http://www.minecraftwiki.net/wiki/Beta_Level_Format
 # 
 
-from nbt import NBTFile
+from .nbt import NBTFile
 from struct import pack, unpack
 from gzip import GzipFile
 import zlib
-from StringIO import StringIO
+from io import BytesIO
 import math, time
 from os.path import getsize
 
@@ -34,6 +34,7 @@ class RegionFile(object):
 	"""
 	
 	def __init__(self, filename=None, fileobj=None):
+		self.file = None
 		if filename:
 			self.filename = filename
 			self.file = open(filename, 'r+b')
@@ -59,7 +60,6 @@ class RegionFile(object):
 		
 		self.header = {}
 		self.chunk_headers = {}
-		self.chunk_count = 0 # only sane chunks are counted, sane as seen by chunk headers
 		self.extents = None
 		if self.file:
 			self.size = getsize(self.filename)
@@ -67,18 +67,22 @@ class RegionFile(object):
 				# Some region files seems to have 0 bytes of size, and
 				# Minecraft handle them without problems. Take them 
 				# as empty region files.
-				for x in range(32):
-					for z in range(32):
-						self.header[x,z] = (0, 0, 0, self.STATUS_CHUNK_NOT_CREATED)
-				self.parse_chunk_headers()
+				self.init_header()
 			else:
 				self.parse_header()
-				self.parse_chunk_headers()
+		else:
+			self.init_header()
+		self.parse_chunk_headers()
 
 
 	def __del__(self):
 		if self.file:
 			self.file.close()
+
+	def init_header(self):
+		for x in range(32):
+			for z in range(32):
+				self.header[x,z] = (0, 0, 0, self.STATUS_CHUNK_NOT_CREATED)
 
 	def parse_header(self):
 		""" 
@@ -87,11 +91,11 @@ class RegionFile(object):
 		"""
 		for index in range(0,4096,4):
 			self.file.seek(index)
-			offset, length = unpack(">IB", "\0"+self.file.read(4))
+			offset, length = unpack(">IB", b"\0"+self.file.read(4))
 			self.file.seek(index + 4096)
 			timestamp = unpack(">I", self.file.read(4))
-			x = (index/4) % 32
-			z = int(index/4)/32
+			x = int(index//4) % 32
+			z = int(index//4)//32
 			if offset == 0 and length == 0:
 				status = self.STATUS_CHUNK_NOT_CREATED
 
@@ -131,7 +135,6 @@ class RegionFile(object):
 						chunk_status = self.STATUS_CHUNK_MISMATCHED_LENGTHS
 					else:
 						chunk_status = self.STATUS_CHUNK_OK
-						self.chunk_count += 1
 
 				elif status == self.STATUS_CHUNK_OUT_OF_FILE:
 					if offset*4096 + 5 < self.size: # if possible read it, just in case it's useful
@@ -171,10 +174,10 @@ class RegionFile(object):
 		self.file.seek(index)
 		chunks = []
 		while (index < 4096):
-			offset, length = unpack(">IB", "\0"+self.file.read(4))
+			offset, length = unpack(">IB", b"\0"+self.file.read(4))
 			if offset:
-				x = (index/4) % 32
-				z = int(index/4)/32
+				x = int(index//4) % 32
+				z = int(index//4)//32
 				chunks.append({'x':x,'z':z,'length':length})
 			index += 4
 		return chunks
@@ -222,16 +225,16 @@ class RegionFile(object):
 			if (compression == 2):
 				try:
 					chunk = zlib.decompress(chunk)
-					chunk = StringIO(chunk)
+					chunk = BytesIO(chunk)
 					return NBTFile(buffer=chunk) # pass uncompressed
-				except Exception, e:
+				except Exception as e:
 					raise ChunkDataError(str(e))
 				
 			elif (compression == 1):
-				chunk = StringIO(chunk)
+				chunk = BytesIO(chunk)
 				try:
 					return NBTFile(fileobj=chunk) # pass compressed; will be filtered through Gzip
-				except Exception, e:
+				except Exception as e:
 					raise ChunkDataError(str(e))
 					
 			else:
@@ -242,11 +245,11 @@ class RegionFile(object):
 	
 	def write_chunk(self, x, z, nbt_file):
 		""" A smart chunk writer that uses extents to trade off between fragmentation and cpu time"""
-		data = StringIO()
+		data = BytesIO()
 		nbt_file.write_file(buffer = data) #render to buffer; uncompressed
 		
 		compressed = zlib.compress(data.getvalue()) #use zlib compression, rather than Gzip
-		data = StringIO(compressed)
+		data = BytesIO(compressed)
 		
 		nsectors = int(math.ceil((data.len+0.001)/4096))
 		
@@ -275,7 +278,7 @@ class RegionFile(object):
 					self.file.seek(0)
 					found = True
 					for intersect_offset, intersect_len in ( (extent_offset, extent_len)
-						for extent_offset, extent_len in (unpack(">IB", "\0"+self.file.read(4)) for block in xrange(1024))
+						for extent_offset, extent_len in (unpack(">IB", b"\0"+self.file.read(4)) for block in xrange(1024))
 							if extent_offset != 0 and ( sector >= extent_offset < (sector+nsectors))):
 								#move foward to end of intersect
 								sector = intersect_offset + intersect_len
