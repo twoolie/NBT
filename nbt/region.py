@@ -91,11 +91,11 @@ class RegionFile(object):
 		"""
 		for index in range(0,4096,4):
 			self.file.seek(index)
-			offset, length = unpack(">IB", "\0"+self.file.read(4))
+			offset, length = unpack(">IB", b"\0"+self.file.read(4))
 			self.file.seek(index + 4096)
 			timestamp = unpack(">I", self.file.read(4))
-			x = (index/4) % 32
-			z = int(index/4)/32
+			x = int(index//4) % 32
+			z = int(index//4)//32
 			if offset == 0 and length == 0:
 				status = self.STATUS_CHUNK_NOT_CREATED
 
@@ -174,10 +174,10 @@ class RegionFile(object):
 		self.file.seek(index)
 		chunks = []
 		while (index < 4096):
-			offset, length = unpack(">IB", "\0"+self.file.read(4))
+			offset, length = unpack(">IB", b"\0"+self.file.read(4))
 			if offset:
-				x = (index/4) % 32
-				z = int(index/4)/32
+				x = int(index//4) % 32
+				z = int(index//4)//32
 				chunks.append({'x':x,'z':z,'length':length})
 			index += 4
 		return chunks
@@ -278,7 +278,7 @@ class RegionFile(object):
 					self.file.seek(0)
 					found = True
 					for intersect_offset, intersect_len in ( (extent_offset, extent_len)
-						for extent_offset, extent_len in (unpack(">IB", "\0"+self.file.read(4)) for block in xrange(1024))
+						for extent_offset, extent_len in (unpack(">IB", b"\0"+self.file.read(4)) for block in xrange(1024))
 							if extent_offset != 0 and ( sector >= extent_offset < (sector+nsectors))):
 								#move foward to end of intersect
 								sector = intersect_offset + intersect_len
