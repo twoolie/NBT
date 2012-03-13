@@ -59,7 +59,6 @@ class RegionFile(object):
 		
 		self.header = {}
 		self.chunk_headers = {}
-		self.chunk_count = 0 # only sane chunks are counted, sane as seen by chunk headers
 		self.extents = None
 		if self.file:
 			self.size = getsize(self.filename)
@@ -131,7 +130,6 @@ class RegionFile(object):
 						chunk_status = self.STATUS_CHUNK_MISMATCHED_LENGTHS
 					else:
 						chunk_status = self.STATUS_CHUNK_OK
-						self.chunk_count += 1
 
 				elif status == self.STATUS_CHUNK_OUT_OF_FILE:
 					if offset*4096 + 5 < self.size: # if possible read it, just in case it's useful
