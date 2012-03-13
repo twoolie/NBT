@@ -1,9 +1,19 @@
 #!/usr/bin/env python
-from nbt.nbt import _TAG_Numeric, MalformedFileError, NBTFile, TAGLIST
 import sys,os,unittest
 import tempfile, shutil
 from io import BytesIO
 from gzip import GzipFile
+
+# Search parent directory first, to make sure we test the local nbt module, 
+# not an installed nbt module.
+extrasearchpath = os.path.realpath(os.path.join(sys.path[0],os.pardir))
+sys.path.insert(1, extrasearchpath) # insert ../ just after ./
+
+from nbt.nbt import _TAG_Numeric, MalformedFileError, NBTFile, TAGLIST
+
+NBTTESTFILE = os.path.join(sys.path[0], 'bigtest.nbt')
+
+
 
 class BugfixTest(unittest.TestCase):
 	"""Bugfix regression tests."""
@@ -24,7 +34,7 @@ class BugfixTest(unittest.TestCase):
 		# copy the file (don't work on the original test file)
 		tempdir = tempfile.mkdtemp()
 		filename = os.path.join(tempdir, 'bigtest.nbt')
-		shutil.copy('bigtest.nbt', filename)
+		shutil.copy(NBTTESTFILE, filename)
 		
 		#open the file
 		f = NBTFile(filename)
@@ -44,7 +54,7 @@ class ReadWriteTest(unittest.TestCase):
 	def setUp(self):
 		self.tempdir = tempfile.mkdtemp()
 		self.filename = os.path.join(self.tempdir, 'bigtest.nbt')
-		shutil.copy('bigtest.nbt', self.filename)
+		shutil.copy(NBTTESTFILE, self.filename)
 
 	def tearDown(self):
 		try:
@@ -61,7 +71,7 @@ class ReadWriteTest(unittest.TestCase):
 		mynbt = NBTFile(self.filename)
 		output = BytesIO()
 		mynbt.write_file(buffer=output)
-		self.assertEqual(GzipFile("bigtest.nbt").read(), output.getvalue())
+		self.assertEqual(GzipFile(NBTTESTFILE).read(), output.getvalue())
 
 	def testWriteback(self):
 		mynbt = NBTFile(self.filename)
