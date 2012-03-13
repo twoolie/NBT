@@ -1,4 +1,4 @@
-from struct import pack, unpack, calcsize, error as StructError
+from struct import Struct, error as StructError
 from gzip import GzipFile
 import zlib
 from collections import MutableMapping, MutableSequence, Sequence
@@ -49,16 +49,15 @@ class _TAG_Numeric(TAG):
 	"""_TAG_Numeric, comparable to int with an intrinsic name"""
 	def __init__(self, value=None, name=None, buffer=None):
 		super(_TAG_Numeric, self).__init__(value, name)
-		self.size = calcsize(self.fmt)
 		if buffer:
 			self._parse_buffer(buffer)
 
 	#Parsers and Generators
 	def _parse_buffer(self, buffer):
-		self.value = unpack(self.fmt, buffer.read(self.size))[0]
+		self.value = self.fmt.unpack(buffer.read(self.fmt.size))[0]
 
 	def _render_buffer(self, buffer):
-		buffer.write(pack(self.fmt, self.value))
+		buffer.write(self.fmt.pack(self.value))
 
 	#Printing and Formatting of tree
 	def __repr__(self):
@@ -67,27 +66,27 @@ class _TAG_Numeric(TAG):
 #== Value Tags ==#
 class TAG_Byte(_TAG_Numeric):
 	id = TAG_BYTE
-	fmt = ">b"
+	fmt = Struct(">b")
 
 class TAG_Short(_TAG_Numeric):
 	id = TAG_SHORT
-	fmt = ">h"
+	fmt = Struct(">h")
 
 class TAG_Int(_TAG_Numeric):
 	id = TAG_INT
-	fmt = ">i"
+	fmt = Struct(">i")
 
 class TAG_Long(_TAG_Numeric):
 	id = TAG_LONG
-	fmt = ">q"
+	fmt = Struct(">q")
 
 class TAG_Float(_TAG_Numeric):
 	id = TAG_FLOAT
-	fmt = ">f"
+	fmt = Struct(">f")
 
 class TAG_Double(_TAG_Numeric):
 	id = TAG_DOUBLE
-	fmt = ">d"
+	fmt = Struct(">d")
 
 class TAG_Byte_Array(TAG, MutableSequence):
 	"""TAG_Byte_Array, comparable to a collections.UserList with an intrinsic name whose values must be bytes"""
@@ -145,20 +144,19 @@ class TAG_Int_Array(TAG, MutableSequence):
 
 	def update_fmt(self, length):
 		""" Adjust struct format description to length given """
-		self.fmt = ">" + str(length) + "i"
-		self.size = calcsize(self.fmt)
+		self.fmt = Struct(">" + str(length) + "i")
 
 	#Parsers and Generators
 	def _parse_buffer(self, buffer):
 		length = TAG_Int(buffer=buffer).value
 		self.update_fmt(length)
-		self.value = list(unpack(self.fmt, buffer.read(self.size)))
+		self.value = list(self.fmt.unpack(buffer.read(self.fmt.size)))
 
 	def _render_buffer(self, buffer):
 		length = len(self.value)
 		self.update_fmt(length)
 		TAG_Int(length)._render_buffer(buffer)
-		buffer.write(pack(self.fmt, *self.value))
+		buffer.write(self.fmt.pack(*self.value))
 
 	# Mixin methods
 	def __len__(self):
