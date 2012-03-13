@@ -34,6 +34,7 @@ class RegionFile(object):
 	"""
 	
 	def __init__(self, filename=None, fileobj=None):
+		self.file = None
 		if filename:
 			self.filename = filename
 			self.file = open(filename, 'r+b')
@@ -66,18 +67,22 @@ class RegionFile(object):
 				# Some region files seems to have 0 bytes of size, and
 				# Minecraft handle them without problems. Take them 
 				# as empty region files.
-				for x in range(32):
-					for z in range(32):
-						self.header[x,z] = (0, 0, 0, self.STATUS_CHUNK_NOT_CREATED)
-				self.parse_chunk_headers()
+				self.init_header()
 			else:
 				self.parse_header()
-				self.parse_chunk_headers()
+		else:
+			self.init_header()
+		self.parse_chunk_headers()
 
 
 	def __del__(self):
 		if self.file:
 			self.file.close()
+
+	def init_header(self):
+		for x in range(32):
+			for z in range(32):
+				self.header[x,z] = (0, 0, 0, self.STATUS_CHUNK_NOT_CREATED)
 
 	def parse_header(self):
 		""" 
