@@ -8,7 +8,7 @@ from nbt import NBTFile
 from struct import pack, unpack
 from gzip import GzipFile
 import zlib
-from StringIO import StringIO
+from io import BytesIO
 import math, time
 from os.path import getsize
 
@@ -225,13 +225,13 @@ class RegionFile(object):
 			if (compression == 2):
 				try:
 					chunk = zlib.decompress(chunk)
-					chunk = StringIO(chunk)
+					chunk = BytesIO(chunk)
 					return NBTFile(buffer=chunk) # pass uncompressed
 				except Exception, e:
 					raise ChunkDataError(str(e))
 				
 			elif (compression == 1):
-				chunk = StringIO(chunk)
+				chunk = BytesIO(chunk)
 				try:
 					return NBTFile(fileobj=chunk) # pass compressed; will be filtered through Gzip
 				except Exception, e:
@@ -245,11 +245,11 @@ class RegionFile(object):
 	
 	def write_chunk(self, x, z, nbt_file):
 		""" A smart chunk writer that uses extents to trade off between fragmentation and cpu time"""
-		data = StringIO()
+		data = BytesIO()
 		nbt_file.write_file(buffer = data) #render to buffer; uncompressed
 		
 		compressed = zlib.compress(data.getvalue()) #use zlib compression, rather than Gzip
-		data = StringIO(compressed)
+		data = BytesIO(compressed)
 		
 		nsectors = int(math.ceil((data.len+0.001)/4096))
 		

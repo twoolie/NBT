@@ -1,5 +1,5 @@
 """ Handle a single chunk of data (16x16x128 blocks) """
-from StringIO import StringIO
+from io import BytesIO
 from struct import pack, unpack
 import array, math
 
@@ -67,20 +67,20 @@ class BlockArray(object):
 	def get_blocks_byte_array(self, buffer=False):
 		if buffer:
 			length = len(self.blocksList)
-			return StringIO(pack(">i", length)+self.get_blocks_byte_array())
+			return BytesIO(pack(">i", length)+self.get_blocks_byte_array())
 		else:
 			return array.array('B', self.blocksList).tostring()
 
 	def get_data_byte_array(self, buffer=False):
 		if buffer:
 			length = len(self.dataList)
-			return StringIO(pack(">i", length)+self.get_data_byte_array())
+			return BytesIO(pack(">i", length)+self.get_data_byte_array())
 		else:
 			return array.array('B', self.dataList).tostring()
 
 	def generate_heightmap(self, buffer=False, as_array=False):
 		if buffer:
-			return StringIO(pack(">i", 256)+self.generate_heightmap()) # Length + Heightmap, ready for insertion into Chunk NBT
+			return BytesIO(pack(">i", 256)+self.generate_heightmap()) # Length + Heightmap, ready for insertion into Chunk NBT
 		else:
 			bytes = []
 			for z in range(16):
