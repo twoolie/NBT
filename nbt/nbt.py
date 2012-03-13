@@ -8,8 +8,10 @@ import os, io
 
 try:
 	unicode
+	basestring
 except NameError:
 	unicode = str  # compatibility for Python 3
+	basestring = str  # compatibility for Python 3
 
 
 TAG_END = 0
