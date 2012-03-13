@@ -18,13 +18,13 @@ class Chunk(object):
 """ Convenience class for dealing with a Block/data byte array """
 class BlockArray(object):
 	def __init__(self, blocksBytes=None, dataBytes=None):
-		if (blocksBytes != None):
-			self.blocksList = list(unpack("32768B", blocksBytes)) # A list of bytes
+		if isinstance(blocksBytes, (bytearray, array.array)):
+			self.blocksList = list(blocksBytes)
 		else:
 			self.blocksList = [0]*32768 # Create an empty block list (32768 entries of zero (air))
 		
-		if (dataBytes != None):
-			self.dataList = list(unpack("16384B", dataBytes))
+		if isinstance(dataBytes, (bytearray, array.array)):
+			self.dataList = list(dataBytes)
 		else:
 			self.dataList = [0]*16384 # Create an empty data list (32768 4-bit entries of zero make 16384 byte entries)
 
