@@ -128,7 +128,8 @@ class WorldFolder(object):
 				correct_coords = (c2.get_coords() == (x,z))
 				is_comparable = (c1 == c2) # test __eq__ function
 				is_equal = (c1 == c2) # test if id(c1) == id(c2), thus they point to the same memory location
-				print x,z,c1,c2,correct_coords,is_comparable,is_equal
+				# DEBUG (prints a tuple)
+				print((x,z,c1,c2,correct_coords,is_comparable,is_equal))
 	
 	def __str__(self):
 		return "%s(%s,%s)" % (self.__class__.__name__,self.worldfolder, self.format)

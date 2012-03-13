@@ -335,12 +335,11 @@ class TAG_Compound(TAG, MutableMapping):
 		while True:
 			type = TAG_Byte(buffer=buffer)
 			if type.value == TAG_END:
-				#print "found tag_end"
+				#print("found tag_end")
 				break
 			else:
 				name = TAG_String(buffer=buffer).value
 				try:
-					#DEBUG print type, name
 					tag = TAGLIST[type.value](buffer=buffer)
 					tag.name = name
 					self.tags.append(tag)
