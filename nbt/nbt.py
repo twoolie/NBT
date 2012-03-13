@@ -100,12 +100,12 @@ class TAG_Byte_Array(TAG, MutableSequence):
 	#Parsers and Generators
 	def _parse_buffer(self, buffer):
 		length = TAG_Int(buffer=buffer)
-		self.value = buffer.read(length.value)
+		self.value = bytearray(buffer.read(length.value))
 
 	def _render_buffer(self, buffer):
 		length = TAG_Int(len(self.value))
 		length._render_buffer(buffer)
-		buffer.write(self.value)
+		buffer.write(bytes(self.value))
 
 	# Mixin methods
 	def __len__(self):
