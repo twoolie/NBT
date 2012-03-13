@@ -262,9 +262,9 @@ class TAG_Compound(TAG, DictMixin):
 				if tag.name == key:
 					return tag
 			else:
-				raise KeyError("A tag with this name does not exist")
+				raise KeyError("Tag %s does not exist" % key)
 		else:
-			raise ValueError("key needs to be either name of tag, or index of tag")
+			raise TypeError("key needs to be either name of tag, or index of tag, not a %s" % type(key).__name__)
 
 	def __setitem__(self, key, value):
 		if isinstance(key, int):
