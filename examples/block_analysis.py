@@ -53,7 +53,7 @@ def process_region_file(filename, start, stop):
 	rx = int(pieces[1])
 	rz = int(pieces[2])
 	
-	block_data_totals = [[0]*16 for i in xrange(256)] # up to 16 data numbers in 256 block IDs
+	block_data_totals = [[0]*16 for i in range(256)] # up to 16 data numbers in 256 block IDs
 	
 	# Does the region overlap the bounding box at all?
 	if (start != None):
@@ -136,7 +136,7 @@ def main(world_folder, start=None, stop=None):
 	
 	regions = glob.glob(os.path.join(world_folder,'region','*.mcr'))
 	
-	block_data_totals = [[0]*16 for i in xrange(256)] # up to 16 data numbers in 256 block IDs
+	block_data_totals = [[0]*16 for i in range(256)] # up to 16 data numbers in 256 block IDs
 	try:
 		for filename in regions:
 			region_totals = process_region_file(os.path.join(world_folder,'region',filename), start, stop)

@@ -6,6 +6,12 @@ import zlib
 from collections import MutableMapping, MutableSequence, Sequence
 import os, io
 
+try:
+	unicode
+except NameError:
+	unicode = str  # compatibility for Python 3
+
+
 TAG_END = 0
 TAG_BYTE = 1
 TAG_SHORT = 2
@@ -215,7 +221,7 @@ class TAG_String(TAG, Sequence):
 		read = buffer.read(length.value)
 		if len(read) != length.value:
 			raise StructError()
-		self.value = unicode(read, "utf-8")
+		self.value = read.decode("utf-8")
 
 	def _render_buffer(self, buffer):
 		save_val = self.value.encode("utf-8")

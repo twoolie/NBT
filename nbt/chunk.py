@@ -45,7 +45,7 @@ class BlockArray(object):
 
 	# Get all block entries and data entries as tuples
 	def get_all_blocks_and_data(self):
-		return zip(self.get_all_blocks(), self.get_all_data())
+		return list(zip(self.get_all_blocks(), self.get_all_data()))
 
 	def get_blocks_struct(self):
 		cur_x = 0
@@ -141,9 +141,9 @@ class BlockArray(object):
 		(0,0,0), (0,1,0), (0,2,0) ... (0,127,0), (0,0,1), (0,1,1), (0,2,1) ... (0,127,1), (0,0,2) ... (0,127,15), (1,0,0), (1,1,0) ... (15,127,15)
 		
 		blocks = []
-		for x in xrange(15):
-		  for z in xrange(15):
-		    for y in xrange(127):
+		for x in range(15):
+		  for z in range(15):
+		    for y in range(127):
 		      blocks.append(Block(x,y,z))
 		"""
 		

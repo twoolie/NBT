@@ -57,7 +57,7 @@ class WorldFolder(object):
 
 	def get_regionfiles():
 		"""return a list of full path with region files"""
-		return self.regionfiles.values()
+		return list(self.regionfiles.values())
 	
 	def get_region(self, x,z):
 		"""Get a region using x,z coordinates of a region. Cache results."""

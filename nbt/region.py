@@ -4,7 +4,7 @@
 # http://www.minecraftwiki.net/wiki/Beta_Level_Format
 # 
 
-from nbt import NBTFile
+from .nbt import NBTFile
 from struct import pack, unpack
 from gzip import GzipFile
 import zlib
@@ -227,14 +227,14 @@ class RegionFile(object):
 					chunk = zlib.decompress(chunk)
 					chunk = BytesIO(chunk)
 					return NBTFile(buffer=chunk) # pass uncompressed
-				except Exception, e:
+				except Exception as e:
 					raise ChunkDataError(str(e))
 				
 			elif (compression == 1):
 				chunk = BytesIO(chunk)
 				try:
 					return NBTFile(fileobj=chunk) # pass compressed; will be filtered through Gzip
-				except Exception, e:
+				except Exception as e:
 					raise ChunkDataError(str(e))
 					
 			else:
