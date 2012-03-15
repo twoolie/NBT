@@ -106,7 +106,7 @@ def print_results(block_data_totals):
 	total_blocks = sum(block_totals)
 	solid_blocks = total_blocks - block_totals[0]
 	solid_ratio = (solid_blocks+0.0)/total_blocks if (total_blocks > 0) else 0
-	print(locale.format_string("%d total blocks in region, %d are solid (%0.4f", (total_blocks, solid_blocks, 100.0*solid_ratio), grouping=True)+"%)")
+	print(locale.format_string("%d total blocks in region, %d are non-air (%0.4f", (total_blocks, solid_blocks, 100.0*solid_ratio), grouping=True)+"%)")
 	
 	# Find valuable blocks
 	print(locale.format_string("Diamond Ore:      %8d", block_totals[56], grouping=True))
