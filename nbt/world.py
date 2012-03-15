@@ -1,4 +1,4 @@
-"""Handle a world folder, containing """
+"""Handle a world folder, containing .mcr or .mca region files"""
 
 import os, glob, re
 from . import region
@@ -74,14 +74,26 @@ class WorldFolder(object):
 		for x,z in self.regionfiles.keys():
 			yield self.get_region(x,z)
 
-	def iter_chunks(self):
-		"""Returns an iterable list of all chunks. Use this function if you only 
-		want to loop through the chunks once or have a very large world."""
+	def iter_nbt(self):
+		"""Returns an iterable list of all NBT. Use this function if you only 
+		want to loop through the chunks once, and don't need the block or data arrays.
+		Use """
 		# TODO: Implement BoundingBox
 		# TODO: Implement sort order
 		for region in self.iter_regions():
 			for c in region.iter_chunks():
-				yield chunk.Chunk(c)
+				yield c
+
+	def iter_chunks(self):
+		"""Returns an iterable list of all chunks. Use this function if you only 
+		want to loop through the chunks once or have a very large world.
+		Use get_chunks() if you access the chunk list frequently and want to cache 
+		the results. Use iter_nbt() if you are concerned about speed and don't want 
+		to parse the block data."""
+		# TODO: Implement BoundingBox
+		# TODO: Implement sort order
+		for c in self.iter_nbt():
+			yield chunk.Chunk(c)
 
 	def get_chunk(self,x,z):
 		"""Return a chunk specified by the chunk coordinates x,z."""
@@ -92,7 +104,9 @@ class WorldFolder(object):
 	
 	def get_chunks(self, boundingbox=None):
 		"""Returns a list of all chunks. Use this function if you access the chunk
-		list frequently and want to cache the result."""
+		list frequently and want to cache the result.
+		Use iter_chunks() if you only want to loop through the chunks once or have a
+		very large world."""
 		if self.chunks == None:
 			self.chunks = list(self.iter_chunks())
 		return self.chunks
