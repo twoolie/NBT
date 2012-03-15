@@ -4,7 +4,7 @@ Prints a map of the entire world.
 """
 
 import locale, os, sys
-import glob, re, math
+import re, math
 from struct import pack, unpack
 # local module
 try:
@@ -17,7 +17,7 @@ except ImportError:
 	sys.path.append(extrasearchpath)
 from nbt.region import RegionFile
 from nbt.chunk import Chunk
-from nbt.world import WorldFolder,Format
+from nbt.world import WorldFolder,McRegionWorldFolder
 # PIL module (not build-in)
 try:
 	from PIL import Image
@@ -146,7 +146,7 @@ def hsl_slide(hsl1, hsl2, ratio):
 	avg_l = hsl1['l'] + ratio*(hsl2['l']-hsl1['l'])
 	avg_h = math.degrees(avg_h)
 	
-	#print 'tint:',tint, 'base:',final_color, 'avg:',avg_h,avg_s,avg_l
+	#print('tint: %s base: %s avg: %s %s %s' % (tint,final_color,avg_h,avg_s,avg_l))
 	return {'h':avg_h, 's':avg_s, 'l':avg_l}
 
 
@@ -175,7 +175,7 @@ def hsl2rgb(H,S,L):
 
 
 def main(world_folder):
-	world = WorldFolder(world_folder, Format.MCREGION)
+	world = McRegionWorldFolder(world_folder)  # map still only supports McRegion maps
 	bb = world.get_boundingbox()
 	map = Image.new('RGB', (16*bb.lenx(),16*bb.lenz()))
 	t = world.chunk_count()
@@ -193,23 +193,27 @@ def main(world_folder):
 			chunkmap = get_map(chunk)
 			x,z = chunk.get_coords()
 			map.paste(chunkmap, (16*(x-bb.minx),16*(z-bb.minz)))
-		print " done\n"
+		print(" done\n")
 		filename = os.path.basename(world_folder)+".png"
 		map.save(filename,"PNG")
-		print "Saved map as %s" % filename
+		print("Saved map as %s" % filename)
 	except KeyboardInterrupt:
-		print " aborted\n"
+		print(" aborted\n")
+		filename = os.path.basename(world_folder)+".partial.png"
+		map.save(filename,"PNG")
+		print("Saved map as %s" % filename)
+		return 75 # EX_TEMPFAIL
 	map.show()
 	return 0 # NOERR
 
 
 if __name__ == '__main__':
 	if (len(sys.argv) == 1):
-		print "No world folder specified!"
+		print("No world folder specified!")
 		sys.exit(64) # EX_USAGE
 	world_folder = sys.argv[1]
 	if (not os.path.exists(world_folder)):
-		print "No such folder as "+filename
+		print("No such folder as "+world_folder)
 		sys.exit(72) # EX_IOERR
 	
 	sys.exit(main(world_folder))
