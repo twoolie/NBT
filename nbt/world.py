@@ -4,13 +4,6 @@ import os, glob, re
 from . import region
 from . import chunk
 
-class Format(object):
-	# format constants
-	INVALID     = -1  # Unknown or invalid world folder format
-	ALPHA       = 1   # Unsupported
-	MCREGION    = 2   # "Beta" file format
-	ANVIL       = 3   # Anvil file format, introduced in Minecraft 1.2
-
 
 class UnknownWorldFormat(Exception):
 	"""Unknown or invalid world folder"""
@@ -18,44 +11,65 @@ class UnknownWorldFormat(Exception):
 		self.msg = msg
 
 class WorldFolder(object):
-	def __init__(self, world_folder, format=None):
+	"""Abstract class, representing either a McRegion or Anvil Chunk."""
+	type = "Generic"
+	# Preferred subclasses to use (in this order)
+	# this is defined as (AnvilWorldFolder, McRegionWorldFolder) AFTER the 
+	# definition of those subclasses (it can't be done here, because Python insists
+	# that objects are defined before they are referenced.
+	subclasses = ()
+	
+	def __new__(cls, world_folder, *args, **kwargs):
+		"""Python trickery to return a AnvilWorldFolder or McRegionWorldFolder 
+		instance, or raise a UnknownWorldFormat."""
+		if cls == WorldFolder: # Format unspecified. Check which world format to use.
+			for cls in cls.subclasses:
+				wf = cls(world_folder, *args, **kwargs)
+				if wf.valid(): # Check if the world is non-empty
+					return wf
+			raise UnknownWorldFormat("Empty world or unknown format: %r" % world_folder)
+		else:
+			return object.__new__(cls, world_folder, *args, **kwargs)
+	
+	def __init__(self, world_folder):
+		"""Initialize a WorldFolder. To check if the world is valid (=non-empty), use self.valid()"""
 		self.worldfolder = world_folder
 		self.format = format
-		os.listdir(world_folder) # Trigger OSError for non-existant directories or permission errors.
-		mcregion_fn  = list(glob.glob(os.path.join(world_folder,'region','r.*.*.mcr')))
-		anvil_fn     = list(glob.glob(os.path.join(world_folder,'region','r.*.*.mca')))
-		if self.format == None:
-			if (len(anvil_fn) > 0):
-				self.format = Format.ANVIL
-				regionfiles = anvil_fn
-			elif (len(mcregion_fn) > 0):
-				self.format = Format.MCREGION
-				regionfiles = mcregion_fn
-			else:
-				raise UnknownWorldFormat("Empty world or not a McRegion or Anvil format")
-		elif self.format == Format.ANVIL:
-			if len(anvil_fn) == 0:
-				raise UnknownWorldFormat("Empty world or not a Anvil format")
-			regionfiles = anvil_fn
-		elif self.format == Format.MCREGION:
-			if len(mcregion_fn) == 0:
-				raise UnknownWorldFormat("Empty world or not a McRegion format")
-			regionfiles = mcregion_fn
-		else:
-			raise UnknownWorldFormat("Unsupported world format")
 		self.regionfiles = {}
-		for filename in regionfiles:
-			m = re.match(r"r.(\-?\d+).(\-?\d+).mc[ra]", os.path.basename(filename))
+		self.regions     = {}
+		self.chunks      = None
+		# os.listdir triggers an OSError for non-existant directories or permission errors.
+		# This is needed, because glob.glob silently returns no files.
+		os.listdir(world_folder)
+		filenames = None
+		if self.format == None:
+			# may raise UnknownWorldFormat
+			self.format, filenames = self.guessformat()
+		else:
+			filenames = self.get_filenames()
+		for filename in filenames:
+			# Assume that filenames have the name r.<x-digit>.<z-digit>.<extension>
+			m = re.match(r"r.(\-?\d+).(\-?\d+)."+self.extension, os.path.basename(filename))
 			if m:
 				x = int(m.group(1))
 				z = int(m.group(2))
 			else:
+				# Only raised if a .mca of .mcr file exists which does not comply to the 
+				#  r.<x-digit>.<z-digit>.<extension> filename format. This may raise false 
+				# errors if a copy is made, e.g. "r.0.-1 copy.mca". If this is an issue, override
+				# get_filenames(). In most cases, it is an error, and we like to raise that.
 				raise UnknownWorldFormat("Unrecognized filename format %s" % os.path.basename(filename))
 			self.regionfiles[(x,z)] = filename
-		self.regions     = {}
-		self.chunks      = None
-
-	def get_regionfiles():
+	
+	def get_filenames(self):
+		# Warning: glob returns a empty list if the directory is unreadable, without raising an Exception
+		return list(glob.glob(os.path.join(self.worldfolder,'region','r.*.*.'+self.extension)))
+	
+	def valid(self):
+		"""Return True is the world is non-empty"""
+		return len(self.regionfiles) > 0
+	
+	def get_regionfiles(self):
 		"""return a list of full path with region files"""
 		return list(self.regionfiles.values())
 	
@@ -100,7 +114,7 @@ class WorldFolder(object):
 		# TODO: Implement (calculate region filename from x,z, see if file exists.)
 		rx,x = divmod(x,32)
 		rz,z = divmod(z,32)
-		return chunk.Chunk(self.get_region(rx,rz).get_chunk(x,z))
+		return self.chunkclass(self.get_region(rx,rz).get_chunk(x,z))
 	
 	def get_chunks(self, boundingbox=None):
 		"""Returns a list of all chunks. Use this function if you access the chunk
@@ -137,16 +151,31 @@ class WorldFolder(object):
 			rx,rz = 32*rx,32*rz
 			for cc in region.get_chunk_coords():
 				x,z = (rx+cc['x'],rz+cc['z'])
-				c1 = chunk.Chunk(region.get_chunk(cc['x'],cc['z']))
+				c1 = self.chunkclass(region.get_chunk(cc['x'],cc['z']))
 				c2 = self.get_chunk(x,z)
 				correct_coords = (c2.get_coords() == (x,z))
 				is_comparable = (c1 == c2) # test __eq__ function
-				is_equal = (c1 == c2) # test if id(c1) == id(c2), thus they point to the same memory location
+				is_equal = (id(c1) == id(c2)) # test if they point to the same memory location
 				# DEBUG (prints a tuple)
 				print((x,z,c1,c2,correct_coords,is_comparable,is_equal))
 	
-	def __str__(self):
-		return "%s(%s,%s)" % (self.__class__.__name__,self.worldfolder, self.format)
+	def __repr__(self):
+		return "%s(%s)" % (self.__class__.__name__,self.worldfolder)
+
+
+class McRegionWorldFolder(WorldFolder):
+	type = "McRegion"
+	extension = 'mcr'
+	chunkclass = chunk.Chunk
+	# chunkclass = chunk.McRegionChunk  # TODO: change to McRegionChunk when done
+
+class AnvilWorldFolder(WorldFolder):
+	type = "Anvil"
+	extension = 'mca'
+	chunkclass = chunk.Chunk
+	# chunkclass = chunk.AnvilChunk  # TODO: change to AnvilChunk when done
+
+WorldFolder.subclasses = (AnvilWorldFolder, McRegionWorldFolder)
 
 
 class BoundingBox(object):
