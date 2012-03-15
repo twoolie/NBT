@@ -4,7 +4,7 @@ Prints a map of the entire world.
 """
 
 import locale, os, sys
-import glob, re, math
+import re, math
 from struct import pack, unpack
 # local module
 try:
