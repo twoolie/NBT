@@ -64,7 +64,7 @@ if __name__ == '__main__':
 		sys.exit(64) # EX_USAGE
 	world_folder = sys.argv[1]
 	if (not os.path.exists(world_folder)):
-		print("No such folder as "+filename)
+		print("No such folder as "+world_folder)
 		sys.exit(72) # EX_IOERR
 	
 	sys.exit(main(world_folder))

@@ -131,7 +131,7 @@ def print_results(block_data_totals):
 
 def main(world_folder, start=None, stop=None):
 	if (not os.path.exists(world_folder)):
-		print("No such folder as "+filename)
+		print("No such folder as "+world_folder)
 		return 2 # ENOENT
 	
 	regions = glob.glob(os.path.join(world_folder,'region','*.mcr'))
