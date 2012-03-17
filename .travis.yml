@@ -3,4 +3,4 @@ python:
  - "2.6"
  - "2.7"
  - "3.2"
-script: tests/tests.py
+script: tests/nbttests.py
