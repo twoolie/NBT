@@ -40,8 +40,8 @@ class TAG(object):
 	#Printing and Formatting of tree
 	def tag_info(self):
 		return self.__class__.__name__ + \
-               ('("%s")' % self.name if self.name else "") + \
-               ": " + self.__repr__()
+				('("%s")' % self.name if self.name else "") + \
+				": " + self.__repr__()
 
 	def pretty_tree(self, indent=0):
 		return ("\t"*indent) + self.tag_info()

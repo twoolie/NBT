@@ -2,7 +2,6 @@
 
 from setuptools import setup
 from nbt import VERSION
-import tests
 
 setup(
   name             = 'NBT',
@@ -14,6 +13,5 @@ setup(
   license          = open("LICENSE.txt").read(),
   long_description = open("README.txt").read(),
   packages         = ['nbt'],
-  test_suite       = 'tests',
-  use_2to3         = True
+  use_2to3         = False
 )
