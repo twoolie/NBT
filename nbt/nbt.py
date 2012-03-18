@@ -1,3 +1,5 @@
+"""Handle the NBT (Named Binary Tag) data format"""
+
 from struct import Struct, error as StructError
 from gzip import GzipFile
 import zlib
@@ -38,12 +40,27 @@ class TAG(object):
 
 	#Printing and Formatting of tree
 	def tag_info(self):
+		"""Return Unicode string with class, name and unnested value"""
 		return self.__class__.__name__ + \
-				('("%s")' % self.name if self.name else "") + \
-				": " + self.__repr__()
+				('(%r)' % self.name if self.name else "") + \
+				": " + self.valuestr()
+	def valuestr(self):
+		"""Return Unicode string of unnested value. For iterators, this returns a summary."""
+		return unicode(self.value)
 
 	def pretty_tree(self, indent=0):
+		"""Return formated Unicode string of self, where iterable items are recursively listed in detail."""
 		return ("\t"*indent) + self.tag_info()
+	
+	def __str__(self):
+		"""Return a string (ascii formated for Python 2, unicode for Python 3) with the result in human readable format. Unlike valuestr(), the result is recursive for iterators till at least one level deep."""
+		return str(self.value)
+	# Unlike regular iterators, __repr__() is not recursive.
+	# Use pretty_tree for recursive results.
+	# iterators should use __repr__ or tag_info for each item, like regular iterators
+	def __repr__(self):
+		"""Return a string (ascii formated for Python 2, unicode for Python 3) describing the class, name and id for debugging purposes."""
+		return "<%s(%r) at 0x%x>" % (self.__class__.__name__,self.name,id(self))
 
 class _TAG_Numeric(TAG):
 	"""_TAG_Numeric, comparable to int with an intrinsic name"""
@@ -58,10 +75,6 @@ class _TAG_Numeric(TAG):
 
 	def _render_buffer(self, buffer):
 		buffer.write(self.fmt.pack(self.value))
-
-	#Printing and Formatting of tree
-	def __repr__(self):
-		return str(self.value)
 
 #== Value Tags ==#
 class TAG_Byte(_TAG_Numeric):
@@ -131,8 +144,11 @@ class TAG_Byte_Array(TAG, MutableSequence):
 		self.value.insert(key, value)
 
 	#Printing and Formatting of tree
-	def __repr__(self):
-		return "[%i bytes]" % len(self.value)
+	def valuestr(self):
+		return "[%i byte(s)]" % len(self.value)
+	def __str__(self):
+		# return "'"+",".join(['\\x%02x' % x for x in self.value])+"'"
+		return '['+",".join([str(x) for x in self.value])+']'
 
 class TAG_Int_Array(TAG, MutableSequence):
 	"""TAG_Int_Array, comparable to a collections.UserList with an intrinsic name whose values must be integers"""
@@ -181,11 +197,8 @@ class TAG_Int_Array(TAG, MutableSequence):
 		self.value.insert(key, value)
 
 	#Printing and Formatting of tree
-	def __repr__(self):
-		return "[%i ints]"%len(self.value)
-
-	def pretty_tree(self, indent=0):
-		return super(TAG_Int_Array, self).pretty_tree(indent) + repr(self.value)
+	def valuestr(self):
+		return "[%i int(s)]" % len(self.value)
 
 
 class TAG_String(TAG, Sequence):
@@ -285,6 +298,12 @@ class TAG_List(TAG, MutableSequence):
 	#Printing and Formatting of tree
 	def __repr__(self):
 		return "%i entries of type %s" % (len(self.tags), TAGLIST[self.tagID].__name__)
+
+	#Printing and Formatting of tree
+	def valuestr(self):
+		return "[%i %s(s)]" % (len(self.tags), TAGLIST[self.tagID].__name__)
+	def __str__(self):
+		return "["+", ".join([tag.tag_info() for tag in self.tags])+"]"
 
 	def pretty_tree(self, indent=0):
 		output = [super(TAG_List, self).pretty_tree(indent)]
@@ -392,8 +411,11 @@ class TAG_Compound(TAG, MutableMapping):
 			yield (tag.name, tag)
 
 	#Printing and Formatting of tree
-	def __repr__(self):
-		return '%i Entries' % len(self.tags)
+	def __str__(self):
+		return "{"+", ".join([tag.tag_info() for tag in self.tags])+"}"
+
+	def valuestr(self):
+		return '{%i Entries}' % len(self.tags)
 
 	def pretty_tree(self, indent=0):
 		output = [super(TAG_Compound, self).pretty_tree(indent)]
