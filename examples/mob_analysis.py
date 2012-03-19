@@ -4,7 +4,6 @@ Finds and prints different entities in a game file, including mobs, items, and v
 """
 
 import locale, os, sys
-import glob
 # local module
 try:
 	import nbt
@@ -14,8 +13,7 @@ except ImportError:
 	if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
 		raise
 	sys.path.append(extrasearchpath)
-from nbt.region import RegionFile
-from nbt.chunk import Chunk
+from nbt.world import WorldFolder
 
 class Position(object):
 	def __init__(self, x,y,z):
@@ -37,23 +35,6 @@ def entities_per_chunk(chunk):
 		entities.append(Entity(entity["id"].value, (x.value,y.value,z.value)))
 	return entities
 
-def process_region_file(filename):
-	"""Given a region filename, return the number of blocks of each ID in that file"""
-	entities = []
-	file = RegionFile(filename)
-	
-	# Get all chunks
-	chunks = file.get_chunks()
-	print("Parsing %s... %d chunks" % (os.path.basename(filename),len(chunks)))
-	entities = []
-	for cc in chunks:
-		chunk = file.get_chunk(cc['x'], cc['z'])
-		leveldata = chunk['Level']
-		# chunk = Chunk(c)
-		entities.extend(entities_per_chunk(leveldata))
-	
-	return entities
-
 
 def print_results(entities):
 	locale.setlocale(locale.LC_ALL, 'en_US')
@@ -66,25 +47,24 @@ def print_results(entities):
 
 
 def main(world_folder):
-	regions = glob.glob(os.path.join(world_folder,'region','*.mcr'))
+	world = WorldFolder(world_folder)
 	
 	try:
-		for filename in regions:
-			entities = process_region_file(os.path.join(world_folder,'region',filename))
-			print_results(entities)
-	
+		for chunk in world.iter_nbt():
+			print_results(entities_per_chunk(chunk["Level"]))
+
 	except KeyboardInterrupt:
-		return 4 # EINTR
+		return 75 # EX_TEMPFAIL
 	return 0 # NOERR
 
 
 if __name__ == '__main__':
 	if (len(sys.argv) == 1):
 		print("No world folder specified!")
-		sys.exit(22) # EINVAL
+		sys.exit(64) # EX_USAGE
 	world_folder = sys.argv[1]
 	if (not os.path.exists(world_folder)):
-		print("No such folder as "+filename)
-		sys.exit(2) # ENOENT
+		print("No such folder as "+world_folder)
+		sys.exit(72) # EX_IOERR
 	
 	sys.exit(main(world_folder))

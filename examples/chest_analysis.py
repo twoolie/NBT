@@ -3,7 +3,7 @@
 Finds and prints the contents of chests (including minecart chests)
 """
 import locale, os, sys
-import glob
+
 # local module
 try:
 	import nbt
@@ -13,8 +13,7 @@ except ImportError:
 	if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
 		raise
 	sys.path.append(extrasearchpath)
-from nbt.region import RegionFile
-from nbt.chunk import Chunk
+from nbt.world import WorldFolder
 
 class Position(object):
 	def __init__(self, x,y,z):
@@ -56,19 +55,6 @@ def chests_per_chunk(chunk):
 			entities.append(Chest("Chest",(x,y,z),items))
 	return entities
 
-def process_region_file(filename):
-	"""Given a region filename, return the number of blocks of each ID in that file"""
-	chests = []
-	file = RegionFile(filename)
-	
-	# Get all chunks
-	chunks = file.get_chunks()
-	for cc in chunks:
-		chunk = file.get_chunk(cc['x'], cc['z'])
-		leveldata = chunk['Level']
-		chests.extend(chests_per_chunk(leveldata))
-	
-	return chests
 
 
 def print_results(chests):
@@ -86,15 +72,14 @@ def print_results(chests):
 
 
 def main(world_folder):
-	regions = glob.glob(os.path.join(world_folder,'region','*.mcr'))
+	world = WorldFolder(world_folder)
 	
 	try:
-		for filename in regions:
-			chests = process_region_file(os.path.join(world_folder,'region',filename))
-			print_results(chests)
-	
+		for chunk in world.iter_nbt():
+			print_results(chests_per_chunk(chunk["Level"]))
+
 	except KeyboardInterrupt:
-		return 4 # EINTR
+		return 75 # EX_TEMPFAIL
 	
 	return 0 # NOERR
 
@@ -102,10 +87,10 @@ def main(world_folder):
 if __name__ == '__main__':
 	if (len(sys.argv) == 1):
 		print("No world folder specified!")
-		sys.exit(22) # EINVAL
+		sys.exit(64) # EX_USAGE
 	world_folder = sys.argv[1]
 	if (not os.path.exists(world_folder)):
-		print("No such folder as "+filename)
-		sys.exit(2) # ENOENT
+		print("No such folder as "+world_folder)
+		sys.exit(72) # EX_IOERR
 	
 	sys.exit(main(world_folder))

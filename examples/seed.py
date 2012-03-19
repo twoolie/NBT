@@ -26,10 +26,10 @@ def main(world_folder):
 if __name__ == '__main__':
 	if (len(sys.argv) == 1):
 		print("No world folder specified!")
-		sys.exit(22) # EINVAL
+		sys.exit(64) # EX_USAGE
 	world_folder = sys.argv[1]
 	if (not os.path.exists(world_folder)):
-		print("No such folder as "+filename)
-		sys.exit(2) # ENOENT
+		print("No such folder as "+world_folder)
+		sys.exit(72) # EX_IOERR
 	
 	sys.exit(main(world_folder))

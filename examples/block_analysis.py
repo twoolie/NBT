@@ -106,7 +106,7 @@ def print_results(block_data_totals):
 	total_blocks = sum(block_totals)
 	solid_blocks = total_blocks - block_totals[0]
 	solid_ratio = (solid_blocks+0.0)/total_blocks if (total_blocks > 0) else 0
-	print(locale.format_string("%d total blocks in region, %d are solid (%0.4f", (total_blocks, solid_blocks, 100.0*solid_ratio), grouping=True)+"%)")
+	print(locale.format_string("%d total blocks in region, %d are non-air (%0.4f", (total_blocks, solid_blocks, 100.0*solid_ratio), grouping=True)+"%)")
 	
 	# Find valuable blocks
 	print(locale.format_string("Diamond Ore:      %8d", block_totals[56], grouping=True))
@@ -131,7 +131,7 @@ def print_results(block_data_totals):
 
 def main(world_folder, start=None, stop=None):
 	if (not os.path.exists(world_folder)):
-		print("No such folder as "+filename)
+		print("No such folder as "+world_folder)
 		return 2 # ENOENT
 	
 	regions = glob.glob(os.path.join(world_folder,'region','*.mcr'))
@@ -146,7 +146,7 @@ def main(world_folder, start=None, stop=None):
 	
 	except KeyboardInterrupt:
 		print_results(block_data_totals)
-		return 4 # EINTR
+		return 75 # EX_TEMPFAIL
 	
 	print_results(block_data_totals)
 	return 0 # EX_OK
@@ -154,9 +154,12 @@ def main(world_folder, start=None, stop=None):
 
 if __name__ == '__main__':
 	if (len(sys.argv) == 1):
-		print("No world folder specified!")
-		sys.exit(22) # EINVAL
+		print("No world folder specified! Usage: %s <world folder> [minx,miny,minz maxx,maxy,maxz]" % sys.argv[0])
+		sys.exit(64) # EX_USAGE
 	world_folder = sys.argv[1]
+	if (not os.path.exists(world_folder)):
+		print("No such folder as "+world_folder)
+		sys.exit(72) # EX_IOERR
 	start,stop = None,None
 	if (len(sys.argv) == 4):
 		# A min/max corner was specified
