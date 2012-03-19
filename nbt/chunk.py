@@ -1,5 +1,5 @@
 """ Handle a single chunk of data (16x16x128 blocks) """
-from StringIO import StringIO
+from io import BytesIO
 from struct import pack, unpack
 import array, math
 
@@ -45,7 +45,7 @@ class BlockArray(object):
 
 	# Get all block entries and data entries as tuples
 	def get_all_blocks_and_data(self):
-		return zip(self.get_all_blocks(), self.get_all_data())
+		return list(zip(self.get_all_blocks(), self.get_all_data()))
 
 	def get_blocks_struct(self):
 		cur_x = 0
@@ -67,20 +67,20 @@ class BlockArray(object):
 	def get_blocks_byte_array(self, buffer=False):
 		if buffer:
 			length = len(self.blocksList)
-			return StringIO(pack(">i", length)+self.get_blocks_byte_array())
+			return BytesIO(pack(">i", length)+self.get_blocks_byte_array())
 		else:
 			return array.array('B', self.blocksList).tostring()
 
 	def get_data_byte_array(self, buffer=False):
 		if buffer:
 			length = len(self.dataList)
-			return StringIO(pack(">i", length)+self.get_data_byte_array())
+			return BytesIO(pack(">i", length)+self.get_data_byte_array())
 		else:
 			return array.array('B', self.dataList).tostring()
 
 	def generate_heightmap(self, buffer=False, as_array=False):
 		if buffer:
-			return StringIO(pack(">i", 256)+self.generate_heightmap()) # Length + Heightmap, ready for insertion into Chunk NBT
+			return BytesIO(pack(">i", 256)+self.generate_heightmap()) # Length + Heightmap, ready for insertion into Chunk NBT
 		else:
 			bytes = []
 			for z in range(16):
@@ -125,12 +125,12 @@ class BlockArray(object):
 		self.blocksList[offset] = id
 		if (offset % 2 == 1):
 			# offset is odd
-			index = (offset-1)/2
+			index = (offset-1)//2
 			b = self.dataList[index]
 			self.dataList[index] = (b & 240) + (data & 15) # modify lower bits, leaving higher bits in place
 		else:
 			# offset is even
-			index = offset/2
+			index = offset//2
 			b = self.dataList[index]
 			self.dataList[index] = (b & 15) + (data << 4 & 240) # modify ligher bits, leaving lower bits in place
 
@@ -141,9 +141,9 @@ class BlockArray(object):
 		(0,0,0), (0,1,0), (0,2,0) ... (0,127,0), (0,0,1), (0,1,1), (0,2,1) ... (0,127,1), (0,0,2) ... (0,127,15), (1,0,0), (1,1,0) ... (15,127,15)
 		
 		blocks = []
-		for x in xrange(15):
-		  for z in xrange(15):
-		    for y in xrange(127):
+		for x in range(15):
+		  for z in range(15):
+		    for y in range(127):
 		      blocks.append(Block(x,y,z))
 		"""
 		
@@ -158,12 +158,12 @@ class BlockArray(object):
 		# NOT to the MOST significant bits, as you might expected.
 		if (offset % 2 == 1):
 			# offset is odd
-			index = (offset-1)/2
+			index = (offset-1)//2
 			b = self.dataList[index]
 			return b & 15 # Get little (last 4 bits) end of byte
 		else:
 			# offset is even
-			index = offset/2
+			index = offset//2
 			b = self.dataList[index]
 			return (b >> 4) & 15 # Get big end (first 4 bits) of byte
 

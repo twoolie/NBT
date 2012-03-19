@@ -21,7 +21,7 @@ Usage:
     >>> nbtfile["nested compound test"].tag_info()
     TAG_Compound("nested compound test"): 2 Entries
     >>> for tag in nbtfile["nested compound test"]["ham"].tags:
-    ...     print tag.tag_info()
+    ...     print(tag.tag_info())
     ...
     TAG_String("name"): Hampus
     TAG_Float("value"): 0.75
@@ -73,7 +73,7 @@ Usage:
     >>> mylist.tags.append(TAG_Long(100))
     >>> mylist.tags.extend([TAG_Long(120),TAG_Long(320),TAG_Long(19)])
     >>> nbtfile.tags.append(mylist)
-    >>> print nbtfile.pretty_tree()
+    >>> print(nbtfile.pretty_tree())
     TAG_Compound("My Top Level Tag"): 2 Entries
     {
         TAG_Float("My Float Name"): 3.15298759395
@@ -86,7 +86,7 @@ Usage:
         }
     }
     >>> nbtfile["TestList"].tags.sort(key = lambda tag: tag.value)
-    >>> print nbtfile.pretty_tree()
+    >>> print(nbtfile.pretty_tree())
     TAG_Compound("My Top Level Tag"): 2 Entries
     {
         TAG_Float("My FloatName"): 3.15298759395

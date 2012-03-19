@@ -46,5 +46,5 @@ inventory.name = "Inventory"
 player.tags.append(inventory)
 level.tags.append(player)
 
-print level.pretty_tree()
+print(level.pretty_tree())
 #level.write_file("level.dat")

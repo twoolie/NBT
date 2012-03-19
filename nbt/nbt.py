@@ -6,6 +6,14 @@ import zlib
 from collections import MutableMapping, MutableSequence, Sequence
 import os, io
 
+try:
+	unicode
+	basestring
+except NameError:
+	unicode = str  # compatibility for Python 3
+	basestring = str  # compatibility for Python 3
+
+
 TAG_END = 0
 TAG_BYTE = 1
 TAG_SHORT = 2
@@ -71,6 +79,7 @@ class _TAG_Numeric(TAG):
 
 	#Parsers and Generators
 	def _parse_buffer(self, buffer):
+		# Note: buffer.read() may raise an IOError, for example if buffer is a corrupt gzip.GzipFile 
 		self.value = self.fmt.unpack(buffer.read(self.fmt.size))[0]
 
 	def _render_buffer(self, buffer):
@@ -215,7 +224,7 @@ class TAG_String(TAG, Sequence):
 		read = buffer.read(length.value)
 		if len(read) != length.value:
 			raise StructError()
-		self.value = unicode(read, "utf-8")
+		self.value = read.decode("utf-8")
 
 	def _render_buffer(self, buffer):
 		save_val = self.value.encode("utf-8")
@@ -328,12 +337,11 @@ class TAG_Compound(TAG, MutableMapping):
 		while True:
 			type = TAG_Byte(buffer=buffer)
 			if type.value == TAG_END:
-				#print "found tag_end"
+				#print("found tag_end")
 				break
 			else:
 				name = TAG_String(buffer=buffer).value
 				try:
-					#DEBUG print type, name
 					tag = TAGLIST[type.value](buffer=buffer)
 					tag.name = name
 					self.tags.append(tag)
@@ -345,7 +353,7 @@ class TAG_Compound(TAG, MutableMapping):
 			TAG_Byte(tag.id)._render_buffer(buffer)
 			TAG_String(tag.name)._render_buffer(buffer)
 			tag._render_buffer(buffer)
-		buffer.write('\x00') #write TAG_END
+		buffer.write(b'\x00') #write TAG_END
 
 	# Mixin methods
 	def __len__(self):
