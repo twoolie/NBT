@@ -79,6 +79,7 @@ class BlockArray(object):
 			return array.array('B', self.dataList).tostring()
 
 	def generate_heightmap(self, buffer=False, as_array=False):
+		non_solids = [0, 8, 9, 10, 11, 38, 37, 32]
 		if buffer:
 			return BytesIO(pack(">i", 256)+self.generate_heightmap()) # Length + Heightmap, ready for insertion into Chunk NBT
 		else:
@@ -87,7 +88,7 @@ class BlockArray(object):
 				for x in range(16):
 					for y in range(127, -1, -1):
 						offset = y + z*128 + x*128*16
-						if (self.blocksList[offset] != 0 or y == 0):
+						if (self.blocksList[offset] not in non_solids or y == 0):
 							bytes.append(y+1)
 							break
 			if (as_array):
