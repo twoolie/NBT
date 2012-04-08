@@ -60,6 +60,11 @@ class TAG(object):
 		"""Return formated Unicode string of self, where iterable items are recursively listed in detail."""
 		return ("\t"*indent) + self.tag_info()
 	
+	# Python 2 compatibility; Python 3 uses __str__ instead.
+	def __unicode__(self):
+		"""Return a unicode string with the result in human readable format. Unlike valuestr(), the result is recursive for iterators till at least one level deep."""
+		return unicode(self.value)
+
 	def __str__(self):
 		"""Return a string (ascii formated for Python 2, unicode for Python 3) with the result in human readable format. Unlike valuestr(), the result is recursive for iterators till at least one level deep."""
 		return str(self.value)
@@ -155,8 +160,10 @@ class TAG_Byte_Array(TAG, MutableSequence):
 	#Printing and Formatting of tree
 	def valuestr(self):
 		return "[%i byte(s)]" % len(self.value)
+	
+	def __unicode__(self):
+		return '['+",".join([unicode(x) for x in self.value])+']'
 	def __str__(self):
-		# return "'"+",".join(['\\x%02x' % x for x in self.value])+"'"
 		return '['+",".join([str(x) for x in self.value])+']'
 
 class TAG_Int_Array(TAG, MutableSequence):
@@ -311,6 +318,8 @@ class TAG_List(TAG, MutableSequence):
 	#Printing and Formatting of tree
 	def valuestr(self):
 		return "[%i %s(s)]" % (len(self.tags), TAGLIST[self.tagID].__name__)
+	def __unicode__(self):
+		return "["+", ".join([tag.tag_info() for tag in self.tags])+"]"
 	def __str__(self):
 		return "["+", ".join([tag.tag_info() for tag in self.tags])+"]"
 
@@ -419,6 +428,8 @@ class TAG_Compound(TAG, MutableMapping):
 			yield (tag.name, tag)
 
 	#Printing and Formatting of tree
+	def __unicode__(self):
+		return "{"+", ".join([tag.tag_info() for tag in self.tags])+"}"
 	def __str__(self):
 		return "{"+", ".join([tag.tag_info() for tag in self.tags])+"}"
 
