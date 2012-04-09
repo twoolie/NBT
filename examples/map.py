@@ -16,8 +16,8 @@ except ImportError:
 		raise
 	sys.path.append(extrasearchpath)
 from nbt.region import RegionFile
-from nbt.chunk import Chunk
-from nbt.world import WorldFolder,McRegionWorldFolder
+from nbt.chunk import Chunk, BlockArray
+from nbt.world import WorldFolder,McRegionWorldFolder, AnvilWorldFolder
 # PIL module (not build-in)
 try:
 	from PIL import Image
@@ -173,38 +173,130 @@ def hsl2rgb(H,S,L):
 	B = int(255*hue2rgb(var_1, var_2, H - (1.0/3)))
 	return (R,G,B)
 
+def test_anvil(block_list, data_list):
+	# Show an image of the chunk from above
+	pixels = ""
+	block_colors = {
+		0: {'h':0, 's':0, 'l':0},       # Air
+		1: {'h':0, 's':0, 'l':32},      # Stone
+		2: {'h':94, 's':42, 'l':32},    # Grass
+		3: {'h':27, 's':51, 'l':15},    # Dirt
+		4: {'h':0, 's':0, 'l':25},      # Cobblestone
+		8: {'h':228, 's':50, 'l':23},   # Water
+		9: {'h':228, 's':50, 'l':23},   # Water
+		10: {'h':16, 's':100, 'l':48},  # Lava
+		11: {'h':16, 's':100, 'l':48},  # Lava
+		12: {'h':53, 's':22, 'l':58},   # Sand
+		13: {'h':21, 's':18, 'l':20},   # Gravel
+		17: {'h':35, 's':93, 'l':15},   # Wood
+		18: {'h':114, 's':64, 'l':22},  # Leaves
+		24: {'h':48, 's':31, 'l':40},   # Sandstone
+		37: {'h':60, 's':100, 'l':60},  # Yellow Flower
+		38: {'h':0, 's':100, 'l':50},   # Red Flower
+		50: {'h':60, 's':100, 'l':50},  # Torch
+		51: {'h':55, 's':100, 'l':50},  # Fire
+		59: {'h':123, 's':60, 'l':50},  # Crops
+		60: {'h':35, 's':93, 'l':15},   # Farmland
+		78: {'h':240, 's':10, 'l':85},  # Snow
+		79: {'h':240, 's':10, 'l':95},  # Ice
+		81: {'h':126, 's':61, 'l':20},  # Cacti
+		82: {'h':7, 's':62, 'l':23},    # Clay
+		83: {'h':123, 's':70, 'l':50},  # Sugarcane
+		86: {'h':24, 's':100, 'l':45},  # Pumpkin
+		91: {'h':24, 's':100, 'l':45},  # Jack-o-lantern
+	}
+	block_list = BlockArray(blocksBytes=block_list)
+	for z in range(16):
+		for x in range(16):
+			# Find the highest block in this column
+			ground_height = 127
+			tints = []
+			block_id = block_list.get_block(x,15,z)
+			block_data =  block_list.get_data(x,15,z)
+			if (block_id == 8 or block_id == 9):
+				tints.append({'h':228, 's':50, 'l':23}) # Water
+			elif (block_id == 18):
+				if (block_data == 1):
+					tints.append({'h':114, 's':64, 'l':22}) # Redwood Leaves
+				elif (block_data == 2):
+					tints.append({'h':93, 's':39, 'l':10}) # Birch Leaves
+				else:
+					tints.append({'h':114, 's':64, 'l':22}) # Normal Leaves
+			elif (block_id == 79):
+				tints.append({'h':240, 's':5, 'l':95}) # Ice
+			elif (block_id == 51):
+				tints.append({'h':55, 's':100, 'l':50}) # Fire
+			elif (block_id != 0):
+				# Here is ground level
+				break
+
+			color = block_colors[block_id] if (block_id in block_colors) else {'h':0, 's':0, 'l':100}
+			height_shift = (ground_height-64)*0.25
+			
+			final_color = {'h':color['h'], 's':color['s'], 'l':color['l']+height_shift}
+			if final_color['l'] > 100: final_color['l'] = 100
+			if final_color['l'] < 0: final_color['l'] = 0
+			
+			# Apply tints from translucent blocks
+			for tint in reversed(tints):
+				final_color = hsl_slide(final_color, tint, 0.4)
+
+			rgb = hsl2rgb(final_color['h'], final_color['s'], final_color['l'])
+
+			pixels += pack("BBB", rgb[0], rgb[1], rgb[2])
+	im = Image.fromstring('RGB', (16,16), pixels)
+	return im
+        
 
 def main(world_folder):
-	world = McRegionWorldFolder(world_folder)  # map still only supports McRegion maps
-	bb = world.get_boundingbox()
-	map = Image.new('RGB', (16*bb.lenx(),16*bb.lenz()))
-	t = world.chunk_count()
-	try:
-		i =0.0
-		for chunk in world.iter_chunks():
-			if i % 50 ==0:
-				sys.stdout.write("Rendering image")
-			elif i % 2 == 0:
-				sys.stdout.write(".")
-				sys.stdout.flush()
-			elif i % 50 == 49:
-				sys.stdout.write("%5.1f%%\n" % (100*i/t))
-			i +=1
-			chunkmap = get_map(chunk)
-			x,z = chunk.get_coords()
-			map.paste(chunkmap, (16*(x-bb.minx),16*(z-bb.minz)))
-		print(" done\n")
-		filename = os.path.basename(world_folder)+".png"
-		map.save(filename,"PNG")
-		print("Saved map as %s" % filename)
-	except KeyboardInterrupt:
-		print(" aborted\n")
-		filename = os.path.basename(world_folder)+".partial.png"
-		map.save(filename,"PNG")
-		print("Saved map as %s" % filename)
-		return 75 # EX_TEMPFAIL
-	map.show()
-	return 0 # NOERR
+        try:
+                raise TypeError
+                world = McRegionWorldFolder(world_folder)  # map still only supports McRegion maps
+                bb = world.get_boundingbox()
+                map = Image.new('RGB', (16*bb.lenx(),16*bb.lenz()))
+                t = world.chunk_count()
+                try:
+                        i =0.0
+                        for chunk in world.iter_chunks():
+                                if i % 50 ==0:
+                                        sys.stdout.write("Rendering image")
+                                elif i % 2 == 0:
+                                        sys.stdout.write(".")
+                                        sys.stdout.flush()
+                                elif i % 50 == 49:
+                                        sys.stdout.write("%5.1f%%\n" % (100*i/t))
+                                i +=1
+                                chunkmap = get_map(chunk)
+                                x,z = chunk.get_coords()
+                                map.paste(chunkmap, (16*(x-bb.minx),16*(z-bb.minz)))
+                        print(" done\n")
+                        filename = os.path.basename(world_folder)+".png"
+                        map.save(filename,"PNG")
+                        print("Saved map as %s" % filename)
+                except KeyboardInterrupt:
+                        print(" aborted\n")
+                        filename = os.path.basename(world_folder)+".partial.png"
+                        map.save(filename,"PNG")
+                        print("Saved map as %s" % filename)
+                        return 75 # EX_TEMPFAIL
+                map.show()
+                return 0 # NOERR
+        except TypeError as e:
+                print "Starting Anvil render..."
+                world = AnvilWorldFolder(world_folder)
+                bb = world.get_boundingbox()
+                map = Image.new('RGB', (16*bb.lenx(),16*bb.lenz()))
+                for chunk in world.iter_nbt():
+                        last = chunk['Level']['Sections'][-1]
+                        chunkmap = test_anvil(last['Blocks'], last['Data'])
+                        x,z = chunk['Level']['xPos'], chunk['Level']['zPos']
+                        map.paste(chunkmap, (16*(x.value-bb.minx),16*(z.value-bb.minz)))
+                map.show()
+
+
+                                
+                                
+                                
 
 
 if __name__ == '__main__':
