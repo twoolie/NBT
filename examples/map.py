@@ -173,7 +173,7 @@ def hsl2rgb(H,S,L):
 	B = int(255*hue2rgb(var_1, var_2, H - (1.0/3)))
 	return (R,G,B)
 
-def test_anvil(block_list, data_list):
+def test_anvil(block_list, data_list, section_num):
 	# Show an image of the chunk from above
 	pixels = ""
 	block_colors = {
@@ -208,27 +208,29 @@ def test_anvil(block_list, data_list):
 	block_list = BlockArray(blocksBytes=block_list)
 	for z in range(16):
 		for x in range(16):
-			# Find the highest block in this column
-			ground_height = 127
-			tints = []
-			block_id = block_list.get_block(x,15,z)
-			block_data =  block_list.get_data(x,15,z)
-			if (block_id == 8 or block_id == 9):
-				tints.append({'h':228, 's':50, 'l':23}) # Water
-			elif (block_id == 18):
-				if (block_data == 1):
-					tints.append({'h':114, 's':64, 'l':22}) # Redwood Leaves
-				elif (block_data == 2):
-					tints.append({'h':93, 's':39, 'l':10}) # Birch Leaves
-				else:
-					tints.append({'h':114, 's':64, 'l':22}) # Normal Leaves
-			elif (block_id == 79):
-				tints.append({'h':240, 's':5, 'l':95}) # Ice
-			elif (block_id == 51):
-				tints.append({'h':55, 's':100, 'l':50}) # Fire
-			elif (block_id != 0):
-				# Here is ground level
-				break
+			for y in range(16*section_num, -1, -1):
+				# Find the highest block in this column
+				ground_height = 16*section_num
+				tints = []
+				block_id = block_list.blocksList[(y + z*(16*section_num) + x*(16*section_num)*16)-1]
+				block_data =  0
+				if (block_id == 8 or block_id == 9):
+					tints.append({'h':228, 's':50, 'l':23}) # Water
+				elif (block_id == 18):
+					if (block_data == 1):
+						tints.append({'h':114, 's':64, 'l':22}) # Redwood Leaves
+					elif (block_data == 2):
+						tints.append({'h':93, 's':39, 'l':10}) # Birch Leaves
+					else:
+						tints.append({'h':114, 's':64, 'l':22}) # Normal Leaves
+				elif (block_id == 79):
+					tints.append({'h':240, 's':5, 'l':95}) # Ice
+				elif (block_id == 51):
+					tints.append({'h':55, 's':100, 'l':50}) # Fire
+				elif (block_id != 0):
+					# Here is ground level
+					ground_height = y
+					break
 
 			color = block_colors[block_id] if (block_id in block_colors) else {'h':0, 's':0, 'l':100}
 			height_shift = (ground_height-64)*0.25
@@ -286,19 +288,24 @@ def main(world_folder):
                 world = AnvilWorldFolder(world_folder)
                 bb = world.get_boundingbox()
                 map = Image.new('RGB', (16*bb.lenx(),16*bb.lenz()))
-                for chunk in world.iter_nbt():
-                        last = chunk['Level']['Sections'][-1]
-                        chunkmap = test_anvil(last['Blocks'], last['Data'])
-                        x,z = chunk['Level']['xPos'], chunk['Level']['zPos']
-                        map.paste(chunkmap, (16*(x.value-bb.minx),16*(z.value-bb.minz)))
-                map.show()
-
+                try:
+                        
+                        for chunk in world.iter_nbt():
+                                ids = bytearray()
+                                data = bytearray()
+                                # build up the chunk in 16x16x256 max
+                                for temp in chunk['Level']['Sections']:
+                                        ids += (temp['Blocks'].value)
+                                        data += (temp['Data'].value)
+                                # up to 16 sections/levels, need how many levels
+                                chunkmap = test_anvil(ids, data, len(chunk['Level']['Sections'])) 
+                                x,z = chunk['Level']['xPos'], chunk['Level']['zPos']
+                                map.paste(chunkmap, (16*(x.value-bb.minx),16*(z.value-bb.minz)))
+                except KeyboardInterrupt:
+                        map.save("anvil.partial.png")
+                map.save("anvil.png")
 
                                 
-                                
-                                
-
-
 if __name__ == '__main__':
 	if (len(sys.argv) == 1):
 		print("No world folder specified!")
