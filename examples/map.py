@@ -6,6 +6,7 @@ Prints a map of the entire world.
 import locale, os, sys
 import re, math
 from struct import pack, unpack
+import numpy as np
 # local module
 try:
 	import nbt
@@ -173,7 +174,7 @@ def hsl2rgb(H,S,L):
 	B = int(255*hue2rgb(var_1, var_2, H - (1.0/3)))
 	return (R,G,B)
 
-def test_anvil(block_list, data_list, section_num):
+def test_anvil(full_chunk):
 	# Show an image of the chunk from above
 	pixels = ""
 	block_colors = {
@@ -204,48 +205,39 @@ def test_anvil(block_list, data_list, section_num):
 		83: {'h':123, 's':70, 'l':50},  # Sugarcane
 		86: {'h':24, 's':100, 'l':45},  # Pumpkin
 		91: {'h':24, 's':100, 'l':45},  # Jack-o-lantern
+                8:  {'h':228, 's':50, 'l':23},
+                9:  {'h':228, 's':50, 'l':23},  # Waters
+                18: {'h':114, 's':64, 'l':22}, # leaves
+                79: {'h':240, 's':5, 'l':95}, #ice
+                51: {'h':55, 's':100, 'l':50} #fire
 	}
-	block_list = BlockArray(blocksBytes=block_list)
-	for z in range(16):
-		for x in range(16):
-			for y in range(16*section_num, -1, -1):
-				# Find the highest block in this column
-				ground_height = 16*section_num
-				tints = []
-				block_id = block_list.blocksList[(y + z*(16*section_num) + x*(16*section_num)*16)-1]
-				block_data =  0
-				if (block_id == 8 or block_id == 9):
-					tints.append({'h':228, 's':50, 'l':23}) # Water
-				elif (block_id == 18):
-					if (block_data == 1):
-						tints.append({'h':114, 's':64, 'l':22}) # Redwood Leaves
-					elif (block_data == 2):
-						tints.append({'h':93, 's':39, 'l':10}) # Birch Leaves
-					else:
-						tints.append({'h':114, 's':64, 'l':22}) # Normal Leaves
-				elif (block_id == 79):
-					tints.append({'h':240, 's':5, 'l':95}) # Ice
-				elif (block_id == 51):
-					tints.append({'h':55, 's':100, 'l':50}) # Fire
-				elif (block_id != 0):
-					# Here is ground level
-					ground_height = y
-					break
-
-			color = block_colors[block_id] if (block_id in block_colors) else {'h':0, 's':0, 'l':100}
-			height_shift = (ground_height-64)*0.25
-			
-			final_color = {'h':color['h'], 's':color['s'], 'l':color['l']+height_shift}
-			if final_color['l'] > 100: final_color['l'] = 100
-			if final_color['l'] < 0: final_color['l'] = 0
-			
-			# Apply tints from translucent blocks
-			for tint in reversed(tints):
+	# this represents the top blocks of the chunk
+	top_blocks = np.zeros((16, 16), np.uint8)
+	# start top down
+	# could be optimised for breaking loops, if top_blocks is filled
+	for section in reversed(full_chunk):
+                # top down of each section
+                for y in range(15, -1, -1):
+                        for x in range(16):
+                                for z in range(16):
+                                        # current value here
+                                        current = section[y][x, z]
+                                        # is it not air, and have we already got a block there?
+                                        if current != 0 and top_blocks[x, z] == 0:
+                                                top_blocks[x, z] = current
+        tints = []
+        # could this be combined with above?
+        for x in range(16):
+                for z in range(16):
+                        block_id = top_blocks[x, z]
+                        color = block_colors[block_id] if (block_id in block_colors) else {'h':0, 's':0, 'l':100} 
+                        if color['l'] > 100: color['l'] = 100
+			if color['l'] < 0: color['l'] = 0
+                        for tint in reversed(tints):
 				final_color = hsl_slide(final_color, tint, 0.4)
-
-			rgb = hsl2rgb(final_color['h'], final_color['s'], final_color['l'])
-
+			rgb = hsl2rgb(color['h'], color['s'], color['l'])
 			pixels += pack("BBB", rgb[0], rgb[1], rgb[2])
+                        
 	im = Image.fromstring('RGB', (16,16), pixels)
 	return im
         
@@ -289,21 +281,34 @@ def main(world_folder):
                 bb = world.get_boundingbox()
                 map = Image.new('RGB', (16*bb.lenx(),16*bb.lenz()))
                 try:
-                        
+                        # for each chunk
                         for chunk in world.iter_nbt():
-                                ids = bytearray()
-                                data = bytearray()
-                                # build up the chunk in 16x16x256 max
-                                for temp in chunk['Level']['Sections']:
-                                        ids += (temp['Blocks'].value)
-                                        data += (temp['Data'].value)
-                                # up to 16 sections/levels, need how many levels
-                                chunkmap = test_anvil(ids, data, len(chunk['Level']['Sections'])) 
-                                x,z = chunk['Level']['xPos'], chunk['Level']['zPos']
-                                map.paste(chunkmap, (16*(x.value-bb.minx),16*(z.value-bb.minz)))
+                                # this is the whole chunk as currently stored
+                                full_chunk = []
+                                # get out each section (16x16x16)
+                                for current_section in chunk['Level']['Sections']:
+                                        blocks = current_section['Blocks']
+                                        section = []
+                                        # get out each layer of the section (16x16)
+                                        for y in range(16):
+                                                layer = np.zeros((16, 16), np.uint8)
+                                                for x in range(16):
+                                                        for z in range(15, -1, -1):
+                                                                # set the layer to be the block id there
+                                                                val = blocks.value[256*y+z+(16*x)]
+                                                                layer[x, z] = val
+                                                # each section has 16 layers
+                                                section.append(layer)
+                                        # each chunk has a variable number of sections (up to 16)
+                                        full_chunk.append(section)
+                                im = test_anvil(full_chunk)
+                                x,z = chunk['Level']['xPos'].value, chunk['Level']['zPos'].value
+                                map.paste(im, (16*(x-bb.minx),16*(z-bb.minz)))
+                        map.show()
+                        map.save("anvil2.png")
                 except KeyboardInterrupt:
-                        map.save("anvil.partial.png")
-                map.save("anvil.png")
+                        map.show()
+                        map.save("anvil2.partial.png")
 
                                 
 if __name__ == '__main__':
