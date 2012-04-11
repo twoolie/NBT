@@ -251,7 +251,7 @@ class RegionFile(object):
 		compressed = zlib.compress(data.getvalue()) #use zlib compression, rather than Gzip
 		data = BytesIO(compressed)
 		
-		nsectors = int(math.ceil((data.len+0.001)/4096))
+		nsectors = int(math.ceil((len(data.getvalue())+0.001)/4096))
 		
 		#if it will fit back in it's original slot:
 		offset, length, timestamp, status = self.header[x, z]
@@ -289,7 +289,7 @@ class RegionFile(object):
 
 		#write out chunk to region
 		self.file.seek(sector*4096)
-		self.file.write(pack(">I", data.len+1)) #length field
+		self.file.write(pack(">I", len(data.getvalue())+1)) #length field
 		self.file.write(pack(">B", 2)) #compression field
 		self.file.write(data.getvalue()) #compressed data
 		if pad_end:
