@@ -178,7 +178,7 @@ def hsl2rgb(H, S, L):
     return (R, G, B)
 
 
-def test_anvil(full_chunk):
+def map_anvil(top_blocks):
     # Show an image of the chunk from above
     pixels = ""
     block_colors = {
@@ -215,21 +215,8 @@ def test_anvil(full_chunk):
         79: {'h': 240, 's': 5, 'l': 95}, #ice
         51: {'h': 55, 's': 100, 'l': 50} #fire
     }
-    # this represents the top blocks of the chunk
-    top_blocks = np.zeros((16, 16), np.uint8)
-    # start top down
-    # could be optimised for breaking loops, if top_blocks is filled
-    for section in reversed(full_chunk):
-        # top down of each section
-        for y in range(15, -1, -1):
-            for x in range(16):
-                for z in range(16):
-                    # current value here
-                    current = section[y][x, z]
-                    # is it not air, and have we already got a block there?
-                    if current != 0 and top_blocks[x, z] == 0:
-                        top_blocks[x, z] = current
     tints = []
+##    print top_blocks
     # could this be combined with above?
     for x in range(16):
         for z in range(16):
@@ -252,38 +239,40 @@ def main(world_folder):
     map = Image.new('RGB', (16 * bb.lenx(), 16 * bb.lenz()))
     t = world.chunk_count()
     if world.type == "Anvil":
+        # TODO, rendering image, like McRegion
         try:
             # for each chunk
             start = time.time()
             for chunk in world.iter_nbt():
-                # this is the whole chunk as currently stored
-                full_chunk = []
+                # TODO switch this over to list of lists
+                top_blocks = np.zeros((16, 16), np.uint8)
                 # get out each section (16x16x16)
-                for current_section in chunk['Level']['Sections']:
+                for current_section in reversed(chunk['Level']['Sections']):
                     blocks = current_section['Blocks']
-                    section = []
-                    # get out each layer of the section (16x16)
-                    for y in range(16):
-                        layer = np.zeros((16, 16), np.uint8)
+                    # get out each layer of the section (16x16), start top down, fill top_blocks
+                    for y in range(15, -1, -1):
                         for x in range(16):
                             for z in range(15, -1, -1):
                                 # set the layer to be the block id there
                                 val = blocks.value[256 * y + z + (16 * x)]
-                                layer[x, z] = val
-                                # each section has 16 layers
-                        section.append(layer)
-                        # each chunk has a variable number of sections (up to 16)
-                    full_chunk.append(section)
-                im = test_anvil(full_chunk)
+                                if val != 0 and top_blocks[x, z] == 0:
+                                    top_blocks[x, z] = val
+                    # TODO at this point, check if full, map if is, else continue
+                    # could be easier with multi dim list
+                im = map_anvil(top_blocks)
                 x, z = chunk['Level']['xPos'].value, chunk['Level']['zPos'].value
                 map.paste(im, (16 * (x - bb.minx), 16 * (z - bb.minz)))
             end = time.time()
             print "done", end - start
+            filename = os.path.basename(world_folder) + ".png"
             map.show()
-            map.save("anvil2.png")
+            map.save(filename)
         except KeyboardInterrupt:
+            end = time.time()
+            print "interrepted", end - start
+            filename = os.path.basename(world_folder) + "partial.png"
             map.show()
-            map.save("anvil2.partial.png")
+            map.save(filename)
     else:
         try:
             i = 0.0
