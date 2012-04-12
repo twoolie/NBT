@@ -111,14 +111,27 @@ class WorldFolder(object):
 		for c in self.iter_nbt():
 			yield chunk.Chunk(c)
 
-	def get_chunk(self,x,z):
-		"""Return a chunk specified by the chunk coordinates x,z."""
+	def get_nbt(self,x,z):
+		"""Return a NBT specified by the chunk coordinates x,z. Raise InconceivedChunk 
+		if the NBT file is not yet generated. To get a Chunk object, use get_chunk."""
 		rx,x = divmod(x,32)
 		rz,z = divmod(z,32)
 		nbt = self.get_region(rx,rz).get_chunk(x,z)
 		if nbt == None:
 			raise InconceivedChunk("Chunk %s,%s not present in world" % (32*rx+x,32*rz+z))
-		return self.chunkclass(nbt)
+		return nbt
+	
+	def set_nbt(self,x,z,nbt):
+		"""Set a chunk. Overrides the NBT if it already existed. If the NBT did not exists, 
+		adds it to the Regionfile. May create a new Regionfile if that did not exist yet.
+		nbt must be a nbt.NBTFile instance, not a Chunk or regular TAG_Compound object."""
+		raise NotImplemented()
+		# TODO: implement
+
+	def get_chunk(self,x,z):
+		"""Return a chunk specified by the chunk coordinates x,z. Raise InconceivedChunk 
+		if the chunk is not yet generated. To get the raw NBT data, use get_nbt."""
+		return self.chunkclass(self.get_nbt(x, z))
 	
 	def get_chunks(self, boundingbox=None):
 		"""Returns a list of all chunks. Use this function if you access the chunk
