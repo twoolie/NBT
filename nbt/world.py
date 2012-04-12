@@ -11,10 +11,10 @@ class UnknownWorldFormat(Exception):
 		self.msg = msg
 
 class InconceivedChunk(LookupError):
-	"""Specified does not exist in world file"""
+	"""Specified chunk has not yet been generated"""
 
 class WorldFolder(object):
-	"""Abstract class, representing either a McRegion or Anvil Chunk."""
+	"""Abstract class, representing either a McRegion or Anvil world folder."""
 	type = "Generic"
 	# Preferred subclasses to use (in this order)
 	# this is defined as (AnvilWorldFolder, McRegionWorldFolder) AFTER the 
@@ -28,14 +28,14 @@ class WorldFolder(object):
 		if cls == WorldFolder: # Format unspecified. Check which world format to use.
 			for cls in cls.subclasses:
 				wf = cls(world_folder, *args, **kwargs)
-				if wf.valid(): # Check if the world is non-empty
+				if wf.nonempty(): # Check if the world is non-empty
 					return wf
 			raise UnknownWorldFormat("Empty world or unknown format: %r" % world_folder)
 		else:
 			return object.__new__(cls, world_folder, *args, **kwargs)
 	
 	def __init__(self, world_folder):
-		"""Initialize a WorldFolder. To check if the world is valid (=non-empty), use self.valid()"""
+		"""Initialize a WorldFolder."""
 		self.worldfolder = world_folder
 		self.format = format
 		self.regionfiles = {}
@@ -68,7 +68,7 @@ class WorldFolder(object):
 		# Warning: glob returns a empty list if the directory is unreadable, without raising an Exception
 		return list(glob.glob(os.path.join(self.worldfolder,'region','r.*.*.'+self.extension)))
 	
-	def valid(self):
+	def nonempty(self):
 		"""Return True is the world is non-empty"""
 		return len(self.regionfiles) > 0
 	
@@ -166,7 +166,7 @@ class WorldFolder(object):
 				print((x,z,c1,c2,correct_coords,is_comparable,is_equal))
 	
 	def __repr__(self):
-		return "%s(%s)" % (self.__class__.__name__,self.worldfolder)
+		return "%s(%r)" % (self.__class__.__name__,self.worldfolder)
 
 
 class McRegionWorldFolder(WorldFolder):
@@ -186,7 +186,7 @@ WorldFolder.subclasses = (AnvilWorldFolder, McRegionWorldFolder)
 
 class BoundingBox(object):
 	"""A bounding box of x,y,z coordinates"""
-	def __init__(self,minx=None, maxx=None, miny=None, maxy=None, minz=None, maxz=None):
+	def __init__(self, minx=None, maxx=None, miny=None, maxy=None, minz=None, maxz=None):
 		self.minx,self.maxx = minx, maxx
 		self.miny,self.maxy = miny, maxy
 		self.minz,self.maxz = minz, maxz
@@ -212,6 +212,6 @@ class BoundingBox(object):
 		return self.maxy-self.miny+1
 	def lenz(self):
 		return self.maxz-self.minz+1
-	def __str__(self):
+	def __repr__(self):
 		return "%s(%s,%s,%s,%s,%s,%s)" % (self.__class__.__name__,self.minx,self.maxx,
 				self.miny,self.maxy,self.minz,self.maxz)
