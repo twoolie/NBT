@@ -6,7 +6,6 @@ Prints a map of the entire world.
 import locale, os, sys
 import re, math
 from struct import pack, unpack
-import numpy as np
 import time
 # local module
 try:
@@ -18,7 +17,7 @@ except ImportError:
         raise
     sys.path.append(extrasearchpath)
 from nbt.region import RegionFile
-from nbt.chunk import Chunk, BlockArray
+from nbt.chunk import Chunk
 from nbt.world import WorldFolder, McRegionWorldFolder, AnvilWorldFolder
 # PIL module (not build-in)
 try:
@@ -220,7 +219,7 @@ def map_anvil(top_blocks):
     # could this be combined with above?
     for x in range(16):
         for z in range(16):
-            block_id = top_blocks[x, z]
+            block_id = top_blocks[x][z]
             color = block_colors[block_id] if (block_id in block_colors) else {'h': 0, 's': 0, 'l': 100}
             if color['l'] > 100: color['l'] = 100
             if color['l'] < 0: color['l'] = 0
@@ -239,13 +238,14 @@ def main(world_folder):
     map = Image.new('RGB', (16 * bb.lenx(), 16 * bb.lenz()))
     t = world.chunk_count()
     if world.type == "Anvil":
-        # TODO, rendering image, like McRegion
+        # TODO, rendering image information, like McRegion
+        print "Starting Anvil mapping...",
         try:
             # for each chunk
             start = time.time()
             for chunk in world.iter_nbt():
                 # TODO switch this over to list of lists
-                top_blocks = np.zeros((16, 16), np.uint8)
+                top_blocks = [[0]*16, [0]*16, [0]*16, [0]*16, [0]*16, [0]*16, [0]*16, [0]*16,[0]*16, [0]*16, [0]*16, [0]*16,[0]*16, [0]*16, [0]*16, [0]*16,]
                 # get out each section (16x16x16)
                 for current_section in reversed(chunk['Level']['Sections']):
                     blocks = current_section['Blocks']
@@ -255,8 +255,8 @@ def main(world_folder):
                             for z in range(15, -1, -1):
                                 # set the layer to be the block id there
                                 val = blocks.value[256 * y + z + (16 * x)]
-                                if val != 0 and top_blocks[x, z] == 0:
-                                    top_blocks[x, z] = val
+                                if val != 0 and top_blocks[x][z] == 0:
+                                    top_blocks[x][z] = val
                     # TODO at this point, check if full, map if is, else continue
                     # could be easier with multi dim list
                 im = map_anvil(top_blocks)
@@ -269,8 +269,8 @@ def main(world_folder):
             map.save(filename)
         except KeyboardInterrupt:
             end = time.time()
-            print "interrepted", end - start
-            filename = os.path.basename(world_folder) + "partial.png"
+            print "interrupted", end - start
+            filename = os.path.basename(world_folder) + ".partial.png"
             map.show()
             map.save(filename)
     else:
