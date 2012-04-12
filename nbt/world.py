@@ -37,19 +37,19 @@ class WorldFolder(object):
 	def __init__(self, world_folder):
 		"""Initialize a WorldFolder."""
 		self.worldfolder = world_folder
-		self.format = format
 		self.regionfiles = {}
 		self.regions     = {}
 		self.chunks      = None
 		# os.listdir triggers an OSError for non-existant directories or permission errors.
 		# This is needed, because glob.glob silently returns no files.
 		os.listdir(world_folder)
-		filenames = None
-		if self.format == None:
-			# may raise UnknownWorldFormat
-			self.format, filenames = self.guessformat()
-		else:
-			filenames = self.get_filenames()
+		self.set_regionfiles(self.get_filenames())
+	
+	def get_filenames(self):
+		# Warning: glob returns a empty list if the directory is unreadable, without raising an Exception
+		return list(glob.glob(os.path.join(self.worldfolder,'region','r.*.*.'+self.extension)))
+	
+	def set_regionfiles(self, filenames):
 		for filename in filenames:
 			# Assume that filenames have the name r.<x-digit>.<z-digit>.<extension>
 			m = re.match(r"r.(\-?\d+).(\-?\d+)."+self.extension, os.path.basename(filename))
@@ -61,13 +61,12 @@ class WorldFolder(object):
 				#  r.<x-digit>.<z-digit>.<extension> filename format. This may raise false 
 				# errors if a copy is made, e.g. "r.0.-1 copy.mca". If this is an issue, override
 				# get_filenames(). In most cases, it is an error, and we like to raise that.
-				raise UnknownWorldFormat("Unrecognized filename format %s" % os.path.basename(filename))
+				# Changed, no longer raise error, because we want to continue the loop.
+				# raise UnknownWorldFormat("Unrecognized filename format %s" % os.path.basename(filename))
+				# TODO: log to stderr using logging facility.
+				pass
 			self.regionfiles[(x,z)] = filename
-	
-	def get_filenames(self):
-		# Warning: glob returns a empty list if the directory is unreadable, without raising an Exception
-		return list(glob.glob(os.path.join(self.worldfolder,'region','r.*.*.'+self.extension)))
-	
+
 	def nonempty(self):
 		"""Return True is the world is non-empty"""
 		return len(self.regionfiles) > 0
@@ -114,7 +113,6 @@ class WorldFolder(object):
 
 	def get_chunk(self,x,z):
 		"""Return a chunk specified by the chunk coordinates x,z."""
-		# TODO: Implement (calculate region filename from x,z, see if file exists.)
 		rx,x = divmod(x,32)
 		rz,z = divmod(z,32)
 		nbt = self.get_region(rx,rz).get_chunk(x,z)
