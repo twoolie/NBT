@@ -452,7 +452,6 @@ class NBTFile(TAG_Compound):
 
 	def __init__(self, filename=None, buffer=None, fileobj=None):
 		super(NBTFile, self).__init__()
-		self.__class__.__name__ = "TAG_Compound"
 		self.filename = filename
 		self.type = TAG_Byte(self.id)
 		#make a file object
@@ -515,3 +514,13 @@ class NBTFile(TAG_Compound):
 			self.file.flush()
 		if self.filename and 'close' in dir(self.file):
 			self.file.close()
+	
+	def __repr__(self):
+		"""Return a string (ascii formated for Python 2, unicode for Python 3) describing 
+		the class, name and id for debugging purposes."""
+		if self.filename:
+			return "<%s(%r) with %s(%r) at 0x%x>" % (self.__class__.__name__, self.filename, \
+					TAG_Compound.__name__, self.name, id(self))
+		else:
+			return "<%s with %s(%r) at 0x%x>" % (self.__class__.__name__, \
+					TAG_Compound.__name__, self.name, id(self))
