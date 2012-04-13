@@ -276,6 +276,7 @@ def main(world_folder):
     else:
         try:
             i = 0.0
+            start = time.time()
             for chunk in world.iter_chunks():
                 if i % 50 == 0:
                     sys.stdout.write("Rendering image")
@@ -288,7 +289,8 @@ def main(world_folder):
                 chunkmap = get_map(chunk)
                 x, z = chunk.get_coords()
                 map.paste(chunkmap, (16 * (x - bb.minx), 16 * (z - bb.minz)))
-            print(" done\n")
+            end = time.time()
+            print(" done %f\n", end - start)
             filename = os.path.basename(world_folder) + ".png"
             map.save(filename, "PNG")
             print("Saved map as %s" % filename)
