@@ -13,5 +13,16 @@ setup(
   license          = open("LICENSE.txt").read(),
   long_description = open("README.txt").read(),
   packages         = ['nbt'],
-  use_2to3         = False
+  classifiers      = [
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Topic :: Games/Entertainment",
+        "Topic :: Software Development :: Libraries :: Python Modules"
+  ]
 )
