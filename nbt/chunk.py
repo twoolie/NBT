@@ -7,9 +7,9 @@ from struct import pack, unpack
 import array, math
 
 class Chunk(object):
-        """
-        Class for representing a single chunk.
-        """
+	"""
+	Class for representing a single chunk.
+	"""
 	def __init__(self, nbt):
 		chunk_data = nbt['Level']
 		self.coords = chunk_data['xPos'],chunk_data['zPos']
@@ -23,9 +23,9 @@ class Chunk(object):
 
 
 class BlockArray(object):
-        """
-        Convenience class for dealing with a Block/data byte array
-        """
+	"""
+	Convenience class for dealing with a Block/data byte array
+	"""
 	def __init__(self, blocksBytes=None, dataBytes=None):
 		if isinstance(blocksBytes, (bytearray, array.array)):
 			self.blocksList = list(blocksBytes)
@@ -39,16 +39,16 @@ class BlockArray(object):
 
 	# Get all block entries
 	def get_all_blocks(self):
-                """
-                Returns the blocks that are in this BlockArray
-                """
+		"""
+		Returns the blocks that are in this BlockArray
+		"""
 		return self.blocksList
 	
 	# Get all data entries
 	def get_all_data(self):
-                """
-                Returns the data of all the blocks in this BlockArray
-                """
+		"""
+		Returns the data of all the blocks in this BlockArray
+		"""
 		bits = []
 		for b in self.dataList:
 			# The first byte of the Blocks arrays correspond 
@@ -60,9 +60,9 @@ class BlockArray(object):
 
 	# Get all block entries and data entries as tuples
 	def get_all_blocks_and_data(self):
-                """
-                Returns both blocks and data, packed together as tuples
-                """
+		"""
+		Returns both blocks and data, packed together as tuples
+		"""
 		return list(zip(self.get_all_blocks(), self.get_all_data()))
 
 	def get_blocks_struct(self):
