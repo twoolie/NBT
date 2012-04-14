@@ -1,4 +1,6 @@
-"""Handle the NBT (Named Binary Tag) data format"""
+"""
+Handle the NBT (Named Binary Tag) data format
+"""
 
 from struct import Struct, error as StructError
 from gzip import GzipFile
@@ -116,7 +118,10 @@ class TAG_Double(_TAG_Numeric):
 	fmt = Struct(">d")
 
 class TAG_Byte_Array(TAG, MutableSequence):
-	"""TAG_Byte_Array, comparable to a collections.UserList with an intrinsic name whose values must be bytes"""
+	"""
+        TAG_Byte_Array, comparable to a collections.UserList with
+        an intrinsic name whose values must be bytes
+        """
 	id = TAG_BYTE_ARRAY
 	def __init__(self, name=None, buffer=None):
 		super(TAG_Byte_Array, self).__init__(name=name)
@@ -167,7 +172,10 @@ class TAG_Byte_Array(TAG, MutableSequence):
 		return '['+",".join([str(x) for x in self.value])+']'
 
 class TAG_Int_Array(TAG, MutableSequence):
-	"""TAG_Int_Array, comparable to a collections.UserList with an intrinsic name whose values must be integers"""
+	"""
+        TAG_Int_Array, comparable to a collections.UserList with
+        an intrinsic name whose values must be integers
+        """
 	id = TAG_INT_ARRAY
 	def __init__(self, name=None, buffer=None):
 		super(TAG_Int_Array, self).__init__(name=name)
@@ -218,7 +226,10 @@ class TAG_Int_Array(TAG, MutableSequence):
 
 
 class TAG_String(TAG, Sequence):
-	"""TAG_String, comparable to a collections.UserString with an intrinsic name"""
+	"""
+        TAG_String, comparable to a collections.UserString with an
+        intrinsic name
+        """
 	id = TAG_STRING
 	def __init__(self, value=None, name=None, buffer=None):
 		super(TAG_String, self).__init__(value, name)
@@ -258,7 +269,9 @@ class TAG_String(TAG, Sequence):
 
 #== Collection Tags ==#
 class TAG_List(TAG, MutableSequence):
-	"""TAG_List, comparable to a collections.UserList with an intrinsic name"""
+	"""
+        TAG_List, comparable to a collections.UserList with an intrinsic name
+        """
 	id = TAG_LIST
 	def __init__(self, type=None, value=None, name=None, buffer=None):
 		super(TAG_List, self).__init__(value, name)
@@ -332,7 +345,10 @@ class TAG_List(TAG, MutableSequence):
 		return '\n'.join(output)
 
 class TAG_Compound(TAG, MutableMapping):
-	"""TAG_Compound, comparable to a collections.OrderedDict with an intrinsic name"""
+	"""
+        TAG_Compound, comparable to a collections.OrderedDict with an
+        intrinsic name
+        """
 	id = TAG_COMPOUND
 	def __init__(self, buffer=None):
 		super(TAG_Compound, self).__init__()
@@ -448,8 +464,9 @@ class TAG_Compound(TAG, MutableMapping):
 TAGLIST = {TAG_BYTE:TAG_Byte, TAG_SHORT:TAG_Short, TAG_INT:TAG_Int, TAG_LONG:TAG_Long, TAG_FLOAT:TAG_Float, TAG_DOUBLE:TAG_Double, TAG_BYTE_ARRAY:TAG_Byte_Array, TAG_STRING:TAG_String, TAG_LIST:TAG_List, TAG_COMPOUND:TAG_Compound, TAG_INT_ARRAY:TAG_Int_Array}
 
 class NBTFile(TAG_Compound):
-	"""Represents an NBT file object"""
-
+	"""
+        Represents an NBT file object
+        """
 	def __init__(self, filename=None, buffer=None, fileobj=None):
 		super(NBTFile, self).__init__()
 		self.filename = filename
@@ -516,8 +533,11 @@ class NBTFile(TAG_Compound):
 			self.file.close()
 	
 	def __repr__(self):
-		"""Return a string (ascii formated for Python 2, unicode for Python 3) describing 
-		the class, name and id for debugging purposes."""
+		"""
+                Return a string (ascii formated for Python 2, unicode
+                for Python 3) describing the class, name and id for
+                debugging purposes.
+                """
 		if self.filename:
 			return "<%s(%r) with %s(%r) at 0x%x>" % (self.__class__.__name__, self.filename, \
 					TAG_Compound.__name__, self.name, id(self))
