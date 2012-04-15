@@ -13,31 +13,23 @@ import math, time
 from os.path import getsize
 
 class RegionHeaderError(Exception):
-	"""
-	Error in the header of the region file for a given chunk
-	"""
+	"""Error in the header of the region file for a given chunk."""
 	def __init__(self, msg):
 		self.msg = msg
 
 class ChunkHeaderError(Exception):
-	"""
-	Error in the header of a chunk
-	"""
+	"""Error in the header of a chunk."""
 	def __init__(self, msg):
 		self.msg = msg
 
 class ChunkDataError(Exception):
-	"""
-	Error in the data of a chunk, included the bytes of length and byte version
-	"""
+	"""Error in the data of a chunk, included the bytes of length and byte version."""
 	def __init__(self, msg):
 		self.msg = msg
 
 
 class RegionFile(object):
-	"""
-	A convenience class for extracting NBT files from the Minecraft Beta Region Format
-	"""
+	"""A convenience class for extracting NBT files from the Minecraft Beta Region Format."""
 	def __init__(self, filename=None, fileobj=None):
 		self.file = None
 		if filename:
@@ -90,9 +82,7 @@ class RegionFile(object):
 				self.header[x,z] = (0, 0, 0, self.STATUS_CHUNK_NOT_CREATED)
 
 	def parse_header(self):
-		""" 
-		Reads the region header and stores: offset, length and status.
-		"""
+		"""Read the region header and stores: offset, length and status."""
 		for index in range(0,4096,4):
 			self.file.seek(index)
 			offset, length = unpack(">IB", b"\0"+self.file.read(4))
@@ -176,9 +166,7 @@ class RegionFile(object):
 		return self.get_chunk_coords()
 	
 	def get_chunk_coords(self):
-		"""
-		Return coordinates and length of all chunks.
-		"""
+		"""Return coordinates and length of all chunks."""
 		index = 0
 		self.file.seek(index)
 		chunks = []
@@ -201,9 +189,7 @@ class RegionFile(object):
 			yield self.get_chunk(cc['x'],cc['z'])
 	
 	def get_timestamp(self, x, z):
-		"""
-		Returns the timestamp of when this region file was last modified
-		"""
+		"""Return the timestamp of when this region file was last modified."""
 		self.file.seek(4096+4*(x+z*32))
 		timestamp = unpack(">I",self.file.read(4))
 		return timestamp
@@ -259,10 +245,7 @@ class RegionFile(object):
 			return None
 	
 	def write_chunk(self, x, z, nbt_file):
-		"""
-		A smart chunk writer that uses extents to trade off between fragmentation and
-		cpu time
-		"""
+		"""A smart chunk writer that uses extents to trade off between fragmentation and cpu time."""
 		data = BytesIO()
 		nbt_file.write_file(buffer = data) #render to buffer; uncompressed
 		
@@ -327,7 +310,7 @@ class RegionFile(object):
 
 	def unlink_chunk(self, x, z):
 		"""
-		Removes a chunk from the header of the region file (write zeros in the offset of the chunk).
+		Remove a chunk from the header of the region file (write zeros in the offset of the chunk).
 		Using only this method leaves the chunk data intact, fragmenting the region file (unconfirmed).
 		This is an start to a better function remove_chunk
 		"""

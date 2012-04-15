@@ -8,9 +8,7 @@ from . import chunk
 
 
 class UnknownWorldFormat(Exception):
-	"""
-	Unknown or invalid world folder
-	"""
+	"""Unknown or invalid world folder."""
 	def __init__(self, msg):
 		self.msg = msg
 
@@ -82,21 +80,15 @@ class WorldFolder(object):
 			self.regionfiles[(x,z)] = filename
 
 	def nonempty(self):
-		"""
-		Return True is the world is non-empty
-		"""
+		"""Return True is the world is non-empty."""
 		return len(self.regionfiles) > 0
 	
 	def get_regionfiles(self):
-		"""
-		return a list of full path with region files
-		"""
+		"""Return a list of full path of all region files."""
 		return list(self.regionfiles.values())
 	
 	def get_region(self, x,z):
-		"""
-		Get a region using x,z coordinates of a region. Cache results.
-		"""
+		"""Get a region using x,z coordinates of a region. Cache results."""
 		if (x,z) not in self.regions:
 			if (x,z) in self.regionfiles:
 				self.regions[(x,z)] = region.RegionFile(self.regionfiles[(x,z)])
@@ -112,7 +104,7 @@ class WorldFolder(object):
 
 	def iter_nbt(self):
 		"""
-		Returns an iterable list of all NBT. Use this function if you only 
+		Return an iterable list of all NBT. Use this function if you only 
 		want to loop through the chunks once, and don't need the block or data arrays.
 		Use
 		"""
@@ -124,7 +116,7 @@ class WorldFolder(object):
 
 	def iter_chunks(self):
 		"""
-		Returns an iterable list of all chunks. Use this function if you only 
+		Return an iterable list of all chunks. Use this function if you only 
 		want to loop through the chunks once or have a very large world.
 		Use get_chunks() if you access the chunk list frequently and want to cache 
 		the results. Use iter_nbt() if you are concerned about speed and don't want 
@@ -165,7 +157,7 @@ class WorldFolder(object):
 	
 	def get_chunks(self, boundingbox=None):
 		"""
-		Returns a list of all chunks. Use this function if you access the chunk
+		Return a list of all chunks. Use this function if you access the chunk
 		list frequently and want to cache the result.
 		Use iter_chunks() if you only want to loop through the chunks once or have a
 		very large world.
@@ -175,9 +167,7 @@ class WorldFolder(object):
 		return self.chunks
 	
 	def chunk_count(self):
-		"""
-		Returns a count of the chunks in this world folder
-		"""
+		"""Return a count of the chunks in this world folder."""
 		c = 0
 		for r in self.iter_regions():
 			c += r.chunk_count()
@@ -222,18 +212,14 @@ class WorldFolder(object):
 
 
 class McRegionWorldFolder(WorldFolder):
-	"""
-	Represents a world save using the old McRegion format
-	"""
+	"""Represents a world save using the old McRegion format."""
 	type = "McRegion"
 	extension = 'mcr'
 	chunkclass = chunk.Chunk
 	# chunkclass = chunk.McRegionChunk  # TODO: change to McRegionChunk when done
 
 class AnvilWorldFolder(WorldFolder):
-	"""
-	Represents a world save using the new Anvil format
-	"""
+	"""Represents a world save using the new Anvil format."""
 	type = "Anvil"
 	extension = 'mca'
 	chunkclass = chunk.Chunk
@@ -243,9 +229,7 @@ WorldFolder.subclasses = (AnvilWorldFolder, McRegionWorldFolder)
 
 
 class BoundingBox(object):
-	"""
-	A bounding box of x,y,z coordinates
-	"""
+	"""A bounding box of x,y,z coordinates."""
 	def __init__(self, minx=None, maxx=None, miny=None, maxy=None, minz=None, maxz=None):
 		self.minx,self.maxx = minx, maxx
 		self.miny,self.maxy = miny, maxy
