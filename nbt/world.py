@@ -1,4 +1,6 @@
-"""Handle a world folder, containing .mcr or .mca region files"""
+"""
+Handles a Minecraft world save using either the Anvil or McRegion format.
+"""
 
 import os, glob, re
 from . import region
@@ -6,7 +8,9 @@ from . import chunk
 
 
 class UnknownWorldFormat(Exception):
-	"""Unknown or invalid world folder"""
+	"""
+	Unknown or invalid world folder
+	"""
 	def __init__(self, msg):
 		self.msg = msg
 
@@ -14,7 +18,11 @@ class InconceivedChunk(LookupError):
 	"""Specified chunk has not yet been generated"""
 
 class WorldFolder(object):
-	"""Abstract class, representing either a McRegion or Anvil world folder."""
+	"""
+	Abstract class, representing either a McRegion or Anvil world folder.
+	This class will use either Anvil or McRegion, with Anvil the preferred format.
+	Simply calling world_folder will do this automattically, without user interaction
+	"""
 	type = "Generic"
 	# Preferred subclasses to use (in this order)
 	# this is defined as (AnvilWorldFolder, McRegionWorldFolder) AFTER the 
@@ -23,8 +31,10 @@ class WorldFolder(object):
 	subclasses = ()
 	
 	def __new__(cls, world_folder, *args, **kwargs):
-		"""Python trickery to return a AnvilWorldFolder or McRegionWorldFolder 
-		instance, or raise a UnknownWorldFormat."""
+		"""
+		Python trickery to return a AnvilWorldFolder or McRegionWorldFolder 
+		instance, or raise a UnknownWorldFormat.
+		"""
 		if cls == WorldFolder: # Format unspecified. Check which world format to use.
 			for cls in cls.subclasses:
 				wf = cls(world_folder, *args, **kwargs)
@@ -38,8 +48,8 @@ class WorldFolder(object):
 		"""Initialize a WorldFolder."""
 		self.worldfolder = world_folder
 		self.regionfiles = {}
-		self.regions     = {}
-		self.chunks      = None
+		self.regions	 = {}
+		self.chunks	 = None
 		# os.listdir triggers an OSError for non-existant directories or permission errors.
 		# This is needed, because glob.glob silently returns no files.
 		os.listdir(world_folder)
@@ -50,6 +60,10 @@ class WorldFolder(object):
 		return list(glob.glob(os.path.join(self.worldfolder,'region','r.*.*.'+self.extension)))
 	
 	def set_regionfiles(self, filenames):
+		"""
+		This method directly sets the region files for this instance to use.
+		It assumes the filenames are in the form r.<x-digit>.<z-digit>.<extension>
+		"""
 		for filename in filenames:
 			# Assume that filenames have the name r.<x-digit>.<z-digit>.<extension>
 			m = re.match(r"r.(\-?\d+).(\-?\d+)."+self.extension, os.path.basename(filename))
@@ -68,15 +82,21 @@ class WorldFolder(object):
 			self.regionfiles[(x,z)] = filename
 
 	def nonempty(self):
-		"""Return True is the world is non-empty"""
+		"""
+		Return True is the world is non-empty
+		"""
 		return len(self.regionfiles) > 0
 	
 	def get_regionfiles(self):
-		"""return a list of full path with region files"""
+		"""
+		return a list of full path with region files
+		"""
 		return list(self.regionfiles.values())
 	
 	def get_region(self, x,z):
-		"""Get a region using x,z coordinates of a region. Cache results."""
+		"""
+		Get a region using x,z coordinates of a region. Cache results.
+		"""
 		if (x,z) not in self.regions:
 			if (x,z) in self.regionfiles:
 				self.regions[(x,z)] = region.RegionFile(self.regionfiles[(x,z)])
@@ -91,9 +111,11 @@ class WorldFolder(object):
 			yield self.get_region(x,z)
 
 	def iter_nbt(self):
-		"""Returns an iterable list of all NBT. Use this function if you only 
+		"""
+		Returns an iterable list of all NBT. Use this function if you only 
 		want to loop through the chunks once, and don't need the block or data arrays.
-		Use """
+		Use
+		"""
 		# TODO: Implement BoundingBox
 		# TODO: Implement sort order
 		for region in self.iter_regions():
@@ -101,19 +123,23 @@ class WorldFolder(object):
 				yield c
 
 	def iter_chunks(self):
-		"""Returns an iterable list of all chunks. Use this function if you only 
+		"""
+		Returns an iterable list of all chunks. Use this function if you only 
 		want to loop through the chunks once or have a very large world.
 		Use get_chunks() if you access the chunk list frequently and want to cache 
 		the results. Use iter_nbt() if you are concerned about speed and don't want 
-		to parse the block data."""
+		to parse the block data.
+		"""
 		# TODO: Implement BoundingBox
 		# TODO: Implement sort order
 		for c in self.iter_nbt():
 			yield chunk.Chunk(c)
 
 	def get_nbt(self,x,z):
-		"""Return a NBT specified by the chunk coordinates x,z. Raise InconceivedChunk 
-		if the NBT file is not yet generated. To get a Chunk object, use get_chunk."""
+		"""
+		Return a NBT specified by the chunk coordinates x,z. Raise InconceivedChunk 
+		if the NBT file is not yet generated. To get a Chunk object, use get_chunk.
+		"""
 		rx,x = divmod(x,32)
 		rz,z = divmod(z,32)
 		nbt = self.get_region(rx,rz).get_chunk(x,z)
@@ -122,34 +148,46 @@ class WorldFolder(object):
 		return nbt
 	
 	def set_nbt(self,x,z,nbt):
-		"""Set a chunk. Overrides the NBT if it already existed. If the NBT did not exists, 
+		"""
+		Set a chunk. Overrides the NBT if it already existed. If the NBT did not exists, 
 		adds it to the Regionfile. May create a new Regionfile if that did not exist yet.
-		nbt must be a nbt.NBTFile instance, not a Chunk or regular TAG_Compound object."""
+		nbt must be a nbt.NBTFile instance, not a Chunk or regular TAG_Compound object.
+		"""
 		raise NotImplemented()
 		# TODO: implement
 
 	def get_chunk(self,x,z):
-		"""Return a chunk specified by the chunk coordinates x,z. Raise InconceivedChunk 
-		if the chunk is not yet generated. To get the raw NBT data, use get_nbt."""
+		"""
+		Return a chunk specified by the chunk coordinates x,z. Raise InconceivedChunk 
+		if the chunk is not yet generated. To get the raw NBT data, use get_nbt.
+		"""
 		return self.chunkclass(self.get_nbt(x, z))
 	
 	def get_chunks(self, boundingbox=None):
-		"""Returns a list of all chunks. Use this function if you access the chunk
+		"""
+		Returns a list of all chunks. Use this function if you access the chunk
 		list frequently and want to cache the result.
 		Use iter_chunks() if you only want to loop through the chunks once or have a
-		very large world."""
+		very large world.
+		"""
 		if self.chunks == None:
 			self.chunks = list(self.iter_chunks())
 		return self.chunks
 	
 	def chunk_count(self):
+		"""
+		Returns a count of the chunks in this world folder
+		"""
 		c = 0
 		for r in self.iter_regions():
 			c += r.chunk_count()
 		return c 
 	
 	def get_boundingbox(self):
-		"""Return minimum and maximum x and z coordinates of the chunks."""
+		"""
+		Return minimum and maximum x and z coordinates of the chunks that
+		make up this world save
+		"""
 		b = BoundingBox()
 		for rx,rz in self.regionfiles.keys():
 			region = self.get_region(rx,rz)
@@ -160,7 +198,10 @@ class WorldFolder(object):
 		return b
 	
 	def cache_test(self):
-		"""Debug routine: loop through all chunks, fetch them again by coordinates, and check if the same object is returned."""
+		"""
+		Debug routine: loop through all chunks, fetch them again by coordinates,
+		and check if the same object is returned.
+		"""
 		# TODO: make sure this test succeeds (at least True,True,False, preferable True,True,True)
 		# TODO: Move this function to test class.
 		for rx,rz in self.regionfiles.keys():
@@ -181,27 +222,38 @@ class WorldFolder(object):
 
 
 class McRegionWorldFolder(WorldFolder):
+	"""
+	Represents a world save using the old McRegion format
+	"""
 	type = "McRegion"
 	extension = 'mcr'
 	chunkclass = chunk.Chunk
 	# chunkclass = chunk.McRegionChunk  # TODO: change to McRegionChunk when done
 
 class AnvilWorldFolder(WorldFolder):
+	"""
+	Represents a world save using the new Anvil format
+	"""
 	type = "Anvil"
 	extension = 'mca'
 	chunkclass = chunk.Chunk
-	# chunkclass = chunk.AnvilChunk  # TODO: change to AnvilChunk when done
+	# chunkclass = chunk.AnvilChunk	 # TODO: change to AnvilChunk when done
 
 WorldFolder.subclasses = (AnvilWorldFolder, McRegionWorldFolder)
 
 
 class BoundingBox(object):
-	"""A bounding box of x,y,z coordinates"""
+	"""
+	A bounding box of x,y,z coordinates
+	"""
 	def __init__(self, minx=None, maxx=None, miny=None, maxy=None, minz=None, maxz=None):
 		self.minx,self.maxx = minx, maxx
 		self.miny,self.maxy = miny, maxy
 		self.minz,self.maxz = minz, maxz
 	def expand(self,x,y,z):
+		"""
+		Expands the bounding 
+		"""
 		if x != None:
 			if self.minx is None or x < self.minx:
 				self.minx = x
