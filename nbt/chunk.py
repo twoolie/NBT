@@ -7,9 +7,7 @@ from struct import pack, unpack
 import array, math
 
 class Chunk(object):
-	"""
-	Class for representing a single chunk.
-	"""
+	"""Class for representing a single chunk."""
 	def __init__(self, nbt):
 		chunk_data = nbt['Level']
 		self.coords = chunk_data['xPos'],chunk_data['zPos']
@@ -23,9 +21,7 @@ class Chunk(object):
 
 
 class BlockArray(object):
-	"""
-	Convenience class for dealing with a Block/data byte array
-	"""
+	"""Convenience class for dealing with a Block/data byte array."""
 	def __init__(self, blocksBytes=None, dataBytes=None):
 		if isinstance(blocksBytes, (bytearray, array.array)):
 			self.blocksList = list(blocksBytes)
@@ -39,16 +35,12 @@ class BlockArray(object):
 
 	# Get all block entries
 	def get_all_blocks(self):
-		"""
-		Returns the blocks that are in this BlockArray
-		"""
+		"""Return the blocks that are in this BlockArray."""
 		return self.blocksList
 	
 	# Get all data entries
 	def get_all_data(self):
-		"""
-		Returns the data of all the blocks in this BlockArray
-		"""
+		"""Return the data of all the blocks in this BlockArray."""
 		bits = []
 		for b in self.dataList:
 			# The first byte of the Blocks arrays correspond 
@@ -60,9 +52,7 @@ class BlockArray(object):
 
 	# Get all block entries and data entries as tuples
 	def get_all_blocks_and_data(self):
-		"""
-		Returns both blocks and data, packed together as tuples
-		"""
+		"""Return both blocks and data, packed together as tuples."""
 		return list(zip(self.get_all_blocks(), self.get_all_data()))
 
 	def get_blocks_struct(self):
@@ -83,6 +73,7 @@ class BlockArray(object):
 
 	# Give blockList back as a byte array
 	def get_blocks_byte_array(self, buffer=False):
+		"""Return a list of all blocks in this chunk."""
 		if buffer:
 			length = len(self.blocksList)
 			return BytesIO(pack(">i", length)+self.get_blocks_byte_array())
@@ -90,6 +81,7 @@ class BlockArray(object):
 			return array.array('B', self.blocksList).tostring()
 
 	def get_data_byte_array(self, buffer=False):
+		"""Return a list of data for all blocks in this chunk."""
 		if buffer:
 			length = len(self.dataList)
 			return BytesIO(pack(">i", length)+self.get_data_byte_array())
@@ -140,6 +132,7 @@ class BlockArray(object):
 		return True
 
 	def set_block(self, x,y,z, id, data=0):
+		"""Sets the block a x, y, z to the specified id, and optionally data."""
 		offset = y + z*128 + x*128*16
 		self.blocksList[offset] = id
 		if (offset % 2 == 1):
@@ -155,6 +148,7 @@ class BlockArray(object):
 
 	# Get a given X,Y,Z or a tuple of three coordinates
 	def get_block(self, x,y,z, coord=False):
+		"""Return the id of the block at x, y, z."""
 		"""
 		Laid out like:
 		(0,0,0), (0,1,0), (0,2,0) ... (0,127,0), (0,0,1), (0,1,1), (0,2,1) ... (0,127,1), (0,0,2) ... (0,127,15), (1,0,0), (1,1,0) ... (15,127,15)
@@ -173,6 +167,7 @@ class BlockArray(object):
 
 	# Get a given X,Y,Z or a tuple of three coordinates
 	def get_data(self, x,y,z, coord=False):
+		"""Return the data of the block at x, y, z."""
 		offset = y + z*128 + x*128*16 if (coord == False) else coord[1] + coord[2]*128 + coord[0]*128*16
 		# The first byte of the Blocks arrays correspond 
 		# to the LEAST significant bits of the first byte of the Data. 
@@ -189,5 +184,6 @@ class BlockArray(object):
 			return (b >> 4) & 15 # Get big end (first 4 bits) of byte
 
 	def get_block_and_data(self, x,y,z, coord=False):
+		"""Return the tuple of (id, data) for the block at x, y, z"""
 		return (self.get_block(x,y,z,coord),self.get_data(x,y,z,coord))
 
