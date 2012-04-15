@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-=======
 Examples
 ========
 
->>>>>>> f643d51eb5b1f178f951826894e33e482f624885
 **Block Analysis**
 	*Current Status:*
 
