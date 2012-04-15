@@ -1,7 +1,8 @@
-__all__ = ["chunk", "region", "world", "nbt"]
+__all__ = ["nbt", "world", "region", "chunk"]
 from . import *
 
 VERSION = (1, 3)
 
 def _get_version():
-	return ".".join(VERSION)
+	"""Return the NBT version as string."""
+	return ".".join([str(v) for v in VERSION])

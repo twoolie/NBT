@@ -1,11 +1,10 @@
-nbt.chunk Module
+nbt.world Module
 ================
 
-:mod:`chunk` Module
+:mod:`world` Module
 -------------------
 
-.. automodule:: nbt.chunk
+.. automodule:: nbt.world
     :members:
     :undoc-members:
     :show-inheritance:
-
