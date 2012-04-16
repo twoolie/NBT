@@ -1,8 +1,5 @@
-nbt.region Module
-=================
-
-:mod:`region` Module
---------------------
+:mod:`nbt.region` Module
+========================
 
 .. automodule:: nbt.region
     :members:
