@@ -33,7 +33,7 @@ import nbt
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.viewcode']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['templates']
@@ -106,6 +106,11 @@ autoclass_content = 'class'
 # or by source order (value 'bysource'). The default is alphabetical.
 # If further control of the order is required, define __all__ in the module.
 autodoc_member_order = 'bysource'
+
+
+# -- Options for intersphinx extension (for links to doc.python.org)
+
+intersphinx_mapping = {'python': ('http://docs.python.org/3.2', 'python.inv')}
 
 
 # -- Options for HTML output ---------------------------------------------------
