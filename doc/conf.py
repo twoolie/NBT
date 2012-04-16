@@ -107,6 +107,17 @@ autoclass_content = 'class'
 # If further control of the order is required, define __all__ in the module.
 autodoc_member_order = 'bysource'
 
+# Don't skip the following special functions.
+def skip(app, what, name, obj, skip, options):
+    if name in ("__init__", "__unicode__", "__str__", "__repr__", "__len__", 
+                "__contains__", "__iter__", "__getitem__", "__setitem__", 
+                "__delitem__"):
+        return False
+    return skip
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip)
+
 
 # -- Options for intersphinx extension (for links to doc.python.org)
 
