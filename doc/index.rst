@@ -14,14 +14,10 @@ Minecraft, the main use case for the NBT format.
 Contents:
 
 :mod:`nbt` Package
-------------------
+==================
 
-.. automodule:: nbt
-    :members:
-    :private-members:
-    :special-members:
-    :undoc-members:
-    :show-inheritance:
+Modules
+-------
 
 .. toctree::
     :maxdepth: 1
@@ -31,13 +27,23 @@ Contents:
     region
     chunk
 
+Constants
+---------
+
+.. autodata:: nbt.VERSION
+
+Functions
+---------
+
+.. autofunction:: nbt._get_version
+
+
 Auxiliary Documentation
------------------------
+=======================
 
 .. toctree::
     examples
     specification
-
 
 Indices and tables
 ==================
@@ -45,4 +51,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

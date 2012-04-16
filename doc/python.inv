@@ -1,0 +1,8 @@
+# Sphinx inventory version 1
+# Project: Python
+# Version: 3.2
+exceptions.Exception class library/exceptions.html
+exceptions.LookupError class library/exceptions.html
+_abcoll.MutableMapping class library/collections.html
+_abcoll.MutableSequence class library/collections.html
+_abcoll.Sequence class library/collections.html
