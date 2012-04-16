@@ -159,11 +159,13 @@ class BlockArray(object):
 		Laid out like:
 		(0,0,0), (0,1,0), (0,2,0) ... (0,127,0), (0,0,1), (0,1,1), (0,2,1) ... (0,127,1), (0,0,2) ... (0,127,15), (1,0,0), (1,1,0) ... (15,127,15)
 		
-		blocks = []
-		for x in range(15):
-		  for z in range(15):
-		    for y in range(127):
-		      blocks.append(Block(x,y,z))
+		::
+		
+		  blocks = []
+		  for x in range(15):
+		    for z in range(15):
+		      for y in range(127):
+		        blocks.append(Block(x,y,z))
 		"""
 		
 		offset = y + z*128 + x*128*16 if (coord == False) else coord[1] + coord[2]*128 + coord[0]*128*16

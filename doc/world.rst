@@ -1,8 +1,5 @@
-nbt.world Module
-================
-
-:mod:`world` Module
--------------------
+:mod:`nbt.world` Module
+=======================
 
 .. automodule:: nbt.world
     :members:
