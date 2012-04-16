@@ -95,6 +95,19 @@ pygments_style = 'sphinx'
 #modindex_common_prefix = []
 
 
+# -- Options for Autodoc extension (which generated code from Python docstrings)
+
+# Include only the class docstring to describe classes
+# (The alternative is to also include the __init__ docstring)
+autoclass_content = 'class'
+
+# This value selects if automatically documented members are sorted 
+# alphabetical (value 'alphabetical'), by member type (value 'groupwise') 
+# or by source order (value 'bysource'). The default is alphabetical.
+# If further control of the order is required, define __all__ in the module.
+autodoc_member_order = 'bysource'
+
+
 # -- Options for HTML output ---------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
