@@ -6,13 +6,13 @@ from gzip import GzipFile
 
 # Search parent directory first, to make sure we test the local nbt module, 
 # not an installed nbt module.
-extrasearchpath = os.path.realpath(os.path.join(sys.path[0],os.pardir))
-sys.path.insert(1, extrasearchpath) # insert ../ just after ./
+parentdir = os.path.realpath(os.path.join(os.path.dirname(__file__),os.pardir))
+if parentdir not in sys.path:
+	sys.path.insert(1, parentdir)  # insert ../ just after ./
 
 from nbt.nbt import _TAG_Numeric, MalformedFileError, NBTFile, TAGLIST
 
-NBTTESTFILE = os.path.join(sys.path[0], 'bigtest.nbt')
-
+NBTTESTFILE = os.path.join(os.path.dirname(__file__), 'bigtest.nbt')
 
 
 class BugfixTest(unittest.TestCase):
