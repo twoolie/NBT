@@ -1,8 +1,5 @@
-nbt.chunk Module
-================
-
-:mod:`chunk` Module
--------------------
+:mod:`nbt.chunk` Module
+=======================
 
 .. automodule:: nbt.chunk
     :members:

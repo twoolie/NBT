@@ -1,8 +1,5 @@
-nbt.nbt Module
-==============
-
-:mod:`nbt` Module
------------------
+:mod:`nbt.nbt` Module
+=====================
 
 .. automodule:: nbt.nbt
     :members:

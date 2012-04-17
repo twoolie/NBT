@@ -33,23 +33,23 @@ import nbt
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.viewcode']
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ['templates']
 
 # The suffix of source filenames.
 source_suffix = '.rst'
 
 # The encoding of source files.
-#source_encoding = 'utf-8-sig'
+#source_encoding = 'utf-8'
 
 # The master toctree document.
 master_doc = 'index'
 
 # General information about the project.
 project = u'NBT'
-copyright = u'2011, Thomas Woolford'
+copyright = u'2010-2012, Thomas Woolford'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -72,7 +72,7 @@ release = version
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ['build']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -93,6 +93,35 @@ pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
+
+
+# -- Options for Autodoc extension (which generated code from Python docstrings)
+
+# Include only the class docstring to describe classes
+# (The alternative is to also include the __init__ docstring)
+autoclass_content = 'class'
+
+# This value selects if automatically documented members are sorted 
+# alphabetical (value 'alphabetical'), by member type (value 'groupwise') 
+# or by source order (value 'bysource'). The default is alphabetical.
+# If further control of the order is required, define __all__ in the module.
+autodoc_member_order = 'bysource'
+
+# Don't skip the following special functions.
+def skip(app, what, name, obj, skip, options):
+    if name in ("__init__", "__unicode__", "__str__", "__repr__", "__len__", 
+                "__contains__", "__iter__", "__getitem__", "__setitem__", 
+                "__delitem__"):
+        return False
+    return skip
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip)
+
+
+# -- Options for intersphinx extension (for links to doc.python.org)
+
+intersphinx_mapping = {'python': ('http://docs.python.org/3.2', 'python.inv')}
 
 
 # -- Options for HTML output ---------------------------------------------------
