@@ -61,7 +61,7 @@ class TAG(object):
 	def pretty_tree(self, indent=0):
 		"""Return formated Unicode string of self, where iterable items are recursively listed in detail."""
 		return ("\t"*indent) + self.tag_info()
-	
+
 	# Python 2 compatibility; Python 3 uses __str__ instead.
 	def __unicode__(self):
 		"""Return a unicode string with the result in human readable format. Unlike valuestr(), the result is recursive for iterators till at least one level deep."""
@@ -86,7 +86,7 @@ class _TAG_Numeric(TAG):
 
 	#Parsers and Generators
 	def _parse_buffer(self, buffer):
-		# Note: buffer.read() may raise an IOError, for example if buffer is a corrupt gzip.GzipFile 
+		# Note: buffer.read() may raise an IOError, for example if buffer is a corrupt gzip.GzipFile
 		self.value = self.fmt.unpack(buffer.read(self.fmt.size))[0]
 
 	def _render_buffer(self, buffer):
@@ -165,7 +165,7 @@ class TAG_Byte_Array(TAG, MutableSequence):
 	#Printing and Formatting of tree
 	def valuestr(self):
 		return "[%i byte(s)]" % len(self.value)
-	
+
 	def __unicode__(self):
 		return '['+",".join([unicode(x) for x in self.value])+']'
 	def __str__(self):
@@ -383,11 +383,11 @@ class TAG_Compound(TAG, MutableMapping):
 	# Mixin methods
 	def __len__(self):
 		return len(self.tags)
-	
+
 	def __iter__(self):
 		for key in self.tags:
 			yield key.name
-	
+
 	def __contains__(self, key):
 		if isinstance(key, int):
 			return key <= len(self.tags)
@@ -438,7 +438,7 @@ class TAG_Compound(TAG, MutableMapping):
 
 	def keys(self):
 		return [tag.name for tag in self.tags]
-	
+
 	def iteritems(self):
 		for tag in self.tags:
 			yield (tag.name, tag)
@@ -531,7 +531,7 @@ class NBTFile(TAG_Compound):
 			self.file.flush()
 		if self.filename and 'close' in dir(self.file):
 			self.file.close()
-	
+
 	def __repr__(self):
 		"""
 		Return a string (ascii formated for Python 2, unicode

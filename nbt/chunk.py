@@ -1,6 +1,6 @@
 """
 Handles a single chunk of data (16x16x128 blocks) from a Minecraft save.
-Chunk is currently McRegion only.  
+Chunk is currently McRegion only.
 """
 from io import BytesIO
 from struct import pack, unpack
@@ -27,7 +27,7 @@ class BlockArray(object):
 			self.blocksList = list(blocksBytes)
 		else:
 			self.blocksList = [0]*32768 # Create an empty block list (32768 entries of zero (air))
-		
+
 		if isinstance(dataBytes, (bytearray, array.array)):
 			self.dataList = list(dataBytes)
 		else:
@@ -37,14 +37,14 @@ class BlockArray(object):
 	def get_all_blocks(self):
 		"""Return the blocks that are in this BlockArray."""
 		return self.blocksList
-	
+
 	# Get all data entries
 	def get_all_data(self):
 		"""Return the data of all the blocks in this BlockArray."""
 		bits = []
 		for b in self.dataList:
-			# The first byte of the Blocks arrays correspond 
-			# to the LEAST significant bits of the first byte of the Data. 
+			# The first byte of the Blocks arrays correspond
+			# to the LEAST significant bits of the first byte of the Data.
 			# NOT to the MOST significant bits, as you might expected.
 			bits.append(b & 15) # Little end of the byte
 			bits.append((b >> 4) & 15) # Big end of the byte
@@ -152,14 +152,14 @@ class BlockArray(object):
 		"""
 		Laid out like:
 		(0,0,0), (0,1,0), (0,2,0) ... (0,127,0), (0,0,1), (0,1,1), (0,2,1) ... (0,127,1), (0,0,2) ... (0,127,15), (1,0,0), (1,1,0) ... (15,127,15)
-		
+
 		blocks = []
 		for x in range(15):
 		  for z in range(15):
 		    for y in range(127):
 		      blocks.append(Block(x,y,z))
 		"""
-		
+
 		offset = y + z*128 + x*128*16 if (coord == False) else coord[1] + coord[2]*128 + coord[0]*128*16
 		return self.blocksList[offset]
 
@@ -167,8 +167,8 @@ class BlockArray(object):
 	def get_data(self, x,y,z, coord=False):
 		"""Return the data of the block at x, y, z."""
 		offset = y + z*128 + x*128*16 if (coord == False) else coord[1] + coord[2]*128 + coord[0]*128*16
-		# The first byte of the Blocks arrays correspond 
-		# to the LEAST significant bits of the first byte of the Data. 
+		# The first byte of the Blocks arrays correspond
+		# to the LEAST significant bits of the first byte of the Data.
 		# NOT to the MOST significant bits, as you might expected.
 		if (offset % 2 == 1):
 			# offset is odd
