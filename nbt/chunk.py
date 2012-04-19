@@ -14,15 +14,18 @@ class Chunk(object):
 		self.blocks = BlockArray(chunk_data['Blocks'].value, chunk_data['Data'].value)
 
 	def get_coords(self):
+		"""Return the coordinates of this chunk."""
 		return (self.coords[0].value,self.coords[1].value)
 
 	def __repr__(self):
+		"""Return a representation of this Chunk."""
 		return "Chunk("+str(self.coords[0])+","+str(self.coords[1])+")"
 
 
 class BlockArray(object):
 	"""Convenience class for dealing with a Block/data byte array."""
 	def __init__(self, blocksBytes=None, dataBytes=None):
+		"""Create a new BlockArray, defaulting to no block or data bytes."""
 		if isinstance(blocksBytes, (bytearray, array.array)):
 			self.blocksList = list(blocksBytes)
 		else:
@@ -56,6 +59,7 @@ class BlockArray(object):
 		return list(zip(self.get_all_blocks(), self.get_all_data()))
 
 	def get_blocks_struct(self):
+		"""Return a dictionary with block ids keyed to (x, y, z)."""
 		cur_x = 0
 		cur_y = 0
 		cur_z = 0
@@ -89,6 +93,7 @@ class BlockArray(object):
 			return array.array('B', self.dataList).tostring()
 
 	def generate_heightmap(self, buffer=False, as_array=False):
+		"""Return a heightmap, representing the highest solid blocks in this chunk."""
 		non_solids = [0, 8, 9, 10, 11, 38, 37, 32, 31]
 		if buffer:
 			return BytesIO(pack(">i", 256)+self.generate_heightmap()) # Length + Heightmap, ready for insertion into Chunk NBT
@@ -107,6 +112,10 @@ class BlockArray(object):
 				return array.array('B', bytes).tostring()
 
 	def set_blocks(self, list=None, dict=None, fill_air=False):
+		"""
+		Sets all blocks in this chunk, using either a list or dictionary.  
+		Blocks not explicitly set can be filled to air by setting fill_air to True.
+		"""
 		if list:
 			# Inputting a list like self.blocksList
 			self.blocksList = list

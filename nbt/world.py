@@ -106,7 +106,6 @@ class WorldFolder(object):
 		"""
 		Return an iterable list of all NBT. Use this function if you only
 		want to loop through the chunks once, and don't need the block or data arrays.
-		Use
 		"""
 		# TODO: Implement BoundingBox
 		# TODO: Implement sort order
