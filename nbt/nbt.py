@@ -94,26 +94,32 @@ class _TAG_Numeric(TAG):
 
 #== Value Tags ==#
 class TAG_Byte(_TAG_Numeric):
+	"""Represent a single tag storing 1 byte."""
 	id = TAG_BYTE
 	fmt = Struct(">b")
 
 class TAG_Short(_TAG_Numeric):
+	"""Represent a single tag storing 1 short."""
 	id = TAG_SHORT
 	fmt = Struct(">h")
 
 class TAG_Int(_TAG_Numeric):
+	"""Represent a single tag storing 1 int."""
 	id = TAG_INT
 	fmt = Struct(">i")
 
 class TAG_Long(_TAG_Numeric):
+	"""Represent a single tag storing 1 long."""
 	id = TAG_LONG
 	fmt = Struct(">q")
 
 class TAG_Float(_TAG_Numeric):
+	"""Represent a single tag storing 1 IEE-754 floating point number."""
 	id = TAG_FLOAT
 	fmt = Struct(">f")
 
 class TAG_Double(_TAG_Numeric):
+	"""Represent a single tag storing 1 IEE-754 double precision floating point number."""
 	id = TAG_DOUBLE
 	fmt = Struct(">d")
 
@@ -464,9 +470,7 @@ class TAG_Compound(TAG, MutableMapping):
 TAGLIST = {TAG_BYTE:TAG_Byte, TAG_SHORT:TAG_Short, TAG_INT:TAG_Int, TAG_LONG:TAG_Long, TAG_FLOAT:TAG_Float, TAG_DOUBLE:TAG_Double, TAG_BYTE_ARRAY:TAG_Byte_Array, TAG_STRING:TAG_String, TAG_LIST:TAG_List, TAG_COMPOUND:TAG_Compound, TAG_INT_ARRAY:TAG_Int_Array}
 
 class NBTFile(TAG_Compound):
-	"""
-	Represents an NBT file object
-	"""
+	"""Represent an NBT file object."""
 	def __init__(self, filename=None, buffer=None, fileobj=None):
 		super(NBTFile, self).__init__()
 		self.filename = filename
@@ -488,6 +492,7 @@ class NBTFile(TAG_Compound):
 			self.file = None
 
 	def parse_file(self, filename=None, buffer=None, fileobj=None):
+		"""Completely parse a file, extracting all tags."""
 		if filename:
 			self.file = GzipFile(filename, 'rb')
 		elif buffer:
@@ -509,6 +514,7 @@ class NBTFile(TAG_Compound):
 		else: ValueError("need a file!")
 
 	def write_file(self, filename=None, buffer=None, fileobj=None):
+		"""Write this NBT file to a file."""
 		if buffer:
 			self.filename = None
 			self.file = buffer
