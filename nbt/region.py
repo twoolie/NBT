@@ -37,7 +37,7 @@ class RegionFile(object):
 			self.file = open(filename, 'r+b')
 		if fileobj:
 			self.file = fileobj
-			
+
 		# Some variables and constants
 		#
 		# Status is a number representing:
@@ -54,7 +54,7 @@ class RegionFile(object):
 		self.STATUS_CHUNK_OUT_OF_FILE = -1
 		self.STATUS_CHUNK_OK = 0
 		self.STATUS_CHUNK_NOT_CREATED = 1
-		
+
 		self.header = {}
 		self.chunk_headers = {}
 		self.extents = None
@@ -62,7 +62,7 @@ class RegionFile(object):
 			self.size = getsize(self.filename)
 			if self.size == 0:
 				# Some region files seems to have 0 bytes of size, and
-				# Minecraft handle them without problems. Take them 
+				# Minecraft handle them without problems. Take them
 				# as empty region files.
 				self.init_header()
 			else:
@@ -148,23 +148,23 @@ class RegionFile(object):
 					length = None
 					compression = None
 					chunk_status = self.STATUS_CHUNK_IN_HEADER
-		
+
 				self.chunk_headers[x, z] = (length, compression, chunk_status)
 
 
 	def locate_free_space(self):
 		pass
-	
+
 	def get_chunks(self):
 		"""
 		Return coordinates and length of all chunks.
-		
+
 		Warning: despite the name, this function does not actually return the chunk,
 		but merely it's metadata. Use get_chunk(x,z) to get the NBTFile, and then Chunk()
 		to get the actual chunk.
 		"""
 		return self.get_chunk_coords()
-	
+
 	def get_chunk_coords(self):
 		"""Return coordinates and length of all chunks."""
 		index = 0
@@ -178,7 +178,7 @@ class RegionFile(object):
 				chunks.append({'x':x,'z':z,'length':length})
 			index += 4
 		return chunks
-	
+
 	def iter_chunks(self):
 		"""
 		Return an iterater over all chunks present in the region.
@@ -187,26 +187,26 @@ class RegionFile(object):
 		"""
 		for cc in self.get_chunk_coords():
 			yield self.get_chunk(cc['x'],cc['z'])
-	
+
 	def get_timestamp(self, x, z):
 		"""Return the timestamp of when this region file was last modified."""
 		self.file.seek(4096+4*(x+z*32))
 		timestamp = unpack(">I",self.file.read(4))
 		return timestamp
-	
+
 	def chunk_count(self):
 		return len(self.get_chunk_coords())
-	
+
 	def get_nbt(self, x, z):
 		return self.get_chunk(x, z)
-	
+
 	def get_chunk(self, x, z):
 		"""Return a NBTFile"""
 		#read metadata block
 		offset, length, timestamp, region_header_status = self.header[x, z]
 		if region_header_status == self.STATUS_CHUNK_NOT_CREATED:
 			return None
-			
+
 		elif region_header_status == self.STATUS_CHUNK_IN_HEADER:
 			raise RegionHeaderError('Chunk %d,%d is in the region header' % (x,z))
 
@@ -230,30 +230,30 @@ class RegionFile(object):
 					return NBTFile(buffer=chunk) # pass uncompressed
 				except Exception as e:
 					raise ChunkDataError(str(e))
-				
+
 			elif (compression == 1):
 				chunk = BytesIO(chunk)
 				try:
 					return NBTFile(fileobj=chunk) # pass compressed; will be filtered through Gzip
 				except Exception as e:
 					raise ChunkDataError(str(e))
-					
+
 			else:
 				raise ChunkDataError('Unknown chunk compression/format')
-				
+
 		else:
 			return None
-	
+
 	def write_chunk(self, x, z, nbt_file):
 		"""A smart chunk writer that uses extents to trade off between fragmentation and cpu time."""
 		data = BytesIO()
 		nbt_file.write_file(buffer = data) #render to buffer; uncompressed
-		
+
 		compressed = zlib.compress(data.getvalue()) #use zlib compression, rather than Gzip
 		data = BytesIO(compressed)
-		
+
 		nsectors = int(math.ceil((len(data.getvalue())+0.001)/4096))
-		
+
 		#if it will fit back in it's original slot:
 		offset, length, timestamp, status = self.header[x, z]
 		pad_end = False
@@ -297,11 +297,11 @@ class RegionFile(object):
 			# Write zeros up to the end of the chunk
 			self.file.seek((sector+nsectors)*4096-1)
 			self.file.write(chr(0))
-		
+
 		#seek to header record and write offset and length records
 		self.file.seek(4*(x+z*32))
 		self.file.write(pack(">IB", sector, nsectors)[1:])
-		
+
 		#write timestamp
 		self.file.seek(4096+4*(x+z*32))
 		timestamp = int(time.time())
@@ -314,6 +314,6 @@ class RegionFile(object):
 		Using only this method leaves the chunk data intact, fragmenting the region file (unconfirmed).
 		This is an start to a better function remove_chunk
 		"""
-		
+
 		self.file.seek(4*(x+z*32))
 		self.file.write(pack(">IB", 0, 0)[1:])
