@@ -3,15 +3,13 @@ NBT's documentation
 
 NBT is a Named Binary Tag parser based upon the specification by Markus Persson.
 
-From the spec:
-  "NBT (Named Binary Tag) is a tag based binary format designed to carry large
-   amounts of binary data with smaller amounts of additional data.
-   An NBT file consists of a single GZIPped Named Tag of type TAG_Compound."
+From the :ref:`nbt-specification`:
 
-This project also contains helper classes for dealing with Regions and Chunks in
-Minecraft, the main use case for the NBT format.
+    "NBT (Named Binary Tag) is a tag based binary format designed to carry large
+    amounts of binary data with smaller amounts of additional data."
 
-Contents:
+This project also contains helper classes for dealing with Regions, Chunks and 
+World folders in Minecraft, the main use case for the NBT format.
 
 :mod:`nbt` Package
 ==================
@@ -23,9 +21,9 @@ Modules
     :maxdepth: 1
 
     nbt
-    world
-    region
     chunk
+    region
+    world
 
 Constants
 ---------
@@ -42,8 +40,11 @@ Auxiliary Documentation
 =======================
 
 .. toctree::
+    :maxdepth: 1
+
     examples
     specification
+    tests
 
 Indices and tables
 ==================

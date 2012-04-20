@@ -18,6 +18,10 @@ import sys, os
 nbtpath = os.path.realpath(os.path.join(os.path.dirname(__file__),os.pardir))
 if not os.path.exists(os.path.join(nbtpath, 'nbt')):
 	raise ImportError("Can not find nbt module at %s" % nbtpath)
+if os.path.exists(os.path.join(nbtpath, 'examples')):
+	sys.path.insert(0, os.path.join(nbtpath, 'examples'))
+if os.path.exists(os.path.join(nbtpath, 'tests')):
+	sys.path.insert(0, os.path.join(nbtpath, 'tests'))
 sys.path.insert(0,nbtpath)
 import nbt
 

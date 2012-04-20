@@ -1,3 +1,5 @@
+.. _mod:nbt.nbt:
+
 :mod:`nbt.nbt` Module
 =====================
 
