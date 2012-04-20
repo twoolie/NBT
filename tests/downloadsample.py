@@ -92,7 +92,8 @@ def extract(filename, workdir, filelist):
 	logger.info("Extracting")
 	def filefilter(members):
 		for tarinfo in members:
-			if tarinfo.name in filelist:
+			name = tarinfo.name.replace("/", "\\") if "nt" in os.name else tarinfo.name
+			if name in filelist:
 				logger.info("Extract %s" % tarinfo.name)
 				yield tarinfo
 			else:
