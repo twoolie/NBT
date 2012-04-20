@@ -17,7 +17,7 @@ import hashlib
 URL = "https://github.com/downloads/twoolie/NBT/Sample_World.tar.gz"
 """URL to retrieve"""
 checksums = {
-	'Sample World/': None, 
+	'Sample World': None, 
 	'Sample World/data': None, 
 	'Sample World/level.dat': 'f252cf8b938fa1e41c9335ea1bdc70fca73ac5c63c2cf2db4b2ddc4cb2fa4d91', 
 	'Sample World/level.dat_mcr': '933238e89a9f7f94c72f236da0d81d44d966c7a1544490e51e682ab42ccc50ff', 
@@ -34,7 +34,7 @@ checksums = {
 	'Sample World/session.lock': 'd05da686dd04cd2ad1f660ddaa7645abc9fd9af396357a5b3256b437af0d7dba', 
 }
 """SHA256 checksums for each file in the tar file.
-Directories MUST also be included, with None as the checksum"""
+Directories MUST also be included (without trailing slash), with None as the checksum"""
 
 
 def download(url, destination):
@@ -60,18 +60,6 @@ def download(url, destination):
 			localfile.write(data)
 			size += len(data)
 			logging.info("Downloaded %0.1f MiByte..." % (float(size)/1048576))
-	except (urllib.HTTPError) as e:
-		logger.error('Download %s failed: HTTP Error %d: %s\n' % (url, e.code, e.reason))
-		raise
-	except (urllib.URLError) as e:
-		# e.reason may be a socket.error. If so, print e.reason.strerror.
-		logger.error('Download %s failed: %s\n' % \
-				(url, e.reason.strerror if hasattr(e.reason, "strerror") else e.reason))
-		raise
-	except IOError as e:
-		logger.error('Download to %s failed: %s' % \
-				(e.filename, e.strerror if hasattr(e, "strerror") else e))
-		raise
 	finally:
 		try:
 			remotefile.close()
@@ -92,11 +80,12 @@ def extract(filename, workdir, filelist):
 	logger.info("Extracting")
 	def filefilter(members):
 		for tarinfo in members:
-			name = tarinfo.name.replace("/", "\\") if "nt" in os.name else tarinfo.name
-			if name in filelist:
+			if tarinfo.name in filelist:
 				logger.info("Extract %s" % tarinfo.name)
 				yield tarinfo
 			else:
+				print repr(tarinfo.name)
+				print filelist
 				logger.warning("Skip %s" % tarinfo.name)
 	# r:* means any compression (gzip or bz2 are supported)
 	files = tarfile.open(filename, 'r:*')
@@ -104,9 +93,9 @@ def extract(filename, workdir, filelist):
 	files.close()
 
 
-def verify(dir, checksums):
+def verify(checksums):
 	"""
-	Given a folder, verify if all given files are present and their SHA256 
+	Verify if all given files are present and their SHA256 
 	checksum is correct. Any files not explicitly listed are deleted.
 	
 	checksums is a dict of file => checksum, with file a file relative to dir.
@@ -118,14 +107,12 @@ def verify(dir, checksums):
 	Errors or exceptions result in a return value of False.
 	"""
 	logger = logging.getLogger("nbt.tests.downloadsample")
-	logger.info("Verifying")
 	success = True
-	for relpath in checksums.keys():
+	for path in checksums.keys():
 		try:
-			check = checksums[relpath]
+			check = checksums[path]
 			if check == None: continue  # Skip folders
-			fullpath = os.path.join(dir, relpath)
-			localfile = open(fullpath, 'rb')
+			localfile = open(path, 'rb')
 			h = hashlib.sha256()
 			chunksize = 524288 # 0.5 MiB
 			while True:
@@ -134,12 +121,16 @@ def verify(dir, checksums):
 				h.update(data)
 			calc = h.hexdigest()
 			if calc != check:
-				logger.error("Checksum failed %s: %s found, %s expected" % (relpath, calc, check))
+				logger.error("Checksum failed %s: %s found, %s expected" % (path, calc, check))
 				success = False
 		except IOError as e:
-			logger.error('Checksum verificiation of %s failed: %s' % \
-					(e.filename, e.strerror if hasattr(e, "strerror") else e))
+			if e.errno == 2:
+				logger.error('Checksum verificiation failed: file %s not found' % e.filename)
+			else:
+				logger.error('Checksum verificiation of %s failed: errno %d: %s' % \
+						(e.filename, e.errno, e.strerror))
 			return False
+	logger.info("Checksum of %d files verified" % len(checksums))
 	return success
 
 
@@ -151,29 +142,35 @@ def install(url, workdir, checksums):
 	Verifies the checksum of all files. Files without a checksum are not
 	extracted.
 	"""
-	# the paths in checksum are relative, and UNIX-based. Normalise them to 
-	# support Windows; and create the following three derivates:
-	# - nchecksums: as checksum, but with normalised paths (required for Windows)
-	# - dirs: list of full native path of dirs -- to check if folder exists
-	# - filepaths: list of relative native path -- to filter extraction
-	nchecksums = dict([(os.path.normpath(path), checksums[path]) for path in checksums.keys()])
-	filepaths = nchecksums.keys()
-	dirs = sorted(os.path.join(workdir, file) for file in filepaths if nchecksums[file] == None)
+	# the paths in checksum are relative to the working dir, and UNIX-based. 
+	# Normalise them to support Windows; and create the following three derivates:
+	# - posixpaths: list of relative posix paths -- to filter tar extraction
+	# - nchecksums: as checksum, but with normalised absolute paths
+	# - files: list of normalised absolute path of files (non-directories)
+	posixpaths = checksums.keys()
+	nchecksums = dict([(os.path.join(workdir, os.path.normpath(path)), checksums[path]) \
+			for path in posixpaths if checksums[path] != None])
+	files = nchecksums.keys()
+	tarfile = os.path.join(basedir, os.path.basename(url))
 	
-	# only extract files if none of the directories exist (do not overwrite anything)
-	if not any(map(os.path.exists, dirs)):
-		try:
-			file = os.path.join(basedir, os.path.basename(url))
-			if not os.path.exists(file):
-				download(url=URL, destination=file)
-			extract(filename=file, workdir=workdir, filelist=filepaths)
-		except IOError:
-			raise
-			return False
-	if not verify(dir=workdir, checksums=nchecksums):
-		return False
-	else:
-		return False
+	try:
+		if not any(map(os.path.exists, files)):
+			# none destination file exists. We can safely download/extract without overwriting.
+			if not os.path.exists(tarfile):
+				download(url=URL, destination=tarfile)
+			extract(filename=tarfile, workdir=workdir, filelist=posixpaths)
+		return verify(checksums=nchecksums)
+	except urllib.HTTPError as e:
+		logger.error('Download %s failed: HTTP Error %d: %s\n' % (url, e.code, e.reason))
+	except urllib.URLError as e:
+		# e.reason may be a socket.error. If so, print e.reason.strerror.
+		logger.error('Download %s failed: %s\n' % \
+				(url, e.reason.strerror if hasattr(e.reason, "strerror") else e.reason))
+	except tarfile.TarError as e:
+		logger.error('Extract %s failed: %s\n' % (tarfile, e.message))
+	except IOError as e:
+		logger.error('Download to %s failed: %s' % (e.filename, e.strerror))
+	return False
 
 
 if __name__ == '__main__':
