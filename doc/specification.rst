@@ -1,9 +1,12 @@
+.. _nbt-specification:
+
 Named Binary Tag specification
 ==============================
 
 This specification was written by Markus Persson and was available at http://www.minecraft.net/docs/NBT.txt between 2010 and 2011.
 
 NBT (Named Binary Tag) is a tag based binary format designed to carry large amounts of binary data with smaller amounts of additional data.
+
 An NBT file consists of a single GZIPped Named Tag of type TAG_Compound.
 
 A Named Tag has the following format::
