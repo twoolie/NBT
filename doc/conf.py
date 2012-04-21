@@ -13,22 +13,22 @@
 
 import sys, os
 
-# Make sure we are importing the current NBT, and not an old version installed 
-# in the site-packages
-nbtpath = os.path.realpath(os.path.join(os.path.dirname(__file__),os.pardir))
-if not os.path.exists(os.path.join(nbtpath, 'nbt')):
-	raise ImportError("Can not find nbt module at %s" % nbtpath)
-if os.path.exists(os.path.join(nbtpath, 'examples')):
-	sys.path.insert(0, os.path.join(nbtpath, 'examples'))
-if os.path.exists(os.path.join(nbtpath, 'tests')):
-	sys.path.insert(0, os.path.join(nbtpath, 'tests'))
-sys.path.insert(0,nbtpath)
-import nbt
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+
+# Make sure we are importing the current NBT, and not an old version installed 
+# in the site-packages
+parentdir = os.path.realpath(os.path.join(os.path.dirname(__file__),os.pardir))
+if not os.path.exists(os.path.join(parentdir, 'nbt')):
+	raise ImportError("Can not find nbt module at %s" % parentdir)
+if os.path.exists(os.path.join(parentdir, 'examples')):
+	sys.path.insert(1, os.path.join(parentdir, 'examples'))
+if os.path.exists(os.path.join(parentdir, 'tests')):
+	sys.path.insert(1, os.path.join(parentdir, 'tests'))
+sys.path.insert(1, parentdir)
+import nbt
 
 # -- General configuration -----------------------------------------------------
 
