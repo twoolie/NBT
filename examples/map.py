@@ -11,7 +11,7 @@ try:
 	import nbt
 except ImportError:
 	# nbt not in search path. Let's see if it can be found in the parent folder
-	extrasearchpath = os.path.realpath(os.path.join(sys.path[0],os.pardir))
+	extrasearchpath = os.path.realpath(os.path.join(__file__,os.pardir,os.pardir))
 	if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
 		raise
 	sys.path.append(extrasearchpath)
@@ -174,7 +174,7 @@ def hsl2rgb(H,S,L):
 	return (R,G,B)
 
 
-def main(world_folder):
+def main(world_folder, show=True):
 	world = McRegionWorldFolder(world_folder)  # map still only supports McRegion maps
 	bb = world.get_boundingbox()
 	map = Image.new('RGB', (16*bb.lenx(),16*bb.lenz()))
@@ -203,7 +203,8 @@ def main(world_folder):
 		map.save(filename,"PNG")
 		print("Saved map as %s" % filename)
 		return 75 # EX_TEMPFAIL
-	map.show()
+	if show:
+		map.show()
 	return 0 # NOERR
 
 
@@ -211,9 +212,14 @@ if __name__ == '__main__':
 	if (len(sys.argv) == 1):
 		print("No world folder specified!")
 		sys.exit(64) # EX_USAGE
-	world_folder = sys.argv[1]
+	if sys.argv[1] == '--noshow' and len(sys.argv) > 2:
+		show = False
+		world_folder = sys.argv[2]
+	else:
+		show = True
+		world_folder = sys.argv[1]
 	if (not os.path.exists(world_folder)):
 		print("No such folder as "+world_folder)
 		sys.exit(72) # EX_IOERR
 	
-	sys.exit(main(world_folder))
+	sys.exit(main(world_folder, show))
