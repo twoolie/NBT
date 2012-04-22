@@ -16,6 +16,10 @@ import hashlib
 
 URL = "https://github.com/downloads/twoolie/NBT/Sample_World.tar.gz"
 """URL to retrieve"""
+workdir = os.path.dirname(__file__)
+"""Directory for download and extracting the sample files"""
+worlddir = os.path.join(workdir, 'Sample World')
+"""Destination folder for the sample world."""
 checksums = {
 	'Sample World': None, 
 	'Sample World/data': None, 
@@ -134,7 +138,7 @@ def verify(checksums):
 	return success
 
 
-def install(url, workdir, checksums):
+def install(url=URL, workdir=workdir, checksums=checksums):
 	"""
 	Download and extract a sample world, used for testing.
 	The download file and sample world are stored in workdir.
@@ -151,7 +155,7 @@ def install(url, workdir, checksums):
 	nchecksums = dict([(os.path.join(workdir, os.path.normpath(path)), checksums[path]) \
 			for path in posixpaths if checksums[path] != None])
 	files = nchecksums.keys()
-	tarfile = os.path.join(basedir, os.path.basename(url))
+	tarfile = os.path.join(workdir, os.path.basename(url))
 	
 	try:
 		if not any(map(os.path.exists, files)):
@@ -178,6 +182,5 @@ if __name__ == '__main__':
 	if len(logger.handlers) == 0:
 		# Logging is not yet configured. Configure it.
 		logging.basicConfig(level=logging.INFO, stream=sys.stderr, format='%(levelname)-8s %(message)s')
-	basedir = os.path.dirname(__file__)
-	success = install(URL, basedir, checksums)
+	success = install()
 	sys.exit(0 if success else 1)
