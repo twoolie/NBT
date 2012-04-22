@@ -139,7 +139,7 @@ def main(world_folder, start=None, stop=None):
 	block_data_totals = [[0]*16 for i in range(256)] # up to 16 data numbers in 256 block IDs
 	try:
 		for filename in regions:
-			region_totals = process_region_file(os.path.join(world_folder,'region',filename), start, stop)
+			region_totals = process_region_file(filename, start, stop)
 			for i, data in enumerate(region_totals):
 				for j, total in enumerate(data):
 					block_data_totals[i][j] += total
