@@ -87,7 +87,7 @@ class RegionFile(object):
 			self.file.seek(index)
 			offset, length = unpack(">IB", b"\0"+self.file.read(4))
 			self.file.seek(index + 4096)
-			timestamp = unpack(">I", self.file.read(4))
+			timestamp = unpack(">I", self.file.read(4))[0]
 			x = int(index//4) % 32
 			z = int(index//4)//32
 			if offset == 0 and length == 0:
@@ -191,7 +191,7 @@ class RegionFile(object):
 	def get_timestamp(self, x, z):
 		"""Return the timestamp of when this region file was last modified."""
 		self.file.seek(4096+4*(x+z*32))
-		timestamp = unpack(">I",self.file.read(4))
+		timestamp = unpack(">I",self.file.read(4))[0]
 		return timestamp
 
 	def chunk_count(self):

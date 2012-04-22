@@ -10,7 +10,7 @@ try:
 	import nbt
 except ImportError:
 	# nbt not in search path. Let's see if it can be found in the parent folder
-	extrasearchpath = os.path.realpath(os.path.join(sys.path[0],os.pardir))
+	extrasearchpath = os.path.realpath(os.path.join(__file__,os.pardir,os.pardir))
 	if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
 		raise
 	sys.path.append(extrasearchpath)
@@ -61,9 +61,9 @@ def print_results(biome_totals):
 
 def main(world_folder):
 	world = AnvilWorldFolder(world_folder)  # Not supported for McRegion
-	if not world.valid():  # likely still a McRegion file
+	if not world.nonempty():  # likely still a McRegion file
 		sys.stderr.write("World folder %r is empty or not an Anvil formatted world\n" % world_folder)
-		sys.exit(65)  # EX_DATAERR
+		return 65  # EX_DATAERR
 	biome_totals = [0]*256 # 256 counters for 256 biome IDs
 	
 	try:
