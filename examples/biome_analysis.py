@@ -47,7 +47,7 @@ BIOMES = {
 
 
 def print_results(biome_totals):
-	locale.setlocale(locale.LC_ALL, 'en_US')
+	locale.setlocale(locale.LC_ALL, '')
 	for id,count in enumerate(biome_totals):
 		# Biome ID 255 is ignored. It means it is not calculated by Minecraft yet
 		if id == 255 or (count == 0 and id not in BIOMES):

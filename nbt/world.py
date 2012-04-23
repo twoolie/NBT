@@ -15,32 +15,14 @@ class UnknownWorldFormat(Exception):
 class InconceivedChunk(LookupError):
 	"""Specified chunk has not yet been generated"""
 
-class WorldFolder(object):
+
+class _BaseWorldFolder(object):
 	"""
 	Abstract class, representing either a McRegion or Anvil world folder.
 	This class will use either Anvil or McRegion, with Anvil the preferred format.
 	Simply calling world_folder will do this automattically, without user interaction
 	"""
 	type = "Generic"
-	# Preferred subclasses to use (in this order)
-	# this is defined as (AnvilWorldFolder, McRegionWorldFolder) AFTER the
-	# definition of those subclasses (it can't be done here, because Python insists
-	# that objects are defined before they are referenced.
-	subclasses = ()
-
-	def __new__(cls, world_folder, *args, **kwargs):
-		"""
-		Python trickery to return a AnvilWorldFolder or McRegionWorldFolder
-		instance, or raise a UnknownWorldFormat.
-		"""
-		if cls == WorldFolder: # Format unspecified. Check which world format to use.
-			for cls in cls.subclasses:
-				wf = cls(world_folder, *args, **kwargs)
-				if wf.nonempty(): # Check if the world is non-empty
-					return wf
-			raise UnknownWorldFormat("Empty world or unknown format: %r" % world_folder)
-		else:
-			return object.__new__(cls, world_folder, *args, **kwargs)
 
 	def __init__(self, world_folder):
 		"""Initialize a WorldFolder."""
@@ -210,21 +192,40 @@ class WorldFolder(object):
 		return "%s(%r)" % (self.__class__.__name__,self.worldfolder)
 
 
-class McRegionWorldFolder(WorldFolder):
+class McRegionWorldFolder(_BaseWorldFolder):
 	"""Represents a world save using the old McRegion format."""
 	type = "McRegion"
 	extension = 'mcr'
 	chunkclass = chunk.Chunk
 	# chunkclass = chunk.McRegionChunk  # TODO: change to McRegionChunk when done
 
-class AnvilWorldFolder(WorldFolder):
+class AnvilWorldFolder(_BaseWorldFolder):
 	"""Represents a world save using the new Anvil format."""
 	type = "Anvil"
 	extension = 'mca'
 	chunkclass = chunk.Chunk
 	# chunkclass = chunk.AnvilChunk	 # TODO: change to AnvilChunk when done
 
-WorldFolder.subclasses = (AnvilWorldFolder, McRegionWorldFolder)
+
+class _WorldFolderFactory():
+	"""Factory class: instantiate the subclassses in order, and the first instance 
+	whose nonempty() method returns True is returned. If no nonempty() returns True,
+	a UnknownWorldFormat exception is raised."""
+	def __init__(self, subclasses):
+		self.subclasses = subclasses
+	def __call__(self, *args, **kwargs):
+		for cls in self.subclasses:
+			wf = cls(*args, **kwargs)
+			if wf.nonempty(): # Check if the world is non-empty
+				return wf
+		raise UnknownWorldFormat("Empty world or unknown format: %r" % world_folder)
+
+WorldFolder = _WorldFolderFactory([AnvilWorldFolder, McRegionWorldFolder])
+"""
+Factory instance that returns a AnvilWorldFolder or McRegionWorldFolder
+instance, or raise a UnknownWorldFormat.
+"""
+
 
 
 class BoundingBox(object):

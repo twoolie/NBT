@@ -6,7 +6,6 @@ Run all scripts in examples on specific sample world.
 
 import sys
 import os
-# import logging
 import unittest
 import subprocess
 import shutil
@@ -24,6 +23,15 @@ except ImportError:
 			return None if condition else f
 		return decorator
 
+if sys.version_info[0] < 3:
+	def _deletechars(text, deletechars):
+		"""Return string, with the deletechars removed"""
+		return filter(lambda c: c not in deletechars, text)
+else:
+	def _deletechars(text, deletechars):
+		"""Return string, with the deletechars removed"""
+		filter = str.maketrans('', '', deletechars)
+		return text.translate(filter)
 
 def _mkdir(dstdir, subdir):
 	"""Helper function: create folder /dstdir/subdir"""
@@ -47,43 +55,24 @@ class ScriptTestCase(unittest.TestCase):
 	mcregionfolder = None
 	anvilfolder = None
 	examplesdir = os.path.normpath(os.path.join(__file__, os.pardir, os.pardir, 'examples'))
-	@classmethod
-	def installsampleworld(cls):
-		downloadsample.install()
-		cls.worldfolder = downloadsample.worlddir
-	@classmethod
-	def extractMcRegionWorld(cls):
-		cls.mcregionfolder = tempfile.mkdtemp(prefix="nbtmcregion")
-		_mkdir(cls.mcregionfolder, 'region')
-		_copyglob(cls.worldfolder, cls.mcregionfolder, "region/*.mcr")
-		_copyrename(cls.worldfolder, cls.mcregionfolder, "level.dat_mcr", "level.dat")
-	@classmethod
-	def extractAnvilWorld(cls):
-		"""Download and extract a sample world (if not available), and copy the anvil-specific files to a temporary directory."""
-		cls.anvilfolder = tempfile.mkdtemp(prefix="nbtanvil")
-		_mkdir(cls.anvilfolder, 'region')
-		_copyglob(cls.worldfolder, cls.anvilfolder, "region/*.mca")
-		_copyrename(cls.worldfolder, cls.anvilfolder, "level.dat", "level.dat")
-	@classmethod
-	def setUpClass(cls):
-		pass
-	@classmethod
-	def tearDownClass(cls):
-		if cls.mcregionfolder:
-			shutil.rmtree(cls.mcregionfolder, ignore_errors=True)
-			cls.mcregionfolder = None
-		if cls.anvilfolder:
-			shutil.rmtree(cls.anvilfolder, ignore_errors=True)
-			cls.anvilfolder = None
 	def runScript(self, script, args):
-		script = os.path.join(self.examplesdir, script)
-		args.insert(0, script)
-		p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+		scriptpath = os.path.join(self.examplesdir, script)
+		args.insert(0, scriptpath)
+		# Ensure we're using the same python version.
+		# python = sys.argv[0]
+		# args.insert(0, python)
+		p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		p.wait()
+		output = [r.decode('utf-8') for r in p.stdout.readlines()]
+		for l in p.stderr.readlines():
+			sys.stdout.write("%s: %s" % (script, l.decode('utf-8')))
+		try:
+			p.stdout.close()
+			p.stderr.close()
+		except IOError:
+			pass
 		self.assertEqual(p.returncode, 0, "return code is %d" % p.returncode)
-		r = p.stdout.readlines()
-		p.stdout.close()
-		return r
+		return output
 	def assertEqualOutput(self, actual, expected):
 		"""Compare two lists of strings, ignoring whitespace at begin and end of line."""
 		if len(actual) < len(expected):
@@ -133,65 +122,52 @@ class BlockAnalysisScriptTest(ScriptTestCase):
 		"RedMushroom:31",
 		"LavaSprings:47665",
 	]
-	@classmethod
-	def setUpClass(cls):
-		cls.installsampleworld()
-		cls.extractMcRegionWorld()
-		# cls.extractAnvilWorld()
 	def testMcRegionWorld(self):
 		output = self.runScript('block_analysis.py', [self.mcregionfolder])
 		self.assertTrue(len(output) >= 73, "Expected output of at least 73 lines long")
-		output = [l.translate(None," ,.") for l in output[-16:]]
+		output = [_deletechars(l, " ,.") for l in output[-16:]]
 		self.assertEqualOutput(output, self.expected)
 	# TODO: Anvil does not yet work.
 	# def testAnvilWorld(self):
 	# 	output = self.runScript('block_analysis.py', [self.anvilfolder])
 	# 	print repr(output)
 	# 	self.assertTrue(len(output) >= 73, "Expected output of at least 73 lines long")
-	# 	output = [l.translate(None," ,.") for l in output[-16:]]
+	# 	output = [_deletechars(l, " ,.") for l in output[-16:]]
 	# 	self.assertEqualOutput(output, self.expected)
 
 class ChestAnalysisScriptTest(ScriptTestCase):
-	@classmethod
-	def setUpClass(cls):
-		cls.installsampleworld()
-		cls.extractMcRegionWorld()
-		cls.extractAnvilWorld()
 	def testMcRegionWorld(self):
 		output = self.runScript('chest_analysis.py', [self.mcregionfolder])
 		self.assertEqual(len(output), 178)
-		count = len(filter(lambda l: l.startswith('Chest at '), output))
+		count = len(list(filter(lambda l: l.startswith('Chest at '), output)))
 		self.assertEqual(count, 38)
 	def testAnvilWorld(self):
 		output = self.runScript('chest_analysis.py', [self.anvilfolder])
 		self.assertEqual(len(output), 178)
-		count = len(filter(lambda l: l.startswith('Chest at '), output))
+		count = len(list(filter(lambda l: l.startswith('Chest at '), output)))
 		self.assertEqual(count, 38)
 
+def has_PIL():
+	try:
+		from PIL import Image
+		return True
+	except ImportError:
+		return False
+
 class MapScriptTest(ScriptTestCase):
-	@classmethod
-	def setUpClass(cls):
-		cls.installsampleworld()
-		cls.extractMcRegionWorld()
-		# cls.extractAnvilWorld()
-	@skipIf(sys.version_info[0] >= 3, "PIL library not yet available for Python 3")
+	@skipIf(not has_PIL(), "PIL library not available")
 	def testMcRegionWorld(self):
 		output = self.runScript('map.py', ['--noshow', self.mcregionfolder])
 		self.assertTrue(output[-1].startswith("Saved map as "))
 	# TODO: this currently writes the map to tests/nbtmcregion*.png files. 
 	# The locations should be a tempfile, and the file should be deleted afterwards.
 	
-	# @skipIf(sys.version_info[0] >= 3, "PIL library not yet available for Python 3")
+	# @skipIf(not has_PIL(), "PIL library not available")
 	# def testAnvilWorld(self):
 	# 	output = self.runScript('map.py', ['--noshow', self.anvilfolder])
 	# 	self.assertEqualString(output[-1], "Saved map as Sample World.png")
 
 class MobAnalysisScriptTest(ScriptTestCase):
-	@classmethod
-	def setUpClass(cls):
-		cls.installsampleworld()
-		cls.extractMcRegionWorld()
-		cls.extractAnvilWorld()
 	def testMcRegionWorld(self):
 		output = self.runScript('mob_analysis.py', [self.mcregionfolder])
 		self.assertEqual(len(output), 413)
@@ -206,11 +182,6 @@ class MobAnalysisScriptTest(ScriptTestCase):
 		self.assertEqualString(output[400], "Zombie at 249.3,48.0,368.1")
 
 class SeedScriptTest(ScriptTestCase):
-	@classmethod
-	def setUpClass(cls):
-		cls.installsampleworld()
-		cls.extractMcRegionWorld()
-		cls.extractAnvilWorld()
 	def testMcRegionWorld(self):
 		output = self.runScript('seed.py', [self.mcregionfolder])
 		self.assertEqualOutput(output, ["-3195717715052600521"])
@@ -248,7 +219,43 @@ class GenerateLevelDatScriptTest(ScriptTestCase):
 		self.assertEqualString(output[13], self.expected[13])
 
 
+def setUpModule():
+	"""Download sample world, and copy Anvil and McRegion files to temporary folders."""
+	if ScriptTestCase.worldfolder == None:
+		downloadsample.install()
+		ScriptTestCase.worldfolder = downloadsample.worlddir
+	if ScriptTestCase.mcregionfolder == None:
+		ScriptTestCase.mcregionfolder = downloadsample.temp_mcregion_world()
+	if ScriptTestCase.anvilfolder == None:
+		ScriptTestCase.anvilfolder = downloadsample.temp_anvil_world()
+
+def tearDownModule():
+	"""Remove temporary folders with Anvil and McRegion files."""
+	if ScriptTestCase.mcregionfolder != None:
+		downloadsample.cleanup_temp_world(ScriptTestCase.mcregionfolder)
+	if ScriptTestCase.anvilfolder != None:
+		downloadsample.cleanup_temp_world(ScriptTestCase.anvilfolder)
+	ScriptTestCase.worldfolder = None
+	ScriptTestCase.mcregionfolder = None
+	ScriptTestCase.anvilfolder = None
+
+
+if sys.version_info[0:2] < (2,7):
+	class TestSuite(unittest.TestSuite):
+		"""Test suite which backports the setUpModule/tearDownModule fixture 
+		to Python 2.6."""
+		def run(self, tests=[]):
+			setUpModule()
+			super(TestSuite, self).run(tests)
+			tearDownModule()
 
 
 if __name__ == '__main__':
-	unittest.main(verbosity=4, failfast=True)
+	if sys.version_info[0:2] >= (2,7):
+		unittest.main(verbosity=2, failfast=True, catchbreak=True)
+	else:
+		module = sys.modules[__name__]
+		suite = unittest.TestLoader().loadTestsFromModule(module)
+		suite = TestSuite(suite)
+		testresult = unittest.TextTestRunner(verbosity=2).run(suite)
+		sys.exit(not testresult.wasSuccessful())

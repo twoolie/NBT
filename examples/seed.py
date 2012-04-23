@@ -3,7 +3,7 @@
 Prints the seed of a world.
 """
 
-import locale, os, sys
+import os, sys
 
 # local module
 try:

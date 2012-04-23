@@ -14,6 +14,10 @@ import logging
 import tarfile
 import hashlib
 
+import glob
+import tempfile
+import shutil
+
 URL = "https://github.com/downloads/twoolie/NBT/Sample_World.tar.gz"
 """URL to retrieve"""
 workdir = os.path.dirname(__file__)
@@ -88,8 +92,6 @@ def extract(filename, workdir, filelist):
 				logger.info("Extract %s" % tarinfo.name)
 				yield tarinfo
 			else:
-				print repr(tarinfo.name)
-				print filelist
 				logger.warning("Skip %s" % tarinfo.name)
 	# r:* means any compression (gzip or bz2 are supported)
 	files = tarfile.open(filename, 'r:*')
@@ -123,6 +125,7 @@ def verify(checksums):
 				data = localfile.read(chunksize)
 				if not data: break
 				h.update(data)
+			localfile.close()
 			calc = h.hexdigest()
 			if calc != check:
 				logger.error("Checksum failed %s: %s found, %s expected" % (path, calc, check))
@@ -176,6 +179,41 @@ def install(url=URL, workdir=workdir, checksums=checksums):
 		logger.error('Download to %s failed: %s' % (e.filename, e.strerror))
 	return False
 
+
+
+def _mkdir(dstdir, subdir):
+	"""Helper function: create folder /dstdir/subdir"""
+	os.mkdir(os.path.join(dstdir, os.path.normpath(subdir)))
+def _copyglob(srcdir, destdir, pattern):
+	"""Helper function: copies files from /srcdir/pattern to /destdir/pattern.
+	pattern is a glob pattern."""
+	for fullpath in glob.glob(os.path.join(srcdir, os.path.normpath(pattern))):
+		relpath = os.path.relpath(fullpath, srcdir)
+		shutil.copy2(fullpath, os.path.join(destdir, relpath))
+def _copyrename(srcdir, destdir, src, dest):
+	"""Helper function: copy file from /srcdir/src to /destdir/dest."""
+	shutil.copy2(os.path.join(srcdir, os.path.normpath(src)), \
+				os.path.join(destdir, os.path.normpath(dest)))
+
+def temp_mcregion_world(worldfolder=worlddir):
+	"""Create a McRegion worldfolder in a temporary directory, based on the 
+	files in the given mixed worldfolder. Returns the temporary directory path."""
+	tmpfolder = tempfile.mkdtemp(prefix="nbtmcregion")
+	_mkdir(tmpfolder, 'region')
+	_copyglob(worldfolder, tmpfolder, "region/*.mcr")
+	_copyrename(worldfolder, tmpfolder, "level.dat_mcr", "level.dat")
+	return tmpfolder
+def temp_anvil_world(worldfolder=worlddir):
+	"""Create a Anvil worldfolder in a temporary directory, based on the 
+	files in the given mixed worldfolder. Returns the temporary directory path."""
+	tmpfolder = tempfile.mkdtemp(prefix="nbtanvil")
+	_mkdir(tmpfolder, 'region')
+	_copyglob(worldfolder, tmpfolder, "region/*.mca")
+	_copyrename(worldfolder, tmpfolder, "level.dat", "level.dat")
+	return tmpfolder
+def cleanup_temp_world(tmpfolder):
+	"""Remove a temporary directory"""
+	shutil.rmtree(tmpfolder, ignore_errors=True)
 
 if __name__ == '__main__':
 	logger = logging.getLogger("nbt.tests.downloadsample")
