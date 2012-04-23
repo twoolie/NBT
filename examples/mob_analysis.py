@@ -37,7 +37,7 @@ def entities_per_chunk(chunk):
 
 
 def print_results(entities):
-	locale.setlocale(locale.LC_ALL, 'en_US')
+	locale.setlocale(locale.LC_ALL, '')
 	for entity in entities:
 		print("%s at %s,%s,%s" % \
 			(entity.type,\
