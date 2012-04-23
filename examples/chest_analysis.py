@@ -58,7 +58,7 @@ def chests_per_chunk(chunk):
 
 
 def print_results(chests):
-	locale.setlocale(locale.LC_ALL, 'en_US')
+	locale.setlocale(locale.LC_ALL, '')
 	for chest in chests:
 		itemcount = sum(chest.items.values())
 		print("%s at %s,%s,%s with %d items:" % \

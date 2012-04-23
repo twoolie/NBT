@@ -94,7 +94,7 @@ def process_region_file(filename, start, stop):
 
 
 def print_results(block_data_totals):
-	locale.setlocale(locale.LC_ALL, 'en_US')
+	locale.setlocale(locale.LC_ALL, '')
 	
 	# Analyze blocks
 	for block_id,data in enumerate(block_data_totals):
