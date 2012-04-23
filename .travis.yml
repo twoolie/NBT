@@ -3,4 +3,7 @@ python:
  - "2.6"
  - "2.7"
  - "3.2"
-script: tests/nbttests.py
+ - "pypy"
+install: 
+ - pip install PIL --use-mirrors ; true
+script: tests/alltests.py
