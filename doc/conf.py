@@ -20,7 +20,7 @@ import sys, os
 
 # Make sure we are importing the current NBT, and not an old version installed 
 # in the site-packages
-parentdir = os.path.realpath(os.path.join(os.path.dirname(__file__),os.pardir))
+parentdir = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 if not os.path.exists(os.path.join(parentdir, 'nbt')):
 	raise ImportError("Can not find nbt module at %s" % parentdir)
 if os.path.exists(os.path.join(parentdir, 'examples')):
@@ -30,6 +30,9 @@ if os.path.exists(os.path.join(parentdir, 'tests')):
 sys.path.insert(1, parentdir)
 import nbt
 
+# Include extensions directory
+sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), 'sphinxext')))
+
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -37,7 +40,8 @@ import nbt
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'restbuilder']
+#, 'sphinx.ext.viewcode'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['templates']
@@ -207,6 +211,28 @@ html_static_path = []
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'NBTdoc'
 
+
+# -- Options for reST output ---------------------------------------------------
+
+# This is the file name suffix for reST files
+rst_file_suffix = '.rst'
+
+# This is the suffix for links to other reST files
+rst_link_suffix = ''
+
+# If set, function that changes the changes the reST file name.
+# Default is docname + rst_file_suffix
+def rst_file_transform(docname):
+    if docname == 'index':
+        docname = 'home'
+    return docname.title() + rst_file_suffix
+
+# If set, function that changes the changes the reST file name to a URI.
+# Default is docname + rst_link_suffix
+def rst_link_transform(docname):
+    if docname == 'index':
+        return 'wiki'
+    return 'wiki/' + docname.title()
 
 # -- Options for LaTeX output --------------------------------------------------
 
