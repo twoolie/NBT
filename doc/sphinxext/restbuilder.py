@@ -368,9 +368,15 @@ class RstTranslator(TextTranslator):
         self.end_state()
 
     def visit_desc_signature(self, node):
-        self.add_text('``')
+        if node.parent['objtype'] in ('class', 'exception', 'method', 'function'):
+            self.add_text('**')
+        else:
+            self.add_text('``')
     def depart_desc_signature(self, node):
-        self.add_text('``')
+        if node.parent['objtype'] in ('class', 'exception', 'method', 'function'):
+            self.add_text('**')
+        else:
+            self.add_text('``')
 
     def visit_desc_name(self, node):
         # print "visit_desc_name(%s)" % (node)
@@ -784,6 +790,7 @@ class RstTranslator(TextTranslator):
         self.end_state()
 
     def visit_literal_block(self, node):
+        self.add_text("::")
         self.new_state()
     def depart_literal_block(self, node):
         self.end_state(wrap=False)
