@@ -1,4 +1,4 @@
-.. _mod:nbt.chunk:
+.. _module:nbt.chunk:
 
 :mod:`nbt.chunk` Module
 =======================

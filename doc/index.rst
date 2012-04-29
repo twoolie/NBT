@@ -1,3 +1,4 @@
+===================
 NBT's documentation
 ===================
 
@@ -10,6 +11,7 @@ From the :ref:`nbt-specification`:
 
 This project also contains helper classes for dealing with Regions, Chunks and 
 World folders in Minecraft, the main use case for the NBT format.
+
 
 :mod:`nbt` Package
 ==================
@@ -46,8 +48,11 @@ Auxiliary Documentation
     specification
     tests
 
+
 Indices and tables
 ==================
+
+.. .. only:: html
 
 * :ref:`genindex`
 * :ref:`modindex`

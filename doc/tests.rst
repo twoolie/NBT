@@ -14,7 +14,7 @@ Unit tests
 ``nbttests`` unit test
 ----------------------
 
-Unit tests for :ref:`mod:nbt.nbt`
+Unit tests for :ref:`module:nbt.nbt`
 
 .. automodule:: nbttests
     :members:
@@ -24,7 +24,7 @@ Unit tests for :ref:`mod:nbt.nbt`
 ``chunktests`` unit test
 ------------------------
 
-Unit tests for :ref:`mod:nbt.chunk`
+Unit tests for :ref:`module:nbt.chunk`
 
 *No tests available (yet)*
 
@@ -37,7 +37,7 @@ Unit tests for :ref:`mod:nbt.chunk`
 ``regiontests`` unit test
 -------------------------
 
-Unit tests for :ref:`mod:nbt.region`
+Unit tests for :ref:`module:nbt.region`
 
 *No tests available (yet)*
 
@@ -50,7 +50,7 @@ Unit tests for :ref:`mod:nbt.region`
 ``worldtests`` unit test
 ------------------------
 
-Unit tests for :ref:`mod:nbt.world`
+Unit tests for :ref:`module:nbt.world`
 
 *No tests available (yet)*
 
