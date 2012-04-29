@@ -1,4 +1,4 @@
-.. _mod:nbt.world:
+.. _module:nbt.world:
 
 :mod:`nbt.world` Module
 =======================

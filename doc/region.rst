@@ -1,4 +1,4 @@
-.. _mod:nbt.region:
+.. _module:nbt.region:
 
 :mod:`nbt.region` Module
 ========================
