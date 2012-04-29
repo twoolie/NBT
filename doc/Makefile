@@ -140,12 +140,12 @@ gettext:
 	@echo "Build finished. The message catalogs are in $(BUILDDIR)/locale."
 
 rst:
-	$(SPHINXBUILD) -b rst $(I18NSPHINXOPTS) $(BUILDDIR)/rst
+	$(SPHINXBUILD) -b rst $(ALLSPHINXOPTS) $(BUILDDIR)/rst
 	@echo
 	@echo "Build finished. The message catalogs are in $(BUILDDIR)/rst."
 
 wiki:
-	$(SPHINXBUILD) -b rst $(I18NSPHINXOPTS) $(WIKIDIR)
+	$(SPHINXBUILD) -b rst $(ALLSPHINXOPTS) $(WIKIDIR)
 	@echo
 	@echo "Build finished. The message catalogs are in $(BUILDDIR)/rst."
 

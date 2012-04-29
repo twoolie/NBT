@@ -47,8 +47,11 @@ Auxiliary Documentation
     specification
     tests
 
+
 Indices and tables
 ==================
+
+.. .. only:: html
 
 * :ref:`genindex`
 * :ref:`modindex`

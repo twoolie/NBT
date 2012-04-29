@@ -28,6 +28,11 @@ Note that **only** Named Tags carry the name and tagType data. Explicitly identi
 
 The tag types and respective payloads are:
 
+    Key:
+        Value
+
+..
+
     :TYPE:    0
     :NAME:    TAG_End
     :Payload: None.

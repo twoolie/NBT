@@ -54,7 +54,7 @@ from docutils import nodes, writers
 
 from sphinx import addnodes
 from sphinx.locale import admonitionlabels, versionlabels, _
-from sphinx.writers.text import TextTranslator, my_wrap, MAXWIDTH, STDINDENT
+from sphinx.writers.text import TextTranslator
 
 
 from docutils.io import StringOutput
@@ -91,6 +91,24 @@ def relative_uri(base, to):
     return ('..' + SEP) * (len(b2)-1) + SEP.join(t2)
 
 
+
+import textwrap
+
+from docutils import nodes, writers
+
+from sphinx import addnodes
+from sphinx.locale import admonitionlabels, versionlabels, _
+
+# 
+# class TextWrapper(textwrap.TextWrapper):
+#     """Custom subclass that uses a different word separator regex."""
+# 
+#     wordsep_re = re.compile(
+#         r'(\s+|'                                  # any whitespace
+#         r'(?<=\s)(?::[a-z-]+:)?`\S+|'             # interpreted text start
+#         r'[^\s\w]*\w+[a-zA-Z]-(?=\w+[a-zA-Z])|'   # hyphenated words
+#         r'(?<=[\w\!\"\'\&\.\,\?])-{2,}(?=\w))')   # em-dash
+# 
 
 class RstBuilder(Builder):
     name = 'rst'
@@ -137,7 +155,6 @@ class RstBuilder(Builder):
         """
         for docname in self.env.found_docs:
             if docname not in self.env.all_docs:
-                print "yield ",docname
                 yield docname
                 continue
             targetname = os.path.join(self.outdir, self.file_transform(docname))
@@ -151,7 +168,6 @@ class RstBuilder(Builder):
             try:
                 srcmtime = path.getmtime(sourcename)
                 if srcmtime > targetmtime:
-                    print "yield ",docname
                     yield docname
             except EnvironmentError:
                 # source doesn't exist anymore
@@ -165,22 +181,20 @@ class RstBuilder(Builder):
 
         May raise environment.NoUri if there's no way to return a sensible URI.
         """
-        x = relative_uri(self.get_target_uri(from_),
+        return relative_uri(self.get_target_uri(from_),
                             self.get_target_uri(to, typ))
         # Builder.get_relative_uri(self, from_, to, typ)
-        print "relative uri: %s, %s -> %s"  % (from_, to, x)
-        return x
 
     def prepare_writing(self, docnames):
         self.writer = RstWriter(self)
 
     def write_doc(self, docname, doctree):
         destination = StringOutput(encoding='utf-8')
-        print "write(%s,%s)" % (type(doctree), type(destination))
+        # print "write(%s,%s)" % (type(doctree), type(destination))
 
         self.writer.write(doctree, destination)
         outfilename = os.path.join(self.outdir, self.file_transform(docname))
-        print "write(%s,%s) -> %s" % (type(doctree), type(destination), outfilename)
+        # print "write(%s,%s) -> %s" % (type(doctree), type(destination), outfilename)
         ensuredir(os.path.dirname(outfilename))
         try:
             f = codecs.open(outfilename, 'w', 'utf-8')
@@ -213,6 +227,8 @@ class RstWriter(writers.Writer):
         self.document.walkabout(visitor)
         self.output = visitor.body
 
+MAXWIDTH = 78
+STDINDENT = 4
 
 class RstTranslator(TextTranslator):
     sectionchars = '*=-~"+`'
@@ -233,6 +249,11 @@ class RstTranslator(TextTranslator):
         self.list_counter = []
         self.sectionlevel = 0
         self.table = None
+        self.wrapper = textwrap.TextWrapper(width=STDINDENT, break_long_words=False, break_on_hyphens=False)
+
+    def wrap(self, text, width=STDINDENT):
+        self.wrapper.width = width
+        return self.wrapper.wrap(text)
 
     def add_text(self, text):
         self.states[-1].append((-1, text))
@@ -249,7 +270,7 @@ class RstTranslator(TextTranslator):
             if not toformat:
                 return
             if wrap:
-                res = my_wrap(''.join(toformat), width=MAXWIDTH-maxindent)
+                res = self.wrap(''.join(toformat), width=MAXWIDTH-maxindent)
             else:
                 res = ''.join(toformat).splitlines()
             if end:
@@ -271,6 +292,7 @@ class RstTranslator(TextTranslator):
         self.states[-1].extend(result)
 
     def visit_document(self, node):
+        # print node
         self.new_state(0)
     def depart_document(self, node):
         self.end_state()
@@ -341,17 +363,14 @@ class RstTranslator(TextTranslator):
         pass
 
     def visit_desc(self, node):
-        pass
+        self.new_state(0)
     def depart_desc(self, node):
-        pass
+        self.end_state()
 
     def visit_desc_signature(self, node):
-        self.new_state(0)
-        if node.parent['objtype'] in ('class', 'exception'):
-            self.add_text('%s ' % node.parent['objtype'])
+        self.add_text('``')
     def depart_desc_signature(self, node):
-        # XXX: wrap signatures in a way that makes sense
-        self.end_state(wrap=False, end=None)
+        self.add_text('``')
 
     def visit_desc_name(self, node):
         # print "visit_desc_name(%s)" % (node)
@@ -396,8 +415,12 @@ class RstTranslator(TextTranslator):
         self.add_text(']')
 
     def visit_desc_annotation(self, node):
-        # print "visit_desc_annotation(%s)" % (node)
-        pass
+        content = node.astext()
+        if len(content) > MAXWIDTH:
+            h = int(MAXWIDTH/3)
+            content = content[:h] + " ... " + content[-h:]
+            self.add_text(content)
+            raise nodes.SkipNode
     def depart_desc_annotation(self, node):
         pass
 
@@ -408,7 +431,6 @@ class RstTranslator(TextTranslator):
 
     def visit_desc_content(self, node):
         self.new_state()
-        self.add_text(self.nl)
     def depart_desc_content(self, node):
         self.end_state()
 
@@ -562,7 +584,7 @@ class RstTranslator(TextTranslator):
             else:
                 cells = []
                 for i, cell in enumerate(line):
-                    par = my_wrap(cell, width=colwidths[i])
+                    par = self.wrap(cell, width=colwidths[i])
                     if par:
                         maxwidth = max(map(len, par))
                     else:
@@ -688,15 +710,16 @@ class RstTranslator(TextTranslator):
 
     def visit_field(self, node):
         # print "visit_field(%s)" % (node)
-        pass
+        self.new_state(0)
     def depart_field(self, node):
-        pass
+        self.end_state(end=None)
 
     def visit_field_name(self, node):
-        self.new_state(0)
+        self.add_text(':')
     def depart_field_name(self, node):
         self.add_text(':')
-        self.end_state(end=None)
+        content = node.astext()
+        self.add_text((16-len(content))*' ')
 
     def visit_field_body(self, node):
         self.new_state()
@@ -782,6 +805,7 @@ class RstTranslator(TextTranslator):
         pass
 
     def visit_block_quote(self, node):
+        self.add_text('..')
         self.new_state()
     def depart_block_quote(self, node):
         self.end_state()
@@ -815,45 +839,33 @@ class RstTranslator(TextTranslator):
         raise nodes.SkipNode
 
     def visit_pending_xref(self, node):
-        print "visit_pending_xref(%s)" % (node)
         pass
     def depart_pending_xref(self, node):
         pass
 
     def visit_reference(self, node):
-        print "visit_reference(%s)" % (node)
-        if 'refid' in node:
-            # It is an anchor
-            self.new_state()
-            self.add_text('['+node['refid']+']')
-        
-        elif 'refuri' in node:
-            # It is a link
-            pass
-        
+        if 'refuri' not in node:
+            pass # Don't add these anchors
+        elif 'internal' not in node:
+            pass # Don't add external links (they are automatically added by the reST spec)
+        elif 'reftitle' in node:
+            # Include node as text, rather than with markup.
+            # reST seems unable to parse a construct like ` ``literal`` <url>`_
+            # Hence we revert to the more simple `literal <url>`_
+            self.add_text('`%s <%s>`_' % (node.astext(), node['refuri']))
+            # self.end_state(wrap=False)
+            raise nodes.SkipNode
         else:
-            # not an anchor nor link. Raise exception?
-            pass
+            self.add_text('`%s <%s>`_' % (node.astext(), node['refuri']))
+            raise nodes.SkipNode
             
-        pass
-        # if node.children:
-        #     self.add_text('`',versionlabels[node['type']] % node['version'] + ': ')
-        #     print "hadchildren"
-        # else:
-        #     self.add_text('`',versionlabels[node['type']] % node['version'] + '.')
     def depart_reference(self, node):
-        if 'refid' in node:
-            # It is an anchor
-            self.end_state(wrap=False)
-            
-        elif 'refuri' in node:
-            # It is a link
+        if 'refuri' not in node:
+            pass # Don't add these anchors
+        elif 'internal' not in node:
+            pass # Don't add external links (they are automatically added by the reST spec)
+        elif 'reftitle' in node:
             pass
-        
-        else:
-            # not an anchor nor link. Raise exception?
-            pass
-            
 
     def visit_download_reference(self, node):
         print "visit_download_reference(%s)" % (node)
@@ -889,9 +901,9 @@ class RstTranslator(TextTranslator):
         self.add_text('*')
 
     def visit_literal(self, node):
-        self.add_text('"')
+        self.add_text('``')
     def depart_literal(self, node):
-        self.add_text('"')
+        self.add_text('``')
 
     def visit_subscript(self, node):
         self.add_text('_')
