@@ -46,6 +46,7 @@ Auxiliary Documentation
 
     examples
     specification
+    changelog
     tests
 
 
