@@ -21,7 +21,6 @@ Bug Fixes since 1.3.0
 Backward Incompatible Changes since 1.3.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * WorldFolder is no longer a class, but a factory function
-(planned: get_*s functions may return iterator instead of list)
 
 Known Bugs
 ~~~~~~~~~~
