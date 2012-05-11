@@ -107,6 +107,7 @@ class TAG_Int(_TAG_Numeric):
 	"""Represent a single tag storing 1 int."""
 	id = TAG_INT
 	fmt = Struct(">i")
+	"""Struct(">i"), 32-bits integer, big-endian"""
 
 class TAG_Long(_TAG_Numeric):
 	"""Represent a single tag storing 1 long."""
@@ -114,12 +115,12 @@ class TAG_Long(_TAG_Numeric):
 	fmt = Struct(">q")
 
 class TAG_Float(_TAG_Numeric):
-	"""Represent a single tag storing 1 IEE-754 floating point number."""
+	"""Represent a single tag storing 1 IEEE-754 floating point number."""
 	id = TAG_FLOAT
 	fmt = Struct(">f")
 
 class TAG_Double(_TAG_Numeric):
-	"""Represent a single tag storing 1 IEE-754 double precision floating point number."""
+	"""Represent a single tag storing 1 IEEE-754 double precision floating point number."""
 	id = TAG_DOUBLE
 	fmt = Struct(">d")
 

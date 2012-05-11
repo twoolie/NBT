@@ -18,12 +18,12 @@ class RegionHeaderError(Exception):
 		self.msg = msg
 
 class ChunkHeaderError(Exception):
-	"""Error in the header of a chunk."""
+	"""Error in the header of a chunk, included the bytes of length and byte version."""
 	def __init__(self, msg):
 		self.msg = msg
 
 class ChunkDataError(Exception):
-	"""Error in the data of a chunk, included the bytes of length and byte version."""
+	"""Error in the data of a chunk."""
 	def __init__(self, msg):
 		self.msg = msg
 
@@ -31,6 +31,7 @@ class ChunkDataError(Exception):
 class RegionFile(object):
 	"""A convenience class for extracting NBT files from the Minecraft Beta Region Format."""
 	def __init__(self, filename=None, fileobj=None):
+		"""Read a region file by filename of file object. The fileobj is not closed after use; it is the callers responibility to close that."""
 		self.file = None
 		if filename:
 			self.filename = filename
@@ -56,7 +57,35 @@ class RegionFile(object):
 		self.STATUS_CHUNK_NOT_CREATED = 1
 
 		self.header = {}
+		"""
+		dict containing the metadata found in the 8 kiByte header:
+		(x,y): (offset, sectionlength, timestamp, status)
+		offset counts in 4 kiByte sectors, starting from the start of the file. (24 bit int)
+		blocklength is in 4 kiByte sectors (8 bit int)
+		timestamp is a Unix timestamps (seconds since epoch) (32 bits)
+		status is determined from offset, sectionlength and file size.
+		Status can be any of:
+		- STATUS_CHUNK_IN_HEADER
+		- STATUS_CHUNK_OUT_OF_FILE
+		- STATUS_CHUNK_OK
+		- STATUS_CHUNK_NOT_CREATED
+		"""
 		self.chunk_headers = {}
+		"""
+		dict containing the metadata found in each chunk block:
+		(x,y): (length, compression, chunk_status)
+		chunk length in bytes, starting from the compression byte (32 bit int)
+		compression is 1 (Gzip) or 2 (bzip) (8 bit int)
+		chunk_status is determined from sectionlength and status (as found in the header).
+		chunk_status can be any of:
+		- STATUS_CHUNK_MISMATCHED_LENGTHS (status will be STATUS_CHUNK_OK)
+		- STATUS_CHUNK_ZERO_LENGTH (status will be STATUS_CHUNK_OK)
+		- STATUS_CHUNK_IN_HEADER
+		- STATUS_CHUNK_OUT_OF_FILE
+		- STATUS_CHUNK_OK
+		- STATUS_CHUNK_NOT_CREATED
+		If the chunk is not defined, the tuple is (None, None, STATUS_CHUNK_NOT_CREATED)
+		"""
 		self.extents = None
 		if self.file:
 			self.size = getsize(self.filename)

@@ -1,5 +1,5 @@
-NBT Releases
-============
+Changelog
+=========
 
 NBT currently only uses major and minor releases. Patch versions exist as
 commits in the master trunk, but are not enumerated.
