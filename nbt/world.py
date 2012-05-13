@@ -106,7 +106,7 @@ class _BaseWorldFolder(object):
 		# TODO: Implement BoundingBox
 		# TODO: Implement sort order
 		for c in self.iter_nbt():
-			yield chunk.Chunk(c)
+			yield self.chunkclass(c)
 
 	def get_nbt(self,x,z):
 		"""
