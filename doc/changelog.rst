@@ -67,7 +67,7 @@ Backward Incompatible Changes since 1.2.0
   AnvilWorldFolder
 
 
-NBT 1.2.0 (7 March 2011)
+NBT 1.2.0 (7 March 2012)
 ------------------------
 
 New Features since 1.1.0
@@ -91,7 +91,7 @@ Backward Incompatible Changes since 1.1.0
   `RegionFile.get_chunk_coords()`
 
 
-NBT 1.1.0 (23 September 2010)
+NBT 1.1.0 (23 September 2011)
 -----------------------------
 
 New Features since 1.0.0
@@ -103,18 +103,24 @@ New Features since 1.0.0
 Bug Fixes since 1.0.0
 ~~~~~~~~~~~~~~~~~~~~~
 * Allow reading and writing on the same NBTFile object
-* Tests for NBT class
 * Same init function for TAG_Byte_Array as other classes
+* Unit tests for NBT class
 
 Backward Incompatible Changes since 1.0.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Change order of `TAG_Byte_Array.__init__()` parameters
 
 
-NBT 1.0.0 (28 February 2010)
+NBT 1.0.0 (28 February 2011)
 ----------------------------
 
 * First major release
 * Reads and Parses NBT files
 * Generates and Writes NBT files
 * Reads and writes GZipped NBT files or uncompressed File objects
+
+NBT 0.5.0 (8 August 2010)
+----------------------------
+
+* First public release
+* Beta release (not )
