@@ -472,20 +472,28 @@ class NBTFile(TAG_Compound):
 		super(NBTFile, self).__init__()
 		self.filename = filename
 		self.type = TAG_Byte(self.id)
+		closefile = True
 		#make a file object
 		if filename:
 			self.file = GzipFile(filename, 'rb')
 		elif buffer:
 			self.file = buffer
+			closefile = False
 		elif fileobj:
 			self.file = GzipFile(fileobj=fileobj)
 		else:
 			self.file = None
+			closefile = False
 		#parse the file given intitially
 		if self.file:
 			self.parse_file()
-			if self.filename and 'close' in dir(self.file):
-				self.file.close()
+			if closefile:
+				# Note: GzipFile().close() does NOT close the fileobj, 
+				# So the caller is still responsible for closing that.
+				try:
+					self.file.close()
+				except (AttributeError, IOError):
+					pass
 			self.file = None
 
 	def parse_file(self, filename=None, buffer=None, fileobj=None):
@@ -512,9 +520,11 @@ class NBTFile(TAG_Compound):
 
 	def write_file(self, filename=None, buffer=None, fileobj=None):
 		"""Write this NBT file to a file."""
+		closefile = True
 		if buffer:
 			self.filename = None
 			self.file = buffer
+			closefile = False
 		elif filename:
 			self.filename = filename
 			self.file = GzipFile(filename, "wb")
@@ -524,16 +534,21 @@ class NBTFile(TAG_Compound):
 		elif self.filename:
 			self.file = GzipFile(self.filename, "wb")
 		elif not self.file:
-			raise ValueError("Need to specify either a filename or a file")
+			raise ValueError("NBTFile.write_file(): Need to specify either a filename or a file object")
 		#Render tree to file
 		TAG_Byte(self.id)._render_buffer(self.file)
 		TAG_String(self.name)._render_buffer(self.file)
 		self._render_buffer(self.file)
 		#make sure the file is complete
-		if 'flush' in dir(self.file):
+		try:
 			self.file.flush()
-		if self.filename and 'close' in dir(self.file):
-			self.file.close()
+		except (AttributeError, IOError):
+			pass
+		if closefile:
+			try:
+				self.file.close()
+			except (AttributeError, IOError):
+				pass
 
 	def __repr__(self):
 		"""

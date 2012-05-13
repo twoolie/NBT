@@ -36,13 +36,20 @@ class ChunkDataError(Exception):
 class RegionFile(object):
 	"""A convenience class for extracting NBT files from the Minecraft Beta Region Format."""
 	def __init__(self, filename=None, fileobj=None):
-		"""Read a region file by filename of file object. The fileobj is not closed after use; it is the callers responibility to close that."""
+		"""
+		Read a region file by filename of file object. 
+		If a fileobj is specified, it is not closed after use; it is the callers responibility to close that.
+		"""
 		self.file = None
+		self._closefile = False
 		if filename:
 			self.filename = filename
-			self.file = open(filename, 'r+b')
-		if fileobj:
+			self.file = open(filename, 'r+b') # open for read and write in binary mode
+			self._closefile = True
+		elif fileobj:
 			self.file = fileobj
+		elif not self.file:
+			raise ValueError("RegionFile(): Need to specify either a filename or a file object")
 
 		# Some variables and constants
 		#
@@ -109,7 +116,7 @@ class RegionFile(object):
 
 
 	def __del__(self):
-		if self.file:
+		if self._closefile:
 			self.file.close()
 
 	def init_header(self):
