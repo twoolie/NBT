@@ -10,5 +10,5 @@ revision number, but not (yet) patch and build identifiers."""
 
 
 def _get_version():
-	"""Return the NBT version as string."""
-	return ".".join([str(v) for v in VERSION])
+    """Return the NBT version as string."""
+    return ".".join([str(v) for v in VERSION])
