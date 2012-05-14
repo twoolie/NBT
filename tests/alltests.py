@@ -23,8 +23,7 @@ def get_testsuites_in_module(module):
 
 def load_tests_in_modules(modulenames):
 	"""
-	Given a list of module names, import the modules, load and run the 
-	test cases in these modules. The modules are typically files in the 
+	Given a list of module names, import the modules, load and run the 	test cases in these modules. The modules are typically files in the
 	current directory, but this is not a requirement.
 	"""
 	loader = unittest.TestLoader()
@@ -38,7 +37,6 @@ def load_tests_in_modules(modulenames):
 		suites.append(suite)
 	suite = unittest.TestSuite(suites)
 	return suite
-
 
 
 if __name__ == "__main__":

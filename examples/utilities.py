@@ -11,11 +11,12 @@ try:
 	from nbt import *
 except ImportError:
 	# nbt not in search path. Let's see if it can be found in the parent folder
-	extrasearchpath = os.path.realpath(os.path.join(__file__,os.pardir,os.pardir))
-	if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
+	extrasearchpath = os.path.realpath(os.path.join(__file__, os.pardir, os.pardir))
+	if not os.path.exists(os.path.join(extrasearchpath, 'nbt')):
 		raise
 	sys.path.append(extrasearchpath)
 	from nbt import *
+
 
 def unpack_nbt(tag):
 	"""
@@ -28,6 +29,7 @@ def unpack_nbt(tag):
 		return dict((i.name, unpack_nbt(i)) for i in tag.tags)
 	else:
 		return tag.value
+
 
 def pack_nbt(s):
 	"""
