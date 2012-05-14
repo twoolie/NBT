@@ -1,12 +1,15 @@
 #!/usr/bin/env python
-import sys,os,unittest
-import tempfile, shutil
+import os
+import shutil
+import sys
+import tempfile
+import unittest
 from io import BytesIO
 from gzip import GzipFile
 
-# Search parent directory first, to make sure we test the local nbt module, 
+# Search parent directory first, to make sure we test the local nbt module,
 # not an installed nbt module.
-parentdir = os.path.realpath(os.path.join(os.path.dirname(__file__),os.pardir))
+parentdir = os.path.realpath(os.path.join(os.path.dirname(__file__), os.pardir))
 if parentdir not in sys.path:
 	sys.path.insert(1, parentdir)  # insert ../ just after ./
 
@@ -28,25 +31,26 @@ class BugfixTest(unittest.TestCase):
 
 	def testProperlyClosed(self):
 		"""
-		test that files opened from a file name are closed after 
+		test that files opened from a file name are closed after
 		being written to. i.e. will read correctly in the future
 		"""
 		# copy the file (don't work on the original test file)
 		tempdir = tempfile.mkdtemp()
 		filename = os.path.join(tempdir, 'bigtest.nbt')
 		shutil.copy(NBTTESTFILE, filename)
-		
+
 		#open the file
 		f = NBTFile(filename)
 		f.write_file()
 		# make sure it can be read again directly after
 		f = NBTFile(filename)
-		
+
 		# remove the temporary file
 		try:
 			shutil.rmtree(tempdir)
-		except OSError as e:
+		except OSError:
 			raise
+
 
 class ReadWriteTest(unittest.TestCase):
 	"""test that we can read the test file correctly"""
@@ -59,9 +63,9 @@ class ReadWriteTest(unittest.TestCase):
 	def tearDown(self):
 		try:
 			shutil.rmtree(self.tempdir)
-		except OSError as e:
+		except OSError:
 			raise
-	
+
 	def testReadBig(self):
 		mynbt = NBTFile(self.filename)
 		self.assertTrue(mynbt.filename != None)
@@ -76,6 +80,7 @@ class ReadWriteTest(unittest.TestCase):
 	def testWriteback(self):
 		mynbt = NBTFile(self.filename)
 		mynbt.write_file()
+
 
 class TreeManipulationTest(unittest.TestCase):
 
@@ -98,6 +103,7 @@ class TreeManipulationTest(unittest.TestCase):
 
 	def tearDown(self):
 		del self.nbtfile
+
 
 class EmptyStringTest(unittest.TestCase):
 

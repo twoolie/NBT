@@ -9,7 +9,6 @@ import os
 import unittest
 import subprocess
 import shutil
-import tempfile
 import glob
 # local modules
 import downloadsample
@@ -33,15 +32,20 @@ else:
 		filter = str.maketrans('', '', deletechars)
 		return text.translate(filter)
 
+
 def _mkdir(dstdir, subdir):
 	"""Helper function: create folder /dstdir/subdir"""
 	os.mkdir(os.path.join(dstdir, os.path.normpath(subdir)))
+
+
 def _copyglob(srcdir, destdir, pattern):
 	"""Helper function: copies files from /srcdir/pattern to /destdir/pattern.
 	pattern is a glob pattern."""
 	for fullpath in glob.glob(os.path.join(srcdir, os.path.normpath(pattern))):
 		relpath = os.path.relpath(fullpath, srcdir)
 		shutil.copy2(fullpath, os.path.join(destdir, relpath))
+
+
 def _copyrename(srcdir, destdir, src, dest):
 	"""Helper function: copy file from /srcdir/src to /destdir/dest."""
 	shutil.copy2(os.path.join(srcdir, os.path.normpath(src)), \
@@ -49,12 +53,13 @@ def _copyrename(srcdir, destdir, src, dest):
 
 
 class ScriptTestCase(unittest.TestCase):
-	"""Test Case with helper functions for running a script, and installing a 
+	"""Test Case with helper functions for running a script, and installing a
 	Minecraft sample world."""
 	worldfolder = None
 	mcregionfolder = None
 	anvilfolder = None
 	examplesdir = os.path.normpath(os.path.join(__file__, os.pardir, os.pardir, 'examples'))
+
 	def runScript(self, script, args):
 		scriptpath = os.path.join(self.examplesdir, script)
 		args.insert(0, scriptpath)
@@ -73,14 +78,16 @@ class ScriptTestCase(unittest.TestCase):
 			pass
 		self.assertEqual(p.returncode, 0, "return code is %d" % p.returncode)
 		return output
+
 	def assertEqualOutput(self, actual, expected):
 		"""Compare two lists of strings, ignoring whitespace at begin and end of line."""
 		if len(actual) < len(expected):
 			self.fail("Output is %d lines, expected at least %d lines" % \
 					(len(actual), len(expected)))
-		for i,expline in enumerate(expected):
+		for i, expline in enumerate(expected):
 			self.assertEqual(actual[i].strip(), expline.strip(), \
-					"Output line %d is %r, expected %r" % (i+1, actual[i], expline))
+					"Output line %d is %r, expected %r" % (i + 1, actual[i], expline))
+
 	def assertEqualString(self, actual, expected):
 		"""Compare strings, ignoring whitespace at begin and end of line."""
 		self.assertEqual(actual.strip(), expected.strip(), \
@@ -89,19 +96,20 @@ class ScriptTestCase(unittest.TestCase):
 
 class BiomeAnalysisScriptTest(ScriptTestCase):
 	pass
-	
+
 	# TODO: Sample World was converted with simple script, but does not seem to have biome data.
-	# This needs to be added. (opening the world with minecraft client will change the 
-	# world a bit, which I like to avoid. Perhaps opening with the server will not change it, 
-	# if "/stop" is called quickly enough. this may change the amount of generated chunks to 
+	# This needs to be added. (opening the world with minecraft client will change the
+	# world a bit, which I like to avoid. Perhaps opening with the server will not change it,
+	# if "/stop" is called quickly enough. this may change the amount of generated chunks to
 	# everything in a 380x380 block though.)
-	
+
 	# @classmethod
 	# def setUpClass(cls):
 	# 	cls.installsampleworld()
 	# 	cls.extractAnvilWorld()
 	# def testAnvilWorld(self):
 	# 	output = self.runScript('biome_analysis.py', [self.anvilfolder])
+
 
 class BlockAnalysisScriptTest(ScriptTestCase):
 	expected = [
@@ -122,6 +130,7 @@ class BlockAnalysisScriptTest(ScriptTestCase):
 		"RedMushroom:31",
 		"LavaSprings:47665",
 	]
+
 	def testMcRegionWorld(self):
 		output = self.runScript('block_analysis.py', [self.mcregionfolder])
 		self.assertTrue(len(output) >= 73, "Expected output of at least 73 lines long")
@@ -135,17 +144,20 @@ class BlockAnalysisScriptTest(ScriptTestCase):
 	# 	output = [_deletechars(l, " ,.") for l in output[-16:]]
 	# 	self.assertEqualOutput(output, self.expected)
 
+
 class ChestAnalysisScriptTest(ScriptTestCase):
 	def testMcRegionWorld(self):
 		output = self.runScript('chest_analysis.py', [self.mcregionfolder])
 		self.assertEqual(len(output), 178)
 		count = len(list(filter(lambda l: l.startswith('Chest at '), output)))
 		self.assertEqual(count, 38)
+
 	def testAnvilWorld(self):
 		output = self.runScript('chest_analysis.py', [self.anvilfolder])
 		self.assertEqual(len(output), 178)
 		count = len(list(filter(lambda l: l.startswith('Chest at '), output)))
 		self.assertEqual(count, 38)
+
 
 def has_PIL():
 	try:
@@ -154,18 +166,20 @@ def has_PIL():
 	except ImportError:
 		return False
 
+
 class MapScriptTest(ScriptTestCase):
 	@skipIf(not has_PIL(), "PIL library not available")
 	def testMcRegionWorld(self):
 		output = self.runScript('map.py', ['--noshow', self.mcregionfolder])
 		self.assertTrue(output[-1].startswith("Saved map as "))
-	# TODO: this currently writes the map to tests/nbtmcregion*.png files. 
+	# TODO: this currently writes the map to tests/nbtmcregion*.png files.
 	# The locations should be a tempfile, and the file should be deleted afterwards.
-	
+
 	# @skipIf(not has_PIL(), "PIL library not available")
 	# def testAnvilWorld(self):
 	# 	output = self.runScript('map.py', ['--noshow', self.anvilfolder])
 	# 	self.assertEqualString(output[-1], "Saved map as Sample World.png")
+
 
 class MobAnalysisScriptTest(ScriptTestCase):
 	def testMcRegionWorld(self):
@@ -174,6 +188,7 @@ class MobAnalysisScriptTest(ScriptTestCase):
 		output = sorted(output)
 		self.assertEqualString(output[0], "Chicken at 107.6,88.0,374.5")
 		self.assertEqualString(output[400], "Zombie at 249.3,48.0,368.1")
+
 	def testAnvilWorld(self):
 		output = self.runScript('mob_analysis.py', [self.anvilfolder])
 		self.assertEqual(len(output), 413)
@@ -181,13 +196,16 @@ class MobAnalysisScriptTest(ScriptTestCase):
 		self.assertEqualString(output[0], "Chicken at 107.6,88.0,374.5")
 		self.assertEqualString(output[400], "Zombie at 249.3,48.0,368.1")
 
+
 class SeedScriptTest(ScriptTestCase):
 	def testMcRegionWorld(self):
 		output = self.runScript('seed.py', [self.mcregionfolder])
 		self.assertEqualOutput(output, ["-3195717715052600521"])
+
 	def testAnvilWorld(self):
 		output = self.runScript('seed.py', [self.anvilfolder])
 		self.assertEqualOutput(output, ["-3195717715052600521"])
+
 
 class GenerateLevelDatScriptTest(ScriptTestCase):
 	expected = [
@@ -210,10 +228,11 @@ class GenerateLevelDatScriptTest(ScriptTestCase):
 		"	}",
 		"}"
 	]
+
 	def testNBTGeneration(self):
 		output = self.runScript('generate_level_dat.py', [])
 		self.assertEqual(len(output), 18)
-		self.assertEqualString(output[0],  self.expected[0])
+		self.assertEqualString(output[0], self.expected[0])
 		self.assertEqualString(output[10], self.expected[10])
 		self.assertEqualString(output[11], self.expected[11])
 		self.assertEqualString(output[13], self.expected[13])
@@ -229,6 +248,7 @@ def setUpModule():
 	if ScriptTestCase.anvilfolder == None:
 		ScriptTestCase.anvilfolder = downloadsample.temp_anvil_world()
 
+
 def tearDownModule():
 	"""Remove temporary folders with Anvil and McRegion files."""
 	if ScriptTestCase.mcregionfolder != None:
@@ -240,9 +260,9 @@ def tearDownModule():
 	ScriptTestCase.anvilfolder = None
 
 
-if sys.version_info[0:2] < (2,7):
+if sys.version_info[0:2] < (2, 7):
 	class TestSuite(unittest.TestSuite):
-		"""Test suite which backports the setUpModule/tearDownModule fixture 
+		"""Test suite which backports the setUpModule/tearDownModule fixture
 		to Python 2.6."""
 		def run(self, tests=[]):
 			setUpModule()
@@ -251,7 +271,7 @@ if sys.version_info[0:2] < (2,7):
 
 
 if __name__ == '__main__':
-	if sys.version_info[0:2] >= (2,7):
+	if sys.version_info[0:2] >= (2, 7):
 		unittest.main(verbosity=2, failfast=True, catchbreak=True)
 	else:
 		module = sys.modules[__name__]
