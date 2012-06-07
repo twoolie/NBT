@@ -325,7 +325,7 @@ class TAG_List(TAG, MutableSequence):
 	def __setitem__(self, key, value):
 		self.tags[key] = value
 
-	def __delitem__(self, key, value):
+	def __delitem__(self, key):
 		del(self.tags[key])
 
 	def insert(self, key, value):
