@@ -12,6 +12,11 @@ from io import BytesIO
 import math, time
 from os.path import getsize
 
+class NoRegionHeader(Exception):
+	"""The size of the region file is too small to contain a header."""
+	def __init__(self, msg):
+		self.msg = msg
+
 class RegionHeaderError(Exception):
 	"""Error in the header of the region file for a given chunk."""
 	def __init__(self, msg):
@@ -94,6 +99,8 @@ class RegionFile(object):
 				# Minecraft handle them without problems. Take them
 				# as empty region files.
 				self.init_header()
+			elif self.size < 8192:
+				raise NoRegionHeader('The region file is too small in size to have a header.')
 			else:
 				self.parse_header()
 		else:
