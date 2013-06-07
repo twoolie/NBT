@@ -516,7 +516,8 @@ class NBTFile(TAG_Compound):
 					raise MalformedFileError("First record is not a Compound Tag")
 			except StructError as e:
 				raise MalformedFileError("Partial File Parse: file possibly truncated.")
-		else: ValueError("need a file!")
+		else:
+			raise ValueError("NBTFile.parse_file(): Need to specify either a filename or a file object")
 
 	def write_file(self, filename=None, buffer=None, fileobj=None):
 		"""Write this NBT file to a file."""
