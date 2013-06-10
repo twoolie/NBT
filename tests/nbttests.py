@@ -10,7 +10,7 @@ parentdir = os.path.realpath(os.path.join(os.path.dirname(__file__),os.pardir))
 if parentdir not in sys.path:
 	sys.path.insert(1, parentdir)  # insert ../ just after ./
 
-from nbt.nbt import _TAG_Numeric, MalformedFileError, NBTFile, TAGLIST
+from nbt.nbt import _TAG_Numeric, TAG_Int, MalformedFileError, NBTFile, TAGLIST
 
 NBTTESTFILE = os.path.join(os.path.dirname(__file__), 'bigtest.nbt')
 
@@ -26,37 +26,18 @@ class BugfixTest(unittest.TestCase):
 		temp.seek(0)
 		self.assertRaises(MalformedFileError, NBTFile, buffer=temp)
 
-	def testProperlyClosed(self):
-		"""
-		test that files opened from a file name are closed after 
-		being written to. i.e. will read correctly in the future
-		"""
-		# copy the file (don't work on the original test file)
-		tempdir = tempfile.mkdtemp()
-		filename = os.path.join(tempdir, 'bigtest.nbt')
-		shutil.copy(NBTTESTFILE, filename)
-		
-		#open the file
-		f = NBTFile(filename)
-		f.write_file()
-		# make sure it can be read again directly after
-		f = NBTFile(filename)
-		
-		# remove the temporary file
-		try:
-			shutil.rmtree(tempdir)
-		except OSError as e:
-			raise
 
 class ReadWriteTest(unittest.TestCase):
 	"""test that we can read the test file correctly"""
 
 	def setUp(self):
+		# copy the file (don't work on the original test file)
 		self.tempdir = tempfile.mkdtemp()
 		self.filename = os.path.join(self.tempdir, 'bigtest.nbt')
 		shutil.copy(NBTTESTFILE, self.filename)
 
 	def tearDown(self):
+		# remove the temporary file
 		try:
 			shutil.rmtree(self.tempdir)
 		except OSError as e:
@@ -76,6 +57,25 @@ class ReadWriteTest(unittest.TestCase):
 	def testWriteback(self):
 		mynbt = NBTFile(self.filename)
 		mynbt.write_file()
+
+	def testProperlyClosed(self):
+		"""
+		test that files opened from a file name are closed after 
+		being written to. i.e. will read correctly in the future
+		"""
+		#open the file
+		mynbt = NBTFile(self.filename)
+		mynbt['test'] = TAG_Int(123)
+		mynbt.write_file()
+		self.assertTrue(mynbt.file.closed)
+		# make sure it can be read again directly after closing, 
+		# and contains the updated contents.
+		mynbt = NBTFile(self.filename)
+		self.assertEqual(mynbt['test'].value, 123)
+
+# TODO: test if self.file is NOT closed for NBTFile.write_file([fileobject])
+# TODO: test if self.file is NOT closed for NBTFile.write_file([buffer])
+# TODO: test if NBTFile([buffer]) followed by mynbt.write_file() fails
 
 class TreeManipulationTest(unittest.TestCase):
 

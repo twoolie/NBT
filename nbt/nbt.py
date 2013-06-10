@@ -420,6 +420,7 @@ class TAG_Compound(TAG, MutableMapping):
 			raise TypeError("key needs to be either name of tag, or index of tag, not a %s" % type(key).__name__)
 
 	def __setitem__(self, key, value):
+		assert isinstance(value, TAG), "value must be an nbt.TAG"
 		if isinstance(key, int):
 			# Just try it. The proper error will be raised if it doesn't work.
 			self.tags[key] = value
