@@ -13,14 +13,22 @@ New Features since 1.3.0
 ~~~~~~~~~~~~~~~~~~~~~~~~
 * Added documentation
 * Automatic testing now also runs example scripts
+* WorldFolder.iter_chunks() returns Chunk subclass (McRegionChunk / AnvilChunk)
+* Add exception when opening files too small to be a region file.
 
 Bug Fixes since 1.3.0
 ~~~~~~~~~~~~~~~~~~~~~
 * generate_heightmap now ignored non-solid blocks (such as tall grass)
+* Fix `__delitem__` in TAG_list.
+* Fix behavior of `__delitem__` on TAG_Compound
+* Fix infinite loop while writing a chunk changing the way in which free space is searched in the region file
 
 Backward Incompatible Changes since 1.3.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * WorldFolder is no longer a class, but a factory function
+* The fileobj parameter in `RegionFile(fileobj)` is no longer closed
+  (similar to the behaviour of e.g. GZipFile). It is the callers
+  responsibility to close these files.
 
 Known Bugs
 ~~~~~~~~~~
@@ -114,13 +122,35 @@ Backward Incompatible Changes since 1.0.0
 NBT 1.0.0 (28 February 2011)
 ----------------------------
 
-* First major release
+* First stable release
 * Reads and Parses NBT files
 * Generates and Writes NBT files
 * Reads and writes GZipped NBT files or uncompressed File objects
 
+
+NBT 0.9.0 (15 December 2010)
+----------------------------
+See https://github.com/twoolie/NBT/tree/fe3467fec6d18a6445bc850e9386e1be9e4e1299
+
+
+NBT 0.8.0 (27 November 2010)
+----------------------------
+See https://github.com/twoolie/NBT/tree/67e5f0acdad838e4652d68e7342c362d786411a0
+
+
+NBT 0.7.0 (2 November 2010)
+----------------------------
+See https://github.com/twoolie/NBT/tree/8302ab1040fca8aabd4cf0ab1f40105889c24464
+
+
+NBT 0.6.0 (29 October 2010)
+----------------------------
+See https://github.com/twoolie/NBT/tree/0f0cae968f1fc2d5e5f2cabb37f79bb7910ca7e3
+
+
 NBT 0.5.0 (8 August 2010)
 ----------------------------
+See https://github.com/twoolie/NBT/tree/7d289f0cc4cf91197108569ba361cff934ebaf38
 
 * First public release
-* Beta release (not )
+* Pre-release (not stable yet)
