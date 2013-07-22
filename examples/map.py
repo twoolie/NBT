@@ -23,7 +23,7 @@ try:
 	from PIL import Image
 except ImportError:
 	# PIL not in search path. Let's see if it can be found in the parent folder
-	sys.stderr.write("Module PIL/Image not found. PIL can be found at http://www.pythonware.com/library/pil/")
+	sys.stderr.write("Module PIL/Image not found. Pillow (a PIL fork) can be found at http://python-imaging.github.io/")
 	sys.exit(70) # EX_SOFTWARE
 
 def get_heightmap_image(chunk, buffer=False, gmin=False, gmax=False):
