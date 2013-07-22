@@ -28,6 +28,8 @@ if __name__ == '__main__':
 		print("No world folder specified!")
 		sys.exit(64) # EX_USAGE
 	world_folder = sys.argv[1]
+	# clean path name, eliminate trailing slashes:
+	world_folder = os.path.normpath(world_folder)
 	if (not os.path.exists(world_folder)):
 		print("No such folder as "+world_folder)
 		sys.exit(72) # EX_IOERR

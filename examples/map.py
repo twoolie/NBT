@@ -218,6 +218,8 @@ if __name__ == '__main__':
 	else:
 		show = True
 		world_folder = sys.argv[1]
+	# clean path name, eliminate trailing slashes. required for os.path.basename()
+	world_folder = os.path.normpath(world_folder)
 	if (not os.path.exists(world_folder)):
 		print("No such folder as "+world_folder)
 		sys.exit(72) # EX_IOERR

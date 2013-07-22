@@ -157,6 +157,8 @@ if __name__ == '__main__':
 		print("No world folder specified! Usage: %s <world folder> [minx,miny,minz maxx,maxy,maxz]" % sys.argv[0])
 		sys.exit(64) # EX_USAGE
 	world_folder = sys.argv[1]
+	# clean path name, eliminate trailing slashes. required for os.path.basename()
+	world_folder = os.path.normpath(world_folder)
 	if (not os.path.exists(world_folder)):
 		print("No such folder as "+world_folder)
 		sys.exit(72) # EX_IOERR
