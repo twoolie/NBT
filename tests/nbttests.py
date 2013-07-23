@@ -67,7 +67,10 @@ class ReadWriteTest(unittest.TestCase):
 		mynbt = NBTFile(self.filename)
 		mynbt['test'] = TAG_Int(123)
 		mynbt.write_file()
-		self.assertTrue(mynbt.file.closed)
+		if hasattr(mynbt.file, "closed"):
+			self.assertTrue(mynbt.file.closed)
+		else: # GZipFile does not yet have a closed attribute in Python 2.6
+			self.assertTrue(mynbt.file.fileobj == None)
 		# make sure it can be read again directly after closing, 
 		# and contains the updated contents.
 		mynbt = NBTFile(self.filename)
