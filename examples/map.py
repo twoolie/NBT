@@ -23,7 +23,8 @@ try:
 	from PIL import Image
 except ImportError:
 	# PIL not in search path. Let's see if it can be found in the parent folder
-	sys.stderr.write("Module PIL/Image not found. Pillow (a PIL fork) can be found at http://python-imaging.github.io/")
+	sys.stderr.write("Module PIL/Image not found. Pillow (a PIL fork) can be found at http://python-imaging.github.io/\n")
+	# Note: it may also be possible that PIL is installed, but JPEG support is disabled or broken
 	sys.exit(70) # EX_SOFTWARE
 
 def get_heightmap_image(chunk, buffer=False, gmin=False, gmax=False):
@@ -47,7 +48,7 @@ def get_heightmap_image(chunk, buffer=False, gmin=False, gmax=False):
 
 def get_map(chunk):
 	# Show an image of the chunk from above
-	pixels = ""
+	pixels = b""
 	block_colors = {
 		0: {'h':0, 's':0, 'l':0},       # Air
 		1: {'h':0, 's':0, 'l':32},      # Stone
@@ -117,7 +118,7 @@ def get_map(chunk):
 			rgb = hsl2rgb(final_color['h'], final_color['s'], final_color['l'])
 
 			pixels += pack("BBB", rgb[0], rgb[1], rgb[2])
-	im = Image.fromstring('RGB', (16,16), pixels)
+	im = Image.frombytes('RGB', (16,16), pixels)
 	return im
 
 
