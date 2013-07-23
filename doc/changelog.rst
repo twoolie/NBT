@@ -12,20 +12,27 @@ Git trunk can be found at https://github.com/twoolie/NBT/tree/master
 New Features since 1.3.0
 ~~~~~~~~~~~~~~~~~~~~~~~~
 * Added documentation
-* Automatic testing now also runs example scripts
 * WorldFolder.iter_chunks() returns Chunk subclass (McRegionChunk / AnvilChunk)
 * Add exception when opening files too small to be a region file.
+* Examples/map.py example now works with Python 3 as well.
+  The recommended library is Pillow, a fork of PIL that supports Python 3.
 
 Bug Fixes since 1.3.0
 ~~~~~~~~~~~~~~~~~~~~~
-* generate_heightmap now ignored non-solid blocks (such as tall grass)
+* Automatic testing now also runs example scripts
+* Automatic testing now also runs Python 3.3
+* generate_heightmap now ignores non-solid blocks (such as tall grass).
 * Fix `__delitem__` in TAG_list.
-* Fix behavior of `__delitem__` on TAG_Compound
-* Fix infinite loop while writing a chunk changing the way in which free space is searched in the region file
+* Fix behavior of `__delitem__` on TAG_Compound.
+* Fix infinite loop while writing a chunk changing the way in which free 
+  space is searched in the region file.
+* Fixed a bug that sometimes made write chunks in the region file header.
+* Allow trailing slash in world folder in example scripts
 
 Backward Incompatible Changes since 1.3.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* WorldFolder is no longer a class, but a factory function
+* WorldFolder is no longer a class, but a factory function that returns
+  (a subclass of) a _BaseWorldFolder.
 * The fileobj parameter in `RegionFile(fileobj)` is no longer closed
   (similar to the behaviour of e.g. GZipFile). It is the callers
   responsibility to close these files.
@@ -42,9 +49,11 @@ New Features since 1.2.0
 ~~~~~~~~~~~~~~~~~~~~~~~~
 * Python 3 support
 * NBT_Tag objects behave like native Python objects
+
   - TAG_Byte_Array, TAG_Int_Array and TAG_List are now a MutableSequence
-  - TAG_Compound is now a MutableSequence
+  - TAG_Compound is now a MutableMapping
   - TAG_String is now a Sequence
+
 * Improved printing of TAGs (`__str__` and `__repr__`) for easier debugging
 * Added examples script for listing mobs, listing chest content, display
   world seed, and counting Biome data

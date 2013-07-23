@@ -106,14 +106,15 @@ The tag types and respective payloads are:
     :Payload: - A sequential list of Named Tags. This array keeps going until a TAG_End is found.
               - TAG_End end
     :Notes:   If there's a nested TAG_Compound within this tag, that one will also have a TAG_End, so simply reading until the next TAG_End will not work.
-             The names of the named tags have to be unique within each TAG_Compound
+             The names of the named tags have to be unique within each TAG_Compound.
              The order of the tags is not guaranteed.
 
 ..
 
     :TYPE:    11 
     :NAME:    TAG_Int_Array
-    :Payload: - An array of signed integers (32 bits, big endian). The length of this array is <4*length> bytes
+    :Payload: - TAG_Int length
+              - An array of signed integers (32 bits, big endian). The length of this array is <4*length> bytes
     :Notes:   This payload type was added to the specification in March 2012.
 
 
