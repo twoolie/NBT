@@ -51,6 +51,7 @@ class RegionFile(object):
 		elif not self.file:
 			raise ValueError("RegionFile(): Need to specify either a filename or a file object")
 
+		# TODO: convert constants from instance variables to class variables.
 		# Some variables and constants
 		#
 		# Status is a number representing:
@@ -119,6 +120,14 @@ class RegionFile(object):
 		size = self.file.tell()
 		return size
 
+	@staticmethod
+	def _bytes_to_sector(bsize, sectorlen=4096):
+		"""Given a size in bytes, return how many sections of length sectorlen are required to contain it.
+		This is equivalent to ceil(bsize/sectorlen), if Python would use floating
+		points for division, and integers for ceil(), rather than the other way around."""
+		sectors, remainder = divmod(bsize, sectorlen)
+		return sectors if remainder == 0 else sectors + 1
+	
 	def __del__(self):
 		if self._closefile:
 			self.file.close()
@@ -146,8 +155,13 @@ class RegionFile(object):
 
 			elif offset < 2 and offset != 0:
 				status = self.STATUS_CHUNK_IN_HEADER
+			
+			# TODO: check for chunks overlapping in file
+			# make list of files sectors -> chunk (in addition to the chunk -> sectors dict)?
 
 			# (don't forget!) offset and length comes in sectors of 4096 bytes
+			#TODO: would it be allowed if self.size would be a bit smaller, because the last bytes are not zeroed, 
+			# or MUST the file size be a multiple of 4096?
 			elif (offset + length)*4096 > self.size:
 				status = self.STATUS_CHUNK_OUT_OF_FILE
 
@@ -174,7 +188,7 @@ class RegionFile(object):
 					compression = compression[0]
 					if length == 0: # chunk can't be zero length
 						chunk_status = self.STATUS_CHUNK_ZERO_LENGTH
-					elif length > region_header_length*4096:
+					elif length > region_header_length*4096: # TODO: correct for 4 byte(?) length value
 						# the lengths stored in region header and chunk
 						# header are not compatible
 						chunk_status = self.STATUS_CHUNK_MISMATCHED_LENGTHS
@@ -218,6 +232,7 @@ class RegionFile(object):
 
 	def get_chunk_coords(self):
 		"""Return coordinates and length of all chunks."""
+		# TODO: iterate over self.
 		index = 0
 		self.file.seek(index)
 		chunks = []
@@ -271,7 +286,7 @@ class RegionFile(object):
 			elif chunk_header_status == self.STATUS_CHUNK_MISMATCHED_LENGTHS:
 				raise ChunkHeaderError('The length in region header and the length in the header of chunk %d,%d are incompatible' % (x,z))
 
-			self.file.seek(offset*4*1024 + 5) # offset comes in sectors of 4096 bytes + length bytes + compression byte
+			self.file.seek(offset*4096 + 5) # offset comes in sectors of 4096 bytes + length bytes + compression byte
 			chunk = self.file.read(length-1)
 
 			if (compression == 2):
@@ -303,7 +318,7 @@ class RegionFile(object):
 		compressed = zlib.compress(data.getvalue()) #use zlib compression, rather than Gzip
 		data = BytesIO(compressed)
 
-		nsectors = int(math.ceil(len(data.getvalue())/4096.))
+		nsectors = _bytes_to_sector(len(data.getvalue()))
 
 		# search for a place where to write the chunk:
 		offset, length, timestamp, status = self.header[x, z]
@@ -329,6 +344,7 @@ class RegionFile(object):
 				# sort the chunk tuples by offset and ignore empty chunks
 				l = sorted([i for i in self.header.values() if i[0] != 0])
 
+				# TODO: What is l[0][0]?
 				if l[0][0] != 2:
 					# there is space between the header and the first
 					# used sector, insert a false tuple to check that
@@ -368,6 +384,7 @@ class RegionFile(object):
 		if pad_end:
 			# Write zeros up to the end of the chunk
 			self.file.seek((sector+nsectors)*4096-1)
+			# TODO: this would write only one zero-byte, shouldn't this be more bytes long?
 			self.file.write(chr(0))
 
 		#seek to header record and write offset and length records
@@ -379,6 +396,8 @@ class RegionFile(object):
 		timestamp = int(time.time())
 		self.file.write(pack(">I", timestamp))
 
+		# adjust self.size.
+		# TODO: Is there a reason to call `parse_header()` instead of just `self.size = self.get_size()`
 		#update header information
 		self.parse_header()
 
