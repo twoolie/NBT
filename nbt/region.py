@@ -335,16 +335,7 @@ class RegionFile(object):
 		offset, length, timestamp, status = self.header[x, z]
 		pad_end = False
 
-		if status in (self.STATUS_CHUNK_OUT_OF_FILE, self.STATUS_CHUNK_IN_HEADER,
-                  self.STATUS_CHUNK_ZERO_LENGTH, self.STATUS_CHUNK_MISMATCHED_LENGTHS):
-			# don't trust bad headers, this chunk hasn't been generated yet, or the header is wrong
-			# This chunk should just be appended to the end of the file
-			self.file.seek(0,2) # go to the end of the file
-			file_length = self.file.tell()-1 # current offset is file length
-			total_sectors = file_length/4096
-			sector = total_sectors+1
-			pad_end = True
-		elif status in (self.STATUS_CHUNK_NOT_CREATED, self.STATUS_CHUNK_OK):
+		if status in (self.STATUS_CHUNK_NOT_CREATED, self.STATUS_CHUNK_OK):
 			# look up if the new chunk fits in the place of the old one,
 			# a no created chunk has 0 length, so can't be a problem
 			if nsectors <= length:
@@ -386,6 +377,17 @@ class RegionFile(object):
 					total_sectors = file_length/4096
 					sector = total_sectors+1
 					pad_end = True
+		else:
+			# status is (self.STATUS_CHUNK_OUT_OF_FILE, self.STATUS_CHUNK_IN_HEADER,
+			#      self.STATUS_CHUNK_ZERO_LENGTH, self.STATUS_CHUNK_MISMATCHED_LENGTHS)
+			# don't trust bad headers, this chunk hasn't been generated yet, or the header is wrong
+			# This chunk should just be appended to the end of the file
+			self.file.seek(0,2) # go to the end of the file
+			file_length = self.file.tell()-1 # current offset is file length
+			total_sectors = file_length/4096
+			sector = total_sectors+1
+			pad_end = True
+
 
 		# write out chunk to region
 		self.file.seek(sector*4096)
