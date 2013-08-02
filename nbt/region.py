@@ -40,12 +40,15 @@ class RegionFile(object):
 	"""Length of a sector; A Region file is divided in sectors of equal length."""
 
 	# Status is a number representing:
+	# -5 = Error, the chunk is overlapping with another chunk
 	# -4 = Error, the chunk length is too large to fit in the sector length in the region header
 	# -3 = Error, chunk header has a 0 length
 	# -2 = Error, chunk inside the header of the region file
 	# -1 = Error, chunk partially/completely outside of file
 	#  0 = Ok
 	#  1 = Chunk non-existant yet
+	STATUS_CHUNK_OVERLAPPING = -5
+	"""Constant indicating an error status: the chunk is allocated a sector already occupied by another chunk"""
 	STATUS_CHUNK_MISMATCHED_LENGTHS = -4
 	"""Constant indicating an error status: the region header length and the chunk length are incompatible"""
 	STATUS_CHUNK_ZERO_LENGTH = -3
