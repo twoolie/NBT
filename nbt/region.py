@@ -35,6 +35,30 @@ class ChunkDataError(Exception):
 
 class RegionFile(object):
 	"""A convenience class for extracting NBT files from the Minecraft Beta Region Format."""
+	
+	SECTORLEN = 4096
+	"""Length of a sector; A Region file is divided in sectors of equal length."""
+
+	# Status is a number representing:
+	# -4 = Error, the chunk length is too large to fit in the sector length in the region header
+	# -3 = Error, chunk header has a 0 length
+	# -2 = Error, chunk inside the header of the region file
+	# -1 = Error, chunk partially/completely outside of file
+	#  0 = Ok
+	#  1 = Chunk non-existant yet
+	STATUS_CHUNK_MISMATCHED_LENGTHS = -4
+	"""Constant indicating an error status: the region header length and the chunk length are incompatible"""
+	STATUS_CHUNK_ZERO_LENGTH = -3
+	"""Constant indicating an error status: chunk header has a 0 length"""
+	STATUS_CHUNK_IN_HEADER = -2
+	"""Constant indicating an error status: chunk inside the header of the region file"""
+	STATUS_CHUNK_OUT_OF_FILE = -1
+	"""Constant indicating an error status: chunk partially/completely outside of file"""
+	STATUS_CHUNK_OK = 0
+	"""Constant indicating an normal status: the chunk exists and the metadata is valid"""
+	STATUS_CHUNK_NOT_CREATED = 1
+	"""Constant indicating an normal status: the chunk does not exist"""
+	
 	def __init__(self, filename=None, fileobj=None):
 		"""
 		Read a region file by filename of file object. 
@@ -51,23 +75,7 @@ class RegionFile(object):
 		elif not self.file:
 			raise ValueError("RegionFile(): Need to specify either a filename or a file object")
 
-		# TODO: convert constants from instance variables to class variables.
-		# Some variables and constants
-		#
-		# Status is a number representing:
-		# -4 = Error, the region header length and the chunk length are incompatible
-		# -3 = Error, chunk header has a 0 length
-		# -2 = Error, chunk inside the header of the region file
-		# -1 = Error, chunk partially/completely outside of file
-		#  0 = Ok
-		#  1 = Chunk non-existant yet
-
-		self.STATUS_CHUNK_MISMATCHED_LENGTHS = -4
-		self.STATUS_CHUNK_ZERO_LENGTH = -3
-		self.STATUS_CHUNK_IN_HEADER = -2
-		self.STATUS_CHUNK_OUT_OF_FILE = -1
-		self.STATUS_CHUNK_OK = 0
-		self.STATUS_CHUNK_NOT_CREATED = 1
+		# Some variables
 
 		self.header = {}
 		"""
