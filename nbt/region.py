@@ -32,6 +32,11 @@ class ChunkDataError(Exception):
 	def __init__(self, msg):
 		self.msg = msg
 
+class InconceivedChunk(LookupError):
+	"""Specified chunk has not yet been generated"""
+	def __init__(self, msg):
+		self.msg = msg
+
 
 class RegionFile(object):
 	"""A convenience class for extracting NBT files from the Minecraft Beta Region Format."""
