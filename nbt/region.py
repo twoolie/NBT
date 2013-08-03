@@ -229,11 +229,13 @@ class RegionFile(object):
 					length = None
 					compression = None
 					chunk_status = self.STATUS_CHUNK_IN_HEADER
+				
+				# TODO: make this last elif into an else in case of other error codes
 
 				self.chunk_headers[x, z] = (length, compression, chunk_status)
 
 
-	def locate_free_space(self):
+	def locate_free_space(self, required_sectors):
 		pass
 
 	def get_chunks(self):
@@ -248,6 +250,7 @@ class RegionFile(object):
 
 	def get_chunk_coords(self):
 		"""Return coordinates and length of all chunks."""
+		# TODO: deprecate this function, and replace with one that returns objects instead of a dict, and has a better name (get_chunk_metadata(), get_metadata()?)
 		# TODO: iterate over self.
 		index = 0
 		self.file.seek(index)
@@ -303,7 +306,7 @@ class RegionFile(object):
 				raise ChunkHeaderError('The length in region header and the length in the header of chunk %d,%d are incompatible' % (x,z))
 
 			self.file.seek(offset*4096 + 5) # offset comes in sectors of 4096 bytes + length bytes + compression byte
-			chunk = self.file.read(length-1)
+			chunk = self.file.read(length-1) # the lenght in the file includes the compression byte
 
 			if (compression == 2):
 				try:
@@ -335,6 +338,8 @@ class RegionFile(object):
 		data = BytesIO(compressed)
 
 		nsectors = bytes_to_sector(len(data.getvalue()))
+		# TODO: add the 5 bytes required for the chunk block header
+		# TODO: raise error if nsectors > 256 (because the length byte can no longer fit in the 1-byte length field in the header)
 
 		# search for a place where to write the chunk:
 		offset, length, timestamp, status = self.header[x, z]
@@ -379,7 +384,7 @@ class RegionFile(object):
 				if not found: # append chunk to the end of the file
 					self.file.seek(0,2) # go to the end of the file
 					file_length = self.file.tell()-1 # current offset is file length
-					total_sectors = file_length/4096
+					total_sectors = file_length/4096 # TODO: / or // ?
 					sector = total_sectors+1
 					pad_end = True
 		else:
