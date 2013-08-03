@@ -20,7 +20,7 @@ class _BaseWorldFolder(object):
 	"""
 	Abstract class, representing either a McRegion or Anvil world folder.
 	This class will use either Anvil or McRegion, with Anvil the preferred format.
-	Simply calling world_folder will do this automattically, without user interaction
+	Simply calling WorldFolder() will do this automatically.
 	"""
 	type = "Generic"
 

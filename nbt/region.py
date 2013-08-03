@@ -1,7 +1,7 @@
 """
 Handle a region file, containing 32x32 chunks
 For more info of the region file format look:
-http://www.minecraftwiki.net/wiki/Beta_Level_Format
+http://www.minecraftwiki.net/wiki/Region_file_format
 """
 
 from .nbt import NBTFile
@@ -282,7 +282,7 @@ class RegionFile(object):
 		#read metadata block
 		offset, length, timestamp, region_header_status = self.header[x, z]
 		if region_header_status == self.STATUS_CHUNK_NOT_CREATED:
-			return None
+			return None # TODO: raise InconceivedChunk
 
 		elif region_header_status == self.STATUS_CHUNK_IN_HEADER:
 			raise RegionHeaderError('Chunk %d,%d is in the region header' % (x,z))
@@ -319,7 +319,7 @@ class RegionFile(object):
 				raise ChunkDataError('Unknown chunk compression/format')
 
 		else:
-			return None
+			return None # TODO: raise RegionHeaderError
 
 	def write_chunk(self, x, z, nbt_file):
 		""" A simple chunk writer. """
