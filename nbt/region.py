@@ -132,7 +132,7 @@ class RegionFile(object):
 		return size
 
 	@staticmethod
-	def _bytes_to_sector(bsize, sectorlen=4096):
+	def bytes_to_sector(bsize, sectorlen=4096):
 		"""Given a size in bytes, return how many sections of length sectorlen are required to contain it.
 		This is equivalent to ceil(bsize/sectorlen), if Python would use floating
 		points for division, and integers for ceil(), rather than the other way around."""
@@ -329,7 +329,7 @@ class RegionFile(object):
 		compressed = zlib.compress(data.getvalue()) #use zlib compression, rather than Gzip
 		data = BytesIO(compressed)
 
-		nsectors = _bytes_to_sector(len(data.getvalue()))
+		nsectors = bytes_to_sector(len(data.getvalue()))
 
 		# search for a place where to write the chunk:
 		offset, length, timestamp, status = self.header[x, z]
