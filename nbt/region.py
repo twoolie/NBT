@@ -12,28 +12,26 @@ from io import BytesIO
 import math, time
 from os.path import getsize
 
-class NoRegionHeader(Exception):
+class RegionFileFormatError(Exception):
+	"""Base class for all file format errors.
+	Note: InconceivedChunk is not a child class, because it is not considered a format error."""
+	def __init__(self, msg):
+		self.msg = msg
+
+class NoRegionHeader(RegionFileFormatError):
 	"""The size of the region file is too small to contain a header."""
-	def __init__(self, msg):
-		self.msg = msg
 
-class RegionHeaderError(Exception):
+class RegionHeaderError(RegionFileFormatError):
 	"""Error in the header of the region file for a given chunk."""
-	def __init__(self, msg):
-		self.msg = msg
 
-class ChunkHeaderError(Exception):
+class ChunkHeaderError(RegionFileFormatError):
 	"""Error in the header of a chunk, included the bytes of length and byte version."""
-	def __init__(self, msg):
-		self.msg = msg
 
-class ChunkDataError(Exception):
+class ChunkDataError(RegionFileFormatError):
 	"""Error in the data of a chunk."""
-	def __init__(self, msg):
-		self.msg = msg
 
 class InconceivedChunk(LookupError):
-	"""Specified chunk has not yet been generated"""
+	"""Specified chunk has not yet been generated."""
 	def __init__(self, msg):
 		self.msg = msg
 
@@ -306,7 +304,7 @@ class RegionFile(object):
 				raise ChunkHeaderError('The length in region header and the length in the header of chunk %d,%d are incompatible' % (x,z))
 
 			self.file.seek(offset*4096 + 5) # offset comes in sectors of 4096 bytes + length bytes + compression byte
-			chunk = self.file.read(length-1) # the lenght in the file includes the compression byte
+			chunk = self.file.read(length-1) # the length in the file includes the compression byte
 
 			if (compression == 2):
 				try:
