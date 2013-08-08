@@ -4,6 +4,7 @@ Defragment a given region file.
 """
 
 import locale, os, sys
+import collections
 from optparse import OptionParser
 
 # local module
@@ -49,13 +50,37 @@ class Statuses(object):
 			self.counts[status] = 0
 			self.names = "Status %s" % status
 		self.counts[status] += count
+	def get_name(self, status):
+		if status in self.names:
+			return self.names[status]
+		else:
+			return "Status %s" % status
 	def results(self):
 		for value in sorted(self.counts.keys()):
-			yield value, self.counts[value], self.names[value]
+			yield value, self.counts[value], self.get_name(value)
 	def total(self):
 		return sum(self.counts.values())
 
-def analyse_regionfile(filename):
+class ByteCounter(object):
+	"""Keep track of types of bytes in a binary stream."""
+	def __init__(self):
+		self.counts = {}
+	def count(self, bytestream):
+		if isinstance(bytestream, collections.Iterable):
+			for byte in bytestream:
+				if byte not in self.counts:
+					self.counts[byte] = 0
+				self.counts[byte] += 1
+		else:
+			if bytestream not in self.counts:
+				self.counts[bytestream] = 0
+			self.counts[bytestream] += 1
+	def results(self):
+		for value in sorted(self.counts.keys()):
+			yield value, self.counts[value]
+	
+
+def analyse_regionfile(filename, warnings=True):
 	region = RegionFile(filename)
 	
 	statuscounts = Statuses()
@@ -63,9 +88,18 @@ def analyse_regionfile(filename):
 	if region.size % 4096 != 0:
 		errors.append("File size is %d bytes, which is not a multiple of 4096" % region.size)
 	sectorsize = region.bytes_to_sector(region.size)
-	sectors = sectorsize*["empty"]
-	sectors[0] = "locations"
-	sectors[1] = "timestamps"
+	sectors = sectorsize*[None]
+	if region.size == 0:
+		errors.append("File size is 0 bytes")
+		sectors = []
+	elif sectorsize < 2:
+		errors.append("File size is %d bytes, too small for the 8192 byte header" % region.size)
+	else:
+		sectors[0] = "locations"
+		sectors[1] = "timestamps"
+	unusedfirsts = ByteCounter()
+	unusedmiddle = ByteCounter()
+	unusedend = ByteCounter()
 	for x in range(32):
 		for z in range(32):
 			c = ChunkMetadata(x,z)
@@ -74,56 +108,80 @@ def analyse_regionfile(filename):
 			
 			if c.status < 0:
 				errors.append("chunk %d,%d has status %d: %s" % \
-					(x, z, c.status, statuscounts.names[c.status]))
+					(x, z, c.status, statuscounts.get_name(c.status)))
 			
 			if c.sectorstart != 0:
-				if c.sectorlen == 0:
-					errors.append("chunk %d,%d is 0 sectors in length" % (x, z))
+				if c.sectorlen <= 0:
+					errors.append("chunk %d,%d is %d sectors in length" % (x, z, c.sectorlen))
+				allocatedbytes = 4096 * c.sectorlen
 				requiredsectors = region.bytes_to_sector(c.length + 4)
-				if c.sectorlen < requiredsectors:
+				if c.length + 4 > allocatedbytes:
 					errors.append("chunk %d,%d is %d bytes (4+1+%d) and requires %d sectors, " \
-						"but only %d sectors are allocated" % \
-						(x, z, c.length+4, c.length-1, requiredsectors, c.sectorlen))
+						"but only %d %s allocated" % \
+						(x, z, c.length+4, c.length-1, requiredsectors, c.sectorlen, \
+						"sector is" if (c.sectorlen == 1) else "sectors are"))
+				elif c.length + 4 + 4096 == allocatedbytes:
+					# If the block fits in exactly n sectors, Minecraft seems to allocated n+1 sectors
+					# Threat this as a warning instead of an error.
+					if warnings:
+						errors.append("chunk %d,%d is %d bytes (4+1+%d) and requires %d %s, " \
+							"but %d sectors are allocated" % \
+							(x, z, c.length+4, c.length-1, requiredsectors, \
+							"sector" if (requiredsectors == 1) else "sectors", c.sectorlen))
 				elif c.sectorlen > requiredsectors:
-					errors.append("chunk %d,%d is %d bytes (4+1+%d) and requires %d sectors, " \
+					errors.append("chunk %d,%d is %d bytes (4+1+%d) and requires %d %s, " \
 						"but %d sectors are allocated" % \
-						(x, z, c.length+4, c.length-1, requiredsectors, c.sectorlen))
-				# The following are not errors, but merely notes for myself to check if the 
-				# sector lenght calculation is correct.
-				elif c.length + 4 == c.sectorlen * 4096:
-					errors.append("chunk %d,%d is %d bytes (4+1+%d) and requires %d sector(s), " \
-						"and indeed %d sector(s) is/are allocated" % \
-						(x, z, c.length+4, c.length-1, requiredsectors, c.sectorlen))
-				elif c.length + 5 == c.sectorlen * 4096:
-					errors.append("chunk %d,%d is %d bytes (4+1+%d) and requires %d sector(s), " \
-						"and indeed %d sector(s) is/are allocated" % \
-						(x, z, c.length+4, c.length-1, requiredsectors, c.sectorlen))
-				elif c.length + 6 == c.sectorlen * 4096:
-					errors.append("chunk %d,%d is %d bytes (4+1+%d) and requires %d sector(s), " \
-						"and indeed %d sector(s) is/are allocated" % \
-						(x, z, c.length+4, c.length-1, requiredsectors, c.sectorlen))
+						(x, z, c.length+4, c.length-1, requiredsectors, \
+						"sector" if (requiredsectors == 1) else "sectors", c.sectorlen))
+				
+				if warnings:
+					# Read the unused bytes in a sector and check if all bytes are zeroed.
+					unusedlen = 4096*c.sectorlen - (c.length+4)
+					if unusedlen > 0:
+						region.file.seek(4096*c.sectorstart + 4 + c.length)
+						unused = region.file.read(unusedlen)
+						zeroes = unused.count(b'\x00')
+						if zeroes < unusedlen:
+							errors.append("%d of %d unused bytes are not zeroed in sector %d after chunk %d,%d" % \
+								(unusedlen-zeroes, unusedlen, c.sectorstart + c.sectorlen - 1, x, z))
+			else:
+				# c.sectorstart == 0:
+				if c.sectorlen != 0:
+					errors.append("chunk %d,%d is not created, but is %d sectors in length" % (x, z, c.sectorlen))
+				if c.timestamp != 0:
+					errors.append("chunk %d,%d is not created, but has timestamp %d" % (x, z, c.timestamp))
 			
 			statuscounts.count(c.status)
 			for b in range(c.sectorlen):
-				m = "chunk %-2s,%-2s part %d/%d" % (x, z, b+1, c.sectorlen)
+				m = "chunk %-2d,%-2d part %d/%d" % (x, z, b+1, c.sectorlen)
 				p = c.sectorstart + b
 				if p > sectorsize:
 					errors.append("%s outside file" % (m))
 					break
-				if sectors[p] != "empty":
+				if sectors[p] != None:
 					errors.append("overlap in sector %d: %s and %s" % (p, sectors[p], m))
 				sectors[p] = m
 	
-	e = sectors.count("empty")
+	e = sectors.count(None)
 	if e > 0:
-		errors.append("Fragementation: File has %d unused sectors" % e)
+		if warnings:
+			errors.append("Fragementation: %d of %d sectors are unused" % (e, sectorsize))
+		for sector, content in enumerate(sectors):
+			if content == None:
+				sectors[sector] = "empty"
+				if warnings:
+					region.file.seek(4096*sector)
+					unused = region.file.read(4096)
+					zeroes = unused.count(b'\x00')
+					if zeroes < 4096:
+						errors.append("%d bytes are not zeroed in unused sector %d" % (4096-zeroes, sector))
 
 	return errors, statuscounts, sectors
 	
 
-def debug_regionfile(filename):
+def debug_regionfile(filename, warnings=True):
 	print(filename)
-	errors, statuscounts, sectors = analyse_regionfile(filename)
+	errors, statuscounts, sectors = analyse_regionfile(filename, warnings)
 
 	print("File size is %d sectors" % (len(sectors)))
 	print("Chunk statuses:")
@@ -142,9 +200,9 @@ def debug_regionfile(filename):
 	for i,s in enumerate(sectors):
 		print("sector %03d: %s" % (i, s))
 
-def print_errors(filename):
+def print_errors(filename, warnings=True):
 	print(filename)
-	errors, statuscounts, sectors = analyse_regionfile(filename)
+	errors, statuscounts, sectors = analyse_regionfile(filename, warnings)
 	for error in errors:
 		print(error)
 
@@ -154,18 +212,20 @@ if __name__ == '__main__':
 	parser = OptionParser()
 	parser.add_option("-v", "--verbose", dest="verbose", default=False,
 					action="store_true", help="Show detailed info about region file")
+	parser.add_option("-q", "--quiet", dest="warnings", default=True,
+					action="store_false", help="Only show errors, no warnings")
 
 	(options, args) = parser.parse_args()
 	if (len(args) == 0):
-		print("No region file specified! Use -v for verbose results.")
+		print("No region file specified! Use -v for verbose results; -q for errors only (no warnings)")
 		sys.exit(64) # EX_USAGE
 
 	for filename in args:
 		try:
 			if options.verbose:
-				debug_regionfile(filename)
+				debug_regionfile(filename, options.warnings)
 			else:
-				print_errors(filename)
+				print_errors(filename, options.warnings)
 		except IOError as e:
 			sys.stderr.write("%s: %s\n" % (e.filename, e.strerror))
 			# sys.exit(72) # EX_IOERR
