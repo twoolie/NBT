@@ -250,6 +250,7 @@ class RegionFile(object):
 		"""Return coordinates and length of all chunks."""
 		# TODO: deprecate this function, and replace with one that returns objects instead of a dict, and has a better name (get_chunk_metadata(), get_metadata()?)
 		# TODO: iterate over self.
+		# TODO: this function fails for an empty file. Better use self.header and self.chunk_headers
 		index = 0
 		self.file.seek(index)
 		chunks = []
@@ -273,6 +274,7 @@ class RegionFile(object):
 
 	def get_timestamp(self, x, z):
 		"""Return the timestamp of when this region file was last modified."""
+		# TODO: this function fails for an empty file. Better use self.header and self.chunk_headers
 		self.file.seek(4096+4*(x+z*32))
 		timestamp = unpack(">I",self.file.read(4))[0]
 		return timestamp
@@ -430,6 +432,7 @@ class RegionFile(object):
 		Minecraft and this nbt library write chunks in old free spaces
 		when possible.
 		"""
+		# TODO: this function fails for an empty file. If that is the case, just return.
 
 		# zero the region header for the chunk (offset length and time)
 		self.file.seek(4*(x+z*32))
