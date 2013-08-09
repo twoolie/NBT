@@ -10,15 +10,14 @@ import random
 
 # local module
 try:
-	# Yes, yes, I know. Importing * may give namespace collisions. Fix it if you like.
-	from nbt.nbt import *
+	import nbt
 except ImportError:
 	# nbt not in search path. Let's see if it can be found in the parent folder
 	extrasearchpath = os.path.realpath(os.path.join(__file__,os.pardir,os.pardir))
 	if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
 		raise
 	sys.path.append(extrasearchpath)
-	from nbt.nbt import *
+from nbt.nbt import NBTFile, TAG_Long, TAG_Int, TAG_String, TAG_Compound
 
 
 level = NBTFile() # Blank NBT
