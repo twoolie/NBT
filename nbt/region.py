@@ -113,19 +113,8 @@ class RegionFile(object):
 		- STATUS_CHUNK_NOT_CREATED
 		If the chunk is not defined, the tuple is (None, None, STATUS_CHUNK_NOT_CREATED)
 		"""
-		if self.file:
-			self.size = self.get_size()
-			if self.size == 0:
-				# Some region files seems to have 0 bytes of size, and
-				# Minecraft handle them without problems. Take them
-				# as empty region files.
-				self.init_header()
-			elif self.size < 8192:
-				raise NoRegionHeader('The region file is too small in size to have a header.')
-			else:
-				self.parse_header()
-		else:
-			self.init_header()
+		
+		self.parse_header()
 		self.parse_chunk_headers()
 
 	def get_size(self):
@@ -157,6 +146,16 @@ class RegionFile(object):
 		# we have unlinked a chunk or writed a new one
 		self.size = self.get_size()
 
+		if self.size == 0:
+			# Some region files seems to have 0 bytes of size, and
+			# Minecraft handle them without problems. Take them
+			# as empty region files.
+			self.init_header()
+			return
+		elif self.size < 8192:
+			self.init_header()
+			raise NoRegionHeader('The region file is too small in size to have a header.')
+		
 		for index in range(0,4096,4):
 			self.file.seek(index)
 			offset, length = unpack(">IB", b"\0"+self.file.read(4))
