@@ -277,6 +277,7 @@ class RegionFile(object):
 	def get_timestamp(self, x, z):
 		"""Return the timestamp of when this region file was last modified."""
 		# TODO: this function fails for an empty file. Better use self.header and self.chunk_headers
+		# TODO: raise exception if chunk does not exist
 		self.file.seek(4096+4*(x+z*32))
 		timestamp = unpack(">I",self.file.read(4))[0]
 		return timestamp
@@ -290,6 +291,7 @@ class RegionFile(object):
 	def get_chunk(self, x, z):
 		"""Return a NBTFile"""
 		#read metadata block
+		# TODO: deprecate in favour of get_nbt?
 		offset, length, timestamp, region_header_status = self.header[x, z]
 		if region_header_status == self.STATUS_CHUNK_NOT_CREATED:
 			return None # TODO: raise InconceivedChunk
@@ -425,6 +427,7 @@ class RegionFile(object):
 		# TODO: Is there a reason to call `parse_header()` instead of just `self.size = self.get_size()`
 		#update header information
 		self.parse_header()
+		# TODO: this does not update chunk_headers. This is a problem if the chunk is read later.
 
 
 	def unlink_chunk(self, x, z):
@@ -444,6 +447,7 @@ class RegionFile(object):
 
 		# update the header
 		self.parse_header()
+		# TODO: this does not update chunk_headers. This is most likely not a real problem.
 
 	def _classname(self):
 		"""Return the fully qualified class name."""
