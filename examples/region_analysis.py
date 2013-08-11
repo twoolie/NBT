@@ -39,6 +39,7 @@ class Statuses(object):
 	def __init__(self):
 		self.counts = {}
 		self.names = {}
+		# Read status names from STATUS_CHUNK_* constants in RegionFile.
 		for var in dir(RegionFile):
 			if var.startswith("STATUS_CHUNK_"):
 				name = var[13:].title().replace("_"," ")
@@ -111,10 +112,16 @@ def analyse_regionfile(filename, warnings=True):
 					(x, z, c.status, statuscounts.get_name(c.status)))
 			
 			if c.sectorstart != 0:
-				if c.sectorlen <= 0:
-					errors.append("chunk %d,%d is %d sectors in length" % (x, z, c.sectorlen))
 				allocatedbytes = 4096 * c.sectorlen
 				requiredsectors = region.bytes_to_sector(c.length + 4)
+				if c.sectorlen <= 0:
+					errors.append("chunk %d,%d is %d sectors in length" % (x, z, c.sectorlen))
+				if c.sectorstart < 2:
+					errors.append("chunk %d,%d starts at sector %d, which is in the header" % (x, z, c.sectorstart))
+				if 4096 * c.sectorstart >= region.size:
+					errors.append("chunk %d,%d starts at sector %d, while the file is only %d sectors" % (x, z, c.sectorstart, sectorsize))
+				elif 4096 * c.sectorstart + 4 + c.length > region.size:
+					errors.append("chunk %d,%d is %d bytes in length, which is behind the file end" % (x, z, c.length))
 				if c.length + 4 > allocatedbytes:
 					errors.append("chunk %d,%d is %d bytes (4+1+%d) and requires %d sectors, " \
 						"but only %d %s allocated" % \
@@ -144,8 +151,8 @@ def analyse_regionfile(filename, warnings=True):
 						if zeroes < unusedlen:
 							errors.append("%d of %d unused bytes are not zeroed in sector %d after chunk %d,%d" % \
 								(unusedlen-zeroes, unusedlen, c.sectorstart + c.sectorlen - 1, x, z))
-			else:
-				# c.sectorstart == 0:
+			
+			else:  # c.sectorstart == 0:
 				if c.sectorlen != 0:
 					errors.append("chunk %d,%d is not created, but is %d sectors in length" % (x, z, c.sectorlen))
 				if c.timestamp != 0:
@@ -184,15 +191,17 @@ def debug_regionfile(filename, warnings=True):
 	errors, statuscounts, sectors = analyse_regionfile(filename, warnings)
 
 	print("File size is %d sectors" % (len(sectors)))
-	print("Chunk statuses:")
+	print("Chunk statuses (as reported by nbt.region.RegionFile):")
 	for value, count, name in statuscounts.results():
 		print("status %2d %-21s%4d chunks" % (value, ("(%s):" % name), count))
 	print("%d chunks in total" % statuscounts.total()) #q should be 1024
 
-	if len(errors) > 0:
-		print("Errors:")
-	else:
+	if len(errors) == 0:
 		print("No errors or warnings found")
+	elif warnings:
+		print("Errors and Warnings:")
+	else:
+		print("Errors:")
 	for error in errors:
 		print(error)
 
@@ -201,8 +210,8 @@ def debug_regionfile(filename, warnings=True):
 		print("sector %03d: %s" % (i, s))
 
 def print_errors(filename, warnings=True):
-	print(filename)
 	errors, statuscounts, sectors = analyse_regionfile(filename, warnings)
+	print(filename)
 	for error in errors:
 		print(error)
 
