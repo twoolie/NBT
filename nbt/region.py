@@ -71,12 +71,15 @@ class RegionFile(object):
 		If a fileobj is specified, it is not closed after use; it is the callers responibility to close that.
 		"""
 		self.file = None
+		self.filename = None
 		self._closefile = False
 		if filename:
 			self.filename = filename
 			self.file = open(filename, 'r+b') # open for read and write in binary mode
 			self._closefile = True
 		elif fileobj:
+			if hasattr(fileobj, 'name'):
+				self.filename = fileobj.name
 			self.file = fileobj
 		elif not self.file:
 			raise ValueError("RegionFile(): Need to specify either a filename or a file object")
@@ -441,3 +444,22 @@ class RegionFile(object):
 
 		# update the header
 		self.parse_header()
+
+	def _classname(self):
+		"""Return the fully qualified class name."""
+		if self.__class__.__module__ in (None,):
+			return self.__class__.__name__
+		else:
+			return "%s.%s" % (self.__class__.__module__, self.__class__.__name__)
+
+	def __str__(self):
+		if self.filename:
+			return "<%s(%r)>" % (self._classname(), self.filename)
+		else:
+			return '<%s object at %d>' % (self._classname(), id(self))
+	
+	def __repr__(self):
+		if self.filename:
+			return "%s(%r)" % (self._classname(), self.filename)
+		else:
+			return '<%s object at %d>' % (self._classname(), id(self))
