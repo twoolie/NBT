@@ -116,12 +116,32 @@ def analyse_regionfile(filename, warnings=True):
 				requiredsectors = region.bytes_to_sector(c.length + 4)
 				if c.sectorlen <= 0:
 					errors.append("chunk %d,%d is %d sectors in length" % (x, z, c.sectorlen))
+					continue
 				if c.sectorstart < 2:
 					errors.append("chunk %d,%d starts at sector %d, which is in the header" % (x, z, c.sectorstart))
+					continue
 				if 4096 * c.sectorstart >= region.size:
 					errors.append("chunk %d,%d starts at sector %d, while the file is only %d sectors" % (x, z, c.sectorstart, sectorsize))
+					continue
+				elif 4096 * c.sectorstart + 5 > region.size:
+					# header of chunk only partially fits
+					errors.append("chunk %d,%d starts at sector %d, but only %d bytes of sector %d are present in the file" % (x, z, c.sectorstart, sectorsize))
+					continue
 				elif 4096 * c.sectorstart + 4 + c.length > region.size:
+					# header of chunk fits, but not the complete chunk
 					errors.append("chunk %d,%d is %d bytes in length, which is behind the file end" % (x, z, c.length))
+				if c.compression == 0:
+					errors.append("chunk %d,%d is uncompressed. This is deprecated." % (x, z))
+				elif c.compression == 1:
+					errors.append("chunk %d,%d uses GZip compression. This is deprecated." % (x, z))
+				elif c.compression > 2:
+					errors.append("chunk %d,%d uses an unknown compression type (%d)." % (x, z, c.compression))
+				if c.length == 0:
+					errors.append("chunk %d,%d has length -1 bytes. It should at least be 1." % (x, z))
+					continue
+				elif c.length == 1:
+					errors.append("chunk %d,%d has length 0 bytes." % (x, z))
+					continue
 				if c.length + 4 > allocatedbytes:
 					errors.append("chunk %d,%d is %d bytes (4+1+%d) and requires %d sectors, " \
 						"but only %d %s allocated" % \
@@ -158,6 +178,7 @@ def analyse_regionfile(filename, warnings=True):
 				if c.timestamp != 0:
 					errors.append("chunk %d,%d is not created, but has timestamp %d" % (x, z, c.timestamp))
 			
+			# Check for overlapping chunks
 			statuscounts.count(c.status)
 			for b in range(c.sectorlen):
 				m = "chunk %-2d,%-2d part %d/%d" % (x, z, b+1, c.sectorlen)
