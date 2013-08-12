@@ -6,6 +6,9 @@ Defragment a given region file.
 import locale, os, sys
 import collections
 from optparse import OptionParser
+import gzip
+import zlib
+from struct import unpack
 
 # local module
 try:
@@ -161,16 +164,53 @@ def analyse_regionfile(filename, warnings=True):
 						(x, z, c.length+4, c.length-1, requiredsectors, \
 						"sector" if (requiredsectors == 1) else "sectors", c.sectorlen))
 				
+
+				# Decompress chunk, check if that succeeds.
+				# Check if the header and footer indicate this is a NBT file.
+				# (without parsing it in detail)
+				data = None
+				try:
+					if 0 <= c.compression <= 2:
+						region.file.seek(4096*c.sectorstart + 5)
+						data = region.file.read(c.length - 1)
+				except Exception as e:
+					errors.append("Error reading chunk %d,%d: %s" % (x, z, str(e)))
+				if (c.compression == 1):
+					try:
+						data = gzip.decompress(data)
+					except Exception as e:
+						errors.append("Error decompressing chunk %d,%d using gzip: %s" % (x, z, str(e)))
+				elif (c.compression == 2):
+					try:
+						data = zlib.decompress(data)
+					except Exception as e:
+						errors.append("Error decompressing chunk %d,%d using zlib: %s" % (x, z, str(e)))
+				if data:
+					if data[0] != 10:
+						errors.append("chunk %d,%d is not a valid NBT file: outer object is not a TAG_Compound, but %r" % (x, z, data[0]))
+					elif data[-1] != 0:
+						errors.append("chunk %d,%d is not a valid NBT file: files does not end with a TAG_End." % (x, z))
+					else:
+						(length, ) = unpack(">H", data[1:3])
+						name = data[3:3+length]
+						try:
+							name.decode("utf-8", "strict") 
+						except Exception as e:
+							errors.append("Error decompressing chunk %d,%d using unknown compression: %s" % (x, z, str(e)))
+				
 				if warnings:
 					# Read the unused bytes in a sector and check if all bytes are zeroed.
 					unusedlen = 4096*c.sectorlen - (c.length+4)
 					if unusedlen > 0:
-						region.file.seek(4096*c.sectorstart + 4 + c.length)
-						unused = region.file.read(unusedlen)
-						zeroes = unused.count(b'\x00')
-						if zeroes < unusedlen:
-							errors.append("%d of %d unused bytes are not zeroed in sector %d after chunk %d,%d" % \
-								(unusedlen-zeroes, unusedlen, c.sectorstart + c.sectorlen - 1, x, z))
+						try:
+							region.file.seek(4096*c.sectorstart + 4 + c.length)
+							unused = region.file.read(unusedlen)
+							zeroes = unused.count(b'\x00')
+							if zeroes < unusedlen:
+								errors.append("%d of %d unused bytes are not zeroed in sector %d after chunk %d,%d" % \
+									(unusedlen-zeroes, unusedlen, c.sectorstart + c.sectorlen - 1, x, z))
+						except Exception as e:
+							errors.append("Error reading tail of chunk %d,%d: %s" % (x, z, str(e)))
 			
 			else:  # c.sectorstart == 0:
 				if c.sectorlen != 0:
