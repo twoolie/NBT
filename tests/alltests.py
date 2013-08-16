@@ -5,7 +5,7 @@ import unittest
 import sys
 import logging
 
-testmodules = ['examplestests', 'nbttests']
+testmodules = ['examplestests', 'nbttests', 'regiontests']
 """Files to check for test cases. Do not include the .py extension."""
 
 
