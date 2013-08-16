@@ -19,7 +19,7 @@ except ImportError:
 	if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
 		raise
 	sys.path.append(extrasearchpath)
-from nbt.region import RegionFile
+from nbt.region import RegionFile, RegionFileFormatError
 
 
 class ChunkMetadata(object):
@@ -91,7 +91,7 @@ def analyse_regionfile(filename, warnings=True):
 	errors = []
 	if region.size % 4096 != 0:
 		errors.append("File size is %d bytes, which is not a multiple of 4096" % region.size)
-	sectorsize = region.bytes_to_sector(region.size)
+	sectorsize = region._bytes_to_sector(region.size)
 	sectors = sectorsize*[None]
 	if region.size == 0:
 		errors.append("File size is 0 bytes")
@@ -101,51 +101,59 @@ def analyse_regionfile(filename, warnings=True):
 	else:
 		sectors[0] = "locations"
 		sectors[1] = "timestamps"
-	unusedfirsts = ByteCounter()
-	unusedmiddle = ByteCounter()
-	unusedend = ByteCounter()
+	chunks = {}
 	for x in range(32):
 		for z in range(32):
 			c = ChunkMetadata(x,z)
 			(c.sectorstart, c.sectorlen, c.timestamp, status) = region.header[x,z]
 			(c.length, c.compression, c.status) = region.chunk_headers[x,z]
+			c.uncompressedlength = 0
+			chunks[x,z] = c
 			
+			statuscounts.count(c.status)
 			if c.status < 0:
 				errors.append("chunk %d,%d has status %d: %s" % \
 					(x, z, c.status, statuscounts.get_name(c.status)))
 			
-			if c.sectorstart != 0:
+			try:
+				if c.sectorstart == 0:
+					if c.sectorlen != 0:
+						errors.append("chunk %d,%d is not created, but is %d sectors in length" % (x, z, c.sectorlen))
+					if c.timestamp != 0:
+						errors.append("chunk %d,%d is not created, but has timestamp %d" % (x, z, c.timestamp))
+					raise RegionFileFormatError('')
 				allocatedbytes = 4096 * c.sectorlen
-				requiredsectors = region.bytes_to_sector(c.length + 4)
-				if c.sectorlen <= 0:
-					errors.append("chunk %d,%d is %d sectors in length" % (x, z, c.sectorlen))
-					continue
+				if c.timestamp == 0:
+					errors.append("chunk %d,%d has no timestamp" % (x, z))
 				if c.sectorstart < 2:
 					errors.append("chunk %d,%d starts at sector %d, which is in the header" % (x, z, c.sectorstart))
-					continue
+					raise RegionFileFormatError('')
 				if 4096 * c.sectorstart >= region.size:
 					errors.append("chunk %d,%d starts at sector %d, while the file is only %d sectors" % (x, z, c.sectorstart, sectorsize))
-					continue
+					raise RegionFileFormatError('')
 				elif 4096 * c.sectorstart + 5 > region.size:
 					# header of chunk only partially fits
 					errors.append("chunk %d,%d starts at sector %d, but only %d bytes of sector %d are present in the file" % (x, z, c.sectorstart, sectorsize))
-					continue
+					raise RegionFileFormatError('')
+				elif not c.length:
+					errors.append("chunk %d,%d length is undefined." % (x, z))
+					raise RegionFileFormatError('')
+				elif c.length == 1:
+					errors.append("chunk %d,%d has length 0 bytes." % (x, z))
 				elif 4096 * c.sectorstart + 4 + c.length > region.size:
 					# header of chunk fits, but not the complete chunk
 					errors.append("chunk %d,%d is %d bytes in length, which is behind the file end" % (x, z, c.length))
+				requiredsectors = region._bytes_to_sector(c.length + 4)
+				if c.sectorlen <= 0:
+					errors.append("chunk %d,%d is %d sectors in length" % (x, z, c.sectorlen))
+					raise RegionFileFormatError('')
 				if c.compression == 0:
 					errors.append("chunk %d,%d is uncompressed. This is deprecated." % (x, z))
 				elif c.compression == 1:
 					errors.append("chunk %d,%d uses GZip compression. This is deprecated." % (x, z))
 				elif c.compression > 2:
 					errors.append("chunk %d,%d uses an unknown compression type (%d)." % (x, z, c.compression))
-				if c.length == 0:
-					errors.append("chunk %d,%d has length -1 bytes. It should at least be 1." % (x, z))
-					continue
-				elif c.length == 1:
-					errors.append("chunk %d,%d has length 0 bytes." % (x, z))
-					continue
-				if c.length + 4 > allocatedbytes:
+				if c.length + 4 > allocatedbytes: # TODO 4 or 5?
 					errors.append("chunk %d,%d is %d bytes (4+1+%d) and requires %d sectors, " \
 						"but only %d %s allocated" % \
 						(x, z, c.length+4, c.length-1, requiredsectors, c.sectorlen, \
@@ -168,24 +176,28 @@ def analyse_regionfile(filename, warnings=True):
 				# Decompress chunk, check if that succeeds.
 				# Check if the header and footer indicate this is a NBT file.
 				# (without parsing it in detail)
+				compresseddata = None
 				data = None
 				try:
 					if 0 <= c.compression <= 2:
 						region.file.seek(4096*c.sectorstart + 5)
-						data = region.file.read(c.length - 1)
+						compresseddata = region.file.read(c.length - 1)
 				except Exception as e:
 					errors.append("Error reading chunk %d,%d: %s" % (x, z, str(e)))
+				if (c.compression == 0):
+					data = compresseddata
 				if (c.compression == 1):
 					try:
-						data = gzip.decompress(data)
+						data = gzip.decompress(compresseddata)
 					except Exception as e:
 						errors.append("Error decompressing chunk %d,%d using gzip: %s" % (x, z, str(e)))
 				elif (c.compression == 2):
 					try:
-						data = zlib.decompress(data)
+						data = zlib.decompress(compresseddata)
 					except Exception as e:
 						errors.append("Error decompressing chunk %d,%d using zlib: %s" % (x, z, str(e)))
 				if data:
+					c.uncompressedlength = len(data)
 					if data[0] != 10:
 						errors.append("chunk %d,%d is not a valid NBT file: outer object is not a TAG_Compound, but %r" % (x, z, data[0]))
 					elif data[-1] != 0:
@@ -212,23 +224,29 @@ def analyse_regionfile(filename, warnings=True):
 						except Exception as e:
 							errors.append("Error reading tail of chunk %d,%d: %s" % (x, z, str(e)))
 			
-			else:  # c.sectorstart == 0:
-				if c.sectorlen != 0:
-					errors.append("chunk %d,%d is not created, but is %d sectors in length" % (x, z, c.sectorlen))
-				if c.timestamp != 0:
-					errors.append("chunk %d,%d is not created, but has timestamp %d" % (x, z, c.timestamp))
+			except RegionFileFormatError:
+				pass
 			
-			# Check for overlapping chunks
-			statuscounts.count(c.status)
-			for b in range(c.sectorlen):
-				m = "chunk %-2d,%-2d part %d/%d" % (x, z, b+1, c.sectorlen)
-				p = c.sectorstart + b
-				if p > sectorsize:
-					errors.append("%s outside file" % (m))
-					break
-				if sectors[p] != None:
-					errors.append("overlap in sector %d: %s and %s" % (p, sectors[p], m))
-				sectors[p] = m
+			if c.sectorlen and c.sectorstart:
+				# Check for overlapping chunks
+				for b in range(c.sectorlen):
+					m = "chunk %-2d,%-2d part %d/%d" % (x, z, b+1, c.sectorlen)
+					p = c.sectorstart + b
+					if p > sectorsize:
+						errors.append("%s outside file" % (m))
+						break
+					if sectors[p] != None:
+						errors.append("overlap in sector %d: %s and %s" % (p, sectors[p], m))
+					if (b == 0):
+						if (c.uncompressedlength > 0):
+							m += " (4+1+%d bytes compressed: %d bytes uncompressed)" % (c.length-1, c.uncompressedlength)
+						elif c.length:
+							m += " (4+1+%d bytes compressed)" % (c.length-1)
+						else:
+							m += " (4+1+0 bytes)"
+					if sectors[p] != None:
+						m += " (overlapping!)"
+					sectors[p] = m
 	
 	e = sectors.count(None)
 	if e > 0:
@@ -244,12 +262,12 @@ def analyse_regionfile(filename, warnings=True):
 					if zeroes < 4096:
 						errors.append("%d bytes are not zeroed in unused sector %d" % (4096-zeroes, sector))
 
-	return errors, statuscounts, sectors
+	return errors, statuscounts, sectors, chunks
 	
 
 def debug_regionfile(filename, warnings=True):
 	print(filename)
-	errors, statuscounts, sectors = analyse_regionfile(filename, warnings)
+	errors, statuscounts, sectors, chunks = analyse_regionfile(filename, warnings)
 
 	print("File size is %d sectors" % (len(sectors)))
 	print("Chunk statuses (as reported by nbt.region.RegionFile):")
@@ -271,7 +289,7 @@ def debug_regionfile(filename, warnings=True):
 		print("sector %03d: %s" % (i, s))
 
 def print_errors(filename, warnings=True):
-	errors, statuscounts, sectors = analyse_regionfile(filename, warnings)
+	errors, statuscounts, sectors, chunks = analyse_regionfile(filename, warnings)
 	print(filename)
 	for error in errors:
 		print(error)
