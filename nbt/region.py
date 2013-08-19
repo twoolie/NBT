@@ -307,7 +307,7 @@ class RegionFile(object):
 		# TODO: deprecate in favour of get_nbt?
 		offset, length, timestamp, region_header_status = self.header[x, z]
 		if region_header_status == self.STATUS_CHUNK_NOT_CREATED:
-			return None # TODO: raise InconceivedChunk
+			raise InconceivedChunk("Chunk is not created")
 
 		elif region_header_status == self.STATUS_CHUNK_IN_HEADER:
 			raise RegionHeaderError('Chunk %d,%d is in the region header' % (x,z))
@@ -346,7 +346,7 @@ class RegionFile(object):
 					# Python 3.3 solution (see PEP 409 & 415): "raise ChunkDataError(str(e)) from None"
 					raise ChunkDataError(err)
 		else:
-			return None # TODO: raise RegionHeaderError
+			raise RegionHeaderError("Chunk has unknown status")
 
 	def write_chunk(self, x, z, nbt_file):
 		""" A simple chunk writer. """

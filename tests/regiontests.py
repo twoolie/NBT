@@ -295,8 +295,6 @@ class ReadWriteTest(unittest.TestCase):
 		"""
 		self.assertRaises(ChunkDataError, self.region.get_nbt, 5, 1)
 
-	# TODO: non-existing chunks should raise a InconceivedChunk() instead of returning None
-	@unittest.expectedFailure
 	def test16ReadChunkNonExistent(self):
 		"""
 		read chunk 2,2: does not exist. Reading should raise a InconceivedChunk.
@@ -393,8 +391,6 @@ class ReadWriteTest(unittest.TestCase):
 		"""
 		self.assertEqual(self.region.get_timestamp(7,1), 0)
 
-	# TODO: get_chunk() for undefined chunk should raise InconceivedChunk.
-	@unittest.expectedFailure
 	def test40WriteNewChunk(self):
 		"""
 		read chunk 0,2: InconceivedError
@@ -451,8 +447,6 @@ class ReadWriteTest(unittest.TestCase):
 		self.assertEqual(header[3], RegionFile.STATUS_CHUNK_OK)
 		self.assertEqual(self.region.chunk_count(), chunk_count)
 
-	# TODO: get_chunk() for undefined chunk should raise InconceivedChunk.
-	@unittest.expectedFailure
 	def test43DeleteChunk(self):
 		"""
 		read chunk 6,0: OK
