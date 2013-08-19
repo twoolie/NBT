@@ -423,11 +423,9 @@ class RegionFile(object):
 		timestamp = int(time.time())
 		self.file.write(pack(">I", timestamp))
 
-		# adjust self.size.
-		# TODO: Is there a reason to call `parse_header()` instead of just `self.size = self.get_size()`
-		#update header information
+		# update header information
 		self.parse_header()
-		# TODO: this does not update chunk_headers. This is a problem if the chunk is read later.
+		self.parse_chunk_headers()
 
 
 	def unlink_chunk(self, x, z):
@@ -447,7 +445,7 @@ class RegionFile(object):
 
 		# update the header
 		self.parse_header()
-		# TODO: this does not update chunk_headers. This is most likely not a real problem.
+		self.parse_chunk_headers()
 
 	def _classname(self):
 		"""Return the fully qualified class name."""

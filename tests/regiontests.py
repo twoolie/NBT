@@ -421,8 +421,6 @@ class ReadWriteTest(unittest.TestCase):
 		self.assertEqual(header[3], RegionFile.STATUS_CHUNK_OK)
 		self.assertEqual(self.region.chunk_count(), chunk_count + 1)
 
-	# TODO: default value for length should be 0 instead of None.
-	@unittest.expectedFailure
 	def test41WriteAndReadNewChunk(self):
 		"""
 		write 1 sector chunk 0,2
