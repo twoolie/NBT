@@ -11,6 +11,7 @@ import zlib
 from io import BytesIO
 import math, time
 from os.path import getsize
+from os import SEEK_END
 
 class RegionFileFormatError(Exception):
 	"""Base class for all file format errors.
@@ -122,9 +123,8 @@ class RegionFile(object):
 
 	def get_size(self):
 		""" Returns the file object size. """
-		self.file.seek(0,2)
-		size = self.file.tell()
-		return size
+		# seek(0,2) jumps to 0-bytes from the end of the file, and returns the position
+		return self.file.seek(0, SEEK_END)
 
 	@staticmethod
 	def _bytes_to_sector(bsize, sectorlen=4096):
@@ -386,7 +386,7 @@ class RegionFile(object):
 						break
 
 				if not found: # append chunk to the end of the file
-					self.file.seek(0,2) # go to the end of the file
+					self.file.seek(0, SEEK_END) # go to the end of the file
 					file_length = self.file.tell()-1 # current offset is file length
 					total_sectors = file_length/4096 # TODO: / or // ?
 					sector = total_sectors+1
@@ -396,7 +396,7 @@ class RegionFile(object):
 			#      self.STATUS_CHUNK_ZERO_LENGTH, self.STATUS_CHUNK_MISMATCHED_LENGTHS)
 			# don't trust bad headers, this chunk hasn't been generated yet, or the header is wrong
 			# This chunk should just be appended to the end of the file
-			self.file.seek(0,2) # go to the end of the file
+			self.file.seek(0, SEEK_END) # go to the end of the file
 			file_length = self.file.tell()-1 # current offset is file length
 			total_sectors = file_length/4096
 			sector = total_sectors+1
