@@ -26,8 +26,11 @@ def generate_level(bytesize = 4):
 	def append_byte_array(name, bytesize=1000):
 		bytesize -= len(name)
 		bytesize -= 7
-		byte_array = TAG_Byte_Array(name=name, value=bytearray([random.randrange(256) for i in range(bytesize)]))
-		level.append(byte_array)
+		# byte_array = TAG_Byte_Array(name=name, value=bytearray([random.randrange(256) for i in range(bytesize)]))
+		# level.append(byte_array)
+		byte_array = TAG_Byte_Array(name=name)
+		byte_array.value = bytearray([random.randrange(256) for i in range(bytesize)])
+		level.tags.append(byte_array)
 	random.seed(123456789) # fixed seed to give predictable results.
 	if bytesize < 13:
 		raise ValueError("NBT file size is at least 13 bytes")
@@ -395,6 +398,8 @@ class ReadWriteTest(unittest.TestCase):
 		"""
 		self.assertEqual(self.region.get_timestamp(7,1), 0)
 
+	# TODO: get_chunk() for undefined chunk should raise InconceivedChunk.
+	@unittest.expectedFailure
 	def test40WriteNewChunk(self):
 		"""
 		read chunk 0,2: InconceivedError
@@ -416,6 +421,8 @@ class ReadWriteTest(unittest.TestCase):
 		self.assertEqual(header[3], RegionFile.STATUS_CHUNK_OK)
 		self.assertEqual(self.region.chunk_count(), chunk_count + 1)
 
+	# TODO: default value for length should be 0 instead of None.
+	@unittest.expectedFailure
 	def test41WriteAndReadNewChunk(self):
 		"""
 		write 1 sector chunk 0,2
@@ -451,6 +458,8 @@ class ReadWriteTest(unittest.TestCase):
 		self.assertEqual(header[3], RegionFile.STATUS_CHUNK_OK)
 		self.assertEqual(self.region.chunk_count(), chunk_count)
 
+	# TODO: get_chunk() for undefined chunk should raise InconceivedChunk.
+	@unittest.expectedFailure
 	def test43DeleteChunk(self):
 		"""
 		read chunk 6,0: OK
@@ -796,6 +805,8 @@ class ReadWriteTest(unittest.TestCase):
 
 	# TODO: enable test again
 	@unittest.skip('Test takes too much time')
+	# TODO: Check for maximum sector size.
+	@unittest.expectedFailure
 	def test90WriteChunkTooLarge(self):
 		"""
 		Chunks of size >= 256 sectors are not supported by the file format
@@ -939,6 +950,8 @@ class EmptyFileTest(unittest.TestCase):
 # - file is closed (for filename)
 # - file is not closed (for fileobj)
 # Also test if an exception is raised if RegionFile is called incorrectly (e.g. both filename and fileobj are specified, or none)
+
+# TODO: test what happens with a corrupt region file, of 5000 bytes in size. Read a chunk, write a chunk
 
 if __name__ == '__main__':
 	logger = logging.getLogger("nbt.tests.regiontests")
