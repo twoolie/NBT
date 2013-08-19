@@ -32,14 +32,25 @@ Bug Fixes since 1.3.0
 Backward Incompatible Changes since 1.3.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * WorldFolder is no longer a class, but a factory function that returns
-  (a subclass of) a _BaseWorldFolder.
+  (a subclass of) a _BaseWorldFolder instance.
 * The fileobj parameter in `RegionFile(fileobj)` is no longer closed
   (similar to the behaviour of e.g. GZipFile). It is the callers
   responsibility to close these files.
+* RegionFile.get_chunk() raises InconceivedChunk when a chunk does not exist
+  instead of returning None.
+* The default value for Numeric tags is now 0 instead None. The default value
+  for TAG_String is now "" instead of None. This makes named tags more similar
+  to native Python objects (e.g. int() also returns 0).
 
 Known Bugs
 ~~~~~~~~~~
 See https://github.com/twoolie/NBT/issues
+* Still no support for Anvil Chunks. It is possible to access the NBT structure,
+  just the anvil-specifics are not implemented, such as the exact locations of
+  blocks in the NBT structure.
+* The name of a variable generally only supports 2-byte Unicode characters (the
+  Basic Multilingual Plane). For Full Unicode support, use Python 3.3 or higher,
+  or compile Python --with-wide-unicode.
 
 
 NBT 1.3.0 (19 March 2012)
