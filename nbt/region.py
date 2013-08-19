@@ -18,6 +18,8 @@ class RegionFileFormatError(Exception):
 	Note: InconceivedChunk is not a child class, because it is not considered a format error."""
 	def __init__(self, msg):
 		self.msg = msg
+	def __str__(self):
+		return self.msg
 
 class NoRegionHeader(RegionFileFormatError):
 	"""The size of the region file is too small to contain a header."""
@@ -137,6 +139,7 @@ class RegionFile(object):
 	def __del__(self):
 		if self._closefile:
 			self.file.close()
+		# Parent object() has no __del__ method, otherwise it should be called here.
 
 	def init_header(self):
 		for x in range(32):
@@ -249,9 +252,12 @@ class RegionFile(object):
 		return self.get_chunk_coords()
 
 	def get_chunk_coords(self):
-		"""Return coordinates and length of all chunks."""
+		"""
+		Return the x,z coordinates and length of the chunks that are defined in te regionfile.
+		This includes chunks which may not be readable for whatever reason.
+		"""
 		# TODO: deprecate this function, and replace with one that returns objects instead of a dict, and has a better name (get_chunk_metadata(), get_metadata()?)
-		# TODO: iterate over self.
+		# TODO: allow iteration over RegionFile self. (thus: for chunk in RegionFile('region.mcr'): ... )
 		# TODO: this function fails for an empty file. Better use self.header and self.chunk_headers
 		index = 0
 		self.file.seek(index)
@@ -267,7 +273,9 @@ class RegionFile(object):
 
 	def iter_chunks(self):
 		"""
-		Return an iterater over all chunks present in the region.
+		Yield a triplet x,z,NBTFile() for each readable chunks present in the region.
+		x,z are chunk coordinates local to the RegionFile.
+		Chunks that can not be read for whatever reason are silently skipped.
 		Warning: this function returns a NBTFile() object, use Chunk(nbtfile) to get a
 		Chunk instance.
 		"""
@@ -277,15 +285,17 @@ class RegionFile(object):
 	def get_timestamp(self, x, z):
 		"""Return the timestamp of when this region file was last modified."""
 		# TODO: this function fails for an empty file. Better use self.header and self.chunk_headers
-		# TODO: raise exception if chunk does not exist
+		# TODO: raise an exception if chunk does not exist?
 		self.file.seek(4096+4*(x+z*32))
 		timestamp = unpack(">I",self.file.read(4))[0]
 		return timestamp
 
 	def chunk_count(self):
+		"""Return the number of defined chunks. This includes potentially corrupt chunks."""
 		return len(self.get_chunk_coords())
 
 	def get_nbt(self, x, z):
+		"""Return a NBTFile"""
 		return self.get_chunk(x, z)
 
 	def get_chunk(self, x, z):
@@ -305,7 +315,7 @@ class RegionFile(object):
 		elif region_header_status == self.STATUS_CHUNK_OK:
 			length, compression, chunk_header_status = self.chunk_headers[x, z]
 			if chunk_header_status == self.STATUS_CHUNK_ZERO_LENGTH:
-				raise ChunkHeaderError('The length of chunk %d,%d is 0' % (x,z))
+				raise ChunkHeaderError('The length of chunk %d,%d is 0 sectors' % (x,z))
 			elif chunk_header_status == self.STATUS_CHUNK_MISMATCHED_LENGTHS:
 				raise ChunkHeaderError('The length in region header and the length in the header of chunk %d,%d are incompatible' % (x,z))
 
@@ -423,7 +433,7 @@ class RegionFile(object):
 		timestamp = int(time.time())
 		self.file.write(pack(">I", timestamp))
 
-		# update header information
+		# update file size and header information
 		self.parse_header()
 		self.parse_chunk_headers()
 
