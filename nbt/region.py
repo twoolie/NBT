@@ -8,6 +8,7 @@ from .nbt import NBTFile
 from struct import pack, unpack
 from gzip import GzipFile
 import zlib
+import gzip
 from io import BytesIO
 import math, time
 from os.path import getsize
@@ -322,24 +323,26 @@ class RegionFile(object):
 			self.file.seek(offset*4096 + 5) # offset comes in sectors of 4096 bytes + length bytes + compression byte
 			chunk = self.file.read(length-1) # the length in the file includes the compression byte
 
-			if (compression == 2):
-				try:
+			err = None
+			if compression > 2:
+				raise ChunkDataError('Unknown chunk compression/format (%d)' % compression)
+			try:
+				if (compression == 1):
+					chunk = gzip.decompress(chunk)
+				elif (compression == 2):
 					chunk = zlib.decompress(chunk)
-					chunk = BytesIO(chunk)
-					return NBTFile(buffer=chunk) # pass uncompressed
-				except Exception as e:
-					raise ChunkDataError(str(e))
-
-			elif (compression == 1):
 				chunk = BytesIO(chunk)
-				try:
-					return NBTFile(fileobj=chunk) # pass compressed; will be filtered through Gzip
-				except Exception as e:
-					raise ChunkDataError(str(e))
-
-			else:
-				raise ChunkDataError('Unknown chunk compression/format')
-
+				return NBTFile(buffer=chunk) # this may raise a MalformedFileError.
+			except Exception as e:
+				# Deliberately catch the Exception and re-raise.
+				# The details in gzip/zlib/nbt are irrelevant, just that the data is garbled.
+				err = str(e)
+			finally:
+				if err:
+					# don't raise during exception handling to avoid the warning 
+					# "During handling of the above exception, another exception occurred".
+					# Python 3.3 solution (see PEP 409 & 415): "raise ChunkDataError(str(e)) from None"
+					raise ChunkDataError(err)
 		else:
 			return None # TODO: raise RegionHeaderError
 

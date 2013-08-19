@@ -271,8 +271,6 @@ class ReadWriteTest(unittest.TestCase):
 		nbt = self.region.get_nbt(10, 0)
 		self.assertIsInstance(nbt, TAG_Compound)
 
-	# TODO: Support reading uncompressed chunks
-	@unittest.expectedFailure
 	def test12ReadChunkUncompressed(self):
 		"""
 		chunk 2,0: no compression. Should be read OK.
