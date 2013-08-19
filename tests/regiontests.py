@@ -336,8 +336,6 @@ class ReadWriteTest(unittest.TestCase):
 		"""
 		self.assertRaises(ChunkHeaderError, self.region.get_nbt, 4, 1)
 
-	# TODO: only sector length is checked in region.py, but chunk length is not.
-	@unittest.expectedFailure
 	def test24ReadZeroLengthChunk(self):
 		"""
 		read chunk 8,1: error (zero-length chunk)
