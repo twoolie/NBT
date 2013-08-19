@@ -202,40 +202,37 @@ class ReadWriteTest(unittest.TestCase):
 		self.assertIn((8, 1), coords)
 		self.assertEqual(len(coords_and_lengths), 21)
 
-	# TODO: Support reading uncompressed chunks
-	@unittest.expectedFailure
 	def test03MethodIterChunks(self):
 		"""
 		Test of iter_chunks() method.
 		"""
-		coords = []
-		for x,z,chunk in self.region.iter_chunks():
-			coords.append((x, z))
-			self.assertInstance(chunk, TAG_Compound)
-
-		self.assertIn((1, 0), coords)
-		self.assertIn((2, 0), coords)
-		self.assertNotIn((3, 0), coords) # garbled data
-		self.assertIn((4, 0), coords) # readable, despite overlapping with chunk 12,0
-		self.assertIn((6, 0), coords)
-		self.assertIn((7, 0), coords)
-		self.assertIn((8, 0), coords)
-		self.assertIn((9, 0), coords)
-		self.assertIn((10, 0), coords)
-		self.assertNotIn((11, 0), coords) # unknown encoding
-		self.assertIn((12, 0), coords) # readable, despite overlapping with chunk 4,1
-		self.assertNotIn((13, 0), coords) # zero-length (in header)
-		self.assertNotIn((14, 0), coords) # in header
-		self.assertNotIn((15, 0), coords) # out of file
-		self.assertIn((16, 0), coords)
-		self.assertNotIn((17, 0), coords) # timestamp without data
-		self.assertIn((3, 1), coords)
-		self.assertNotIn((4, 1), coords) # invalid length (in chunk)
-		self.assertNotIn((5, 1), coords) # not a valid NBT file
-		self.assertIn((6, 1), coords)
-		self.assertIn((7, 1), coords)
-		self.assertNotIn((8, 1), coords) # zero-length (in chunk)
-		self.assertEqual(len(coords_and_lengths), 21)
+		chunks = []
+		for chunk in self.region.iter_chunks():
+			self.assertIsInstance(chunk, TAG_Compound)
+			chunks.append(chunk)
+		# self.assertIn((1, 0), coords)
+		# self.assertIn((2, 0), coords)
+		# self.assertNotIn((3, 0), coords) # garbled data
+		# self.assertIn((4, 0), coords) # readable, despite overlapping with chunk 12,0
+		# self.assertIn((6, 0), coords)
+		# self.assertIn((7, 0), coords)
+		# self.assertIn((8, 0), coords)
+		# self.assertIn((9, 0), coords)
+		# self.assertIn((10, 0), coords)
+		# self.assertNotIn((11, 0), coords) # unknown encoding
+		# self.assertIn((12, 0), coords) # readable, despite overlapping with chunk 4,1
+		# self.assertNotIn((13, 0), coords) # zero-length (in header)
+		# self.assertNotIn((14, 0), coords) # in header
+		# self.assertNotIn((15, 0), coords) # out of file
+		# self.assertIn((16, 0), coords)
+		# self.assertNotIn((17, 0), coords) # timestamp without data
+		# self.assertIn((3, 1), coords)
+		# self.assertNotIn((4, 1), coords) # invalid length (in chunk)
+		# self.assertNotIn((5, 1), coords) # not a valid NBT file
+		# self.assertIn((6, 1), coords)
+		# self.assertIn((7, 1), coords)
+		# self.assertNotIn((8, 1), coords) # zero-length (in chunk)
+		self.assertEqual(len(chunks), 13)
 	
 	def test04ParameterHeaders(self):
 		"""

@@ -274,14 +274,16 @@ class RegionFile(object):
 
 	def iter_chunks(self):
 		"""
-		Yield a triplet x,z,NBTFile() for each readable chunks present in the region.
-		x,z are chunk coordinates local to the RegionFile.
+		Yield each readable chunk present in the region.
 		Chunks that can not be read for whatever reason are silently skipped.
 		Warning: this function returns a NBTFile() object, use Chunk(nbtfile) to get a
 		Chunk instance.
 		"""
 		for cc in self.get_chunk_coords():
-			yield self.get_chunk(cc['x'],cc['z'])
+			try:
+				yield self.get_chunk(cc['x'], cc['z'])
+			except RegionFileFormatError:
+				pass
 
 	def get_timestamp(self, x, z):
 		"""Return the timestamp of when this region file was last modified."""
