@@ -482,8 +482,6 @@ class ReadWriteTest(unittest.TestCase):
 		self.assertEqual(header[3], RegionFile.STATUS_CHUNK_NOT_CREATED)
 		self.assertEqual(self.region.chunk_count(), chunk_count - 1)
 
-	# TODO: bug in free sector calculation for overlapping chunks
-	@unittest.expectedFailure
 	def test44UseEmptyChunks(self):
 		"""
 		write 1 sector chunk 1,2 (should go to 004)
@@ -591,18 +589,11 @@ class ReadWriteTest(unittest.TestCase):
 		# self.assertEqual(locations, [4, 10, 11, 18, 26])
 		# self.assertEqual(self.region.get_size(), 27*4096)
 
-	# TODO: increased chunk should remain in place, if possible
-	@unittest.expectedFailure
 	def test60WriteExistingChunkIncreaseSectorSameLocation(self):
 		"""
-		write 2 sector chunk 1,2 (should go to 010-011)
 		write 2 sector chunk 7,0 (should go to 003-004) (increase chunk size)
 		"""
 		nbt = generate_compressed_level(minsize = 5000, maxsize = 7000)
-		self.region.write_chunk(1, 2, nbt)
-		header = self.region.header[1, 2]
-		self.assertEqual(header[1], 2)
-		self.assertEqual(header[0], 10)
 		self.region.write_chunk(7, 0, nbt)
 		header = self.region.header[7, 0]
 		self.assertEqual(header[1], 2, "Chunk length must be 2 sectors")
@@ -610,30 +601,42 @@ class ReadWriteTest(unittest.TestCase):
 		self.assertEqual(header[3], RegionFile.STATUS_CHUNK_OK)
 		# self.assertEqual(self.region.get_size(), 27*4096)
 
-	def test61WriteExistingChunkIncreaseSectorNewLocation(self):
+	def test61WriteExistingChunkCorrectSize(self):
 		"""
-		write 2 sector chunk 8,0 (should go to 010-011) (increase chunk size, move to different location)
+		write 2 sector chunk 3,1 (should go to 025-026) (increase sector size)
+		"""
+		nbt = self.region.get_chunk(3, 1)
+		self.region.write_chunk(3, 1, nbt)
+		header = self.region.header[3, 1]
+		self.assertEqual(header[1], 2, "Chunk length must be 2 sectors")
+		self.assertEqual(header[0], 25, "Chunk should remain in sector 3")
+		self.assertEqual(header[3], RegionFile.STATUS_CHUNK_OK)
+		# self.assertEqual(self.region.get_size(), 27*4096)
+
+	def test62WriteExistingChunkIncreaseSectorNewLocation(self):
+		"""
+		write 2 sector chunk 8,0 (should go to 004-005 or 010-011)
 		verify chunk_count remains 18
-		should free sector 005
-		write 2 sector chunk 2,2 (should go to 004-005)
+		write 2 sector chunk 2,2 (should go to 010-011 or 004-005)
 		verify that file size is not increased <= 027*4096
 		verify chunk_count is 19
 		"""
+		locations = []
 		chunk_count = self.region.chunk_count()
 		nbt = generate_compressed_level(minsize = 5000, maxsize = 7000)
 		self.region.write_chunk(8, 0, nbt)
 		header = self.region.header[8, 0]
 		self.assertEqual(header[1], 2) # length
-		self.assertEqual(header[0], 10) # location
+		locations.append(header[0]) # location
 		self.assertEqual(self.region.chunk_count(), chunk_count)
-		# Section 005 should be free now.
 		self.region.write_chunk(2, 2, nbt)
 		header = self.region.header[2, 2]
 		self.assertEqual(header[1], 2) # length
-		self.assertEqual(header[0], 4) # location
+		locations.append(header[0]) # location
+		self.assertEqual(sorted(locations), [4, 10]) # locations
 		self.assertEqual(self.region.chunk_count(), chunk_count + 1)
 
-	def test62WriteNewChunkFreedSectors(self):
+	def test63WriteNewChunkFreedSectors(self):
 		"""
 		unlink chunk 6,0
 		unlink chunk 7,0
@@ -647,7 +650,6 @@ class ReadWriteTest(unittest.TestCase):
 		self.assertEqual(header[1], 3, "Chunk length must be 3 sectors")
 		self.assertEqual(header[0], 2, "Chunk should be placed in sector 2")
 
-	@unittest.expectedFailure
 	def test70WriteOutOfFileChunk(self):
 		"""
 		write 1 sector chunk 13,0 (should go to 004)
@@ -670,8 +672,6 @@ class ReadWriteTest(unittest.TestCase):
 		self.assertEqual(header[1], 1) # length
 		self.assertNotEqual(header[0], 19, "Previously 0-length chunk should not overwrite existing chunk")
 
-	# TODO: Chunk should not be written to same location when it overlaps
-	@unittest.expectedFailure
 	def test72WriteOverlappingChunkLong(self):
 		"""
 		write 2 sector chunk 4,0 (should go to 010-011) (free 014 & 016)
@@ -707,8 +707,6 @@ class ReadWriteTest(unittest.TestCase):
 		# self.assertEqual(locations, [4, 14, 16, 18, 26])
 		# self.assertEqual(self.region.get_size(), 27*4096)
 
-	# TODO: Chunk should not be written to same location when it overlaps
-	@unittest.expectedFailure
 	def test73WriteOverlappingChunkSmall(self):
 		"""
 		write 1 sector chunk 12,0 (should go to 004) ("free" 015 for use by 4,0)
@@ -733,8 +731,6 @@ class ReadWriteTest(unittest.TestCase):
 		# self.assertEqual(locations, [10, 11, 26])
 		# self.assertEqual(self.region.get_size(), 27*4096)
 
-	# TODO: Chunk should not be written to same location when it overlaps
-	@unittest.expectedFailure
 	def test74WriteOverlappingChunkSameLocation(self):
 		"""
 		write 1 sector chunk 12,0 (should go to 004) ("free" 012 for use by 4,0)
@@ -750,7 +746,7 @@ class ReadWriteTest(unittest.TestCase):
 		self.region.write_chunk(4, 0, nbt)
 		header = self.region.header[4, 0]
 		self.assertEqual(header[1], 3) # length
-		self.assertNotEqual(header[0], 14, "No longer overlapping chunks should be written to same location when when possible")
+		self.assertEqual(header[0], 14, "No longer overlapping chunks should be written to same location when when possible")
 
 	# TODO: bug in free sector calculation for overlapping chunks (precondition fails)
 	@unittest.expectedFailure
@@ -945,6 +941,9 @@ class EmptyFileTest(unittest.TestCase):
 		region.write_chunk(0, 0, chunk)
 		self.assertEqual(self.region.get_size(), 3*4096)
 		self.assertEqual(self.region.chunk_count(), 1)
+
+# TODO: rewrite 3,1 smaller. -> truncate file
+# TODO: rewrite 3,1 same size. -> length is 2
 
 # TODO: test suite to test the different __init__ parameters of RegionFile
 # (filename or fileobj), write to it, delete RegionFile object, and test if:

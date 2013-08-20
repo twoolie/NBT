@@ -288,7 +288,7 @@ class RegionFile(object):
 					# There are not enough sectors allocated for the whole block
 					m.status = self.STATUS_CHUNK_MISMATCHED_LENGTHS
 
-	def _sectors(self):
+	def _sectors(self, ignore_chunk=None):
 		"""
 		Return a list of all sectors, each sector is a list of chunks occupying the block.
 		"""
@@ -299,14 +299,29 @@ class RegionFile(object):
 		for m in self._header.values():
 			if not m.is_created():
 				continue
+			if ignore_chunk == m:
+				continue
 			if m.blocklength and m.blockstart:
 				for b in range(m.blockstart, m.blockstart + m.blocklength):
 					if 2 <= b < sectorsize:
 						sectors[b].append(m)
 		return sectors
 
-	def locate_free_space(self, required_sectors):
-		pass
+	def locate_free_space(self, required_sectors=1, ignore_chunk=None, preferred=0):
+		sectors = self._sectors(ignore_chunk=ignore_chunk)
+		free_locations = [i != None and len(i) == 0 for i in sectors] + required_sectors*[True]
+		
+		# check preferred (current) location
+		if all(free_locations[preferred:preferred+required_sectors]):
+			return preferred
+		
+		# check other locations
+		i = 2
+		while i < len(sectors):
+			if all(free_locations[i:i+required_sectors]):
+				break
+			i += 1
+		return i
 
 	def get_chunk_metadata(self):
 		"""
@@ -431,9 +446,9 @@ class RegionFile(object):
 	def write_chunk(self, x, z, nbt_file):
 		""" A simple chunk writer. """
 		data = BytesIO()
-		nbt_file.write_file(buffer = data) #render to buffer; uncompressed
+		nbt_file.write_file(buffer = data) # render to buffer; uncompressed
 
-		compressed = zlib.compress(data.getvalue()) #use zlib compression, rather than Gzip
+		compressed = zlib.compress(data.getvalue()) # use zlib compression, rather than Gzip
 		data = BytesIO(compressed)
 
 		# 5 extra bytes are required for the chunk block header
@@ -443,62 +458,10 @@ class RegionFile(object):
 			raise ChunkDataError("Chunk is too large (%d sectors exceeds 255 maximum)" % (nsectors))
 
 		# search for a place where to write the chunk:
-		offset, length, timestamp, status = self.header[x, z]
+		current = self._header[x, z]
+		sector = self.locate_free_space(nsectors, ignore_chunk = current, preferred = current.blockstart)
+		
 		pad_end = False
-
-		if status in (self.STATUS_CHUNK_NOT_CREATED, self.STATUS_CHUNK_OK):
-			# look up if the new chunk fits in the place of the old one,
-			# a no created chunk has 0 length, so can't be a problem
-			if nsectors <= length:
-				sector = offset
-			else:
-				# let's find a free place for this chunk
-				found = False
-				# sort the chunk tuples by offset and ignore empty chunks
-				l = sorted([i for i in self.header.values() if i[0] != 0])
-
-				# TODO: What is l[0][0]?
-				if l[0][0] != 2:
-					# there is space between the header and the first
-					# used sector, insert a false tuple to check that
-					# space too
-					l.insert(0,(2,0,0,0))
-
-				# iterate chunks by offset and search free space
-				for i in range(len(l) - 1):
-					# first item in the tuple is offset, second length
-					
-					current_chunk = l[i]
-					next_chunk = l[i+1]
-					# calculate free_space beween chunks and break if enough
-					free_space = next_chunk[0] - (current_chunk[0] + current_chunk[1])
-					if free_space >= nsectors:
-						sector = current_chunk[0] + current_chunk[1]
-						# a corrupted region header can contain random
-						# stuff, just in case check if we are trying to
-						# write in the header and skip if it's the case.
-						if sector <= 1:
-							continue
-						found  = True
-						break
-
-				if not found: # append chunk to the end of the file
-					self.file.seek(0, SEEK_END) # go to the end of the file
-					file_length = self.file.tell()-1 # current offset is file length
-					total_sectors = self._bytes_to_sector(file_length)
-					sector = total_sectors+1
-					pad_end = True
-		else:
-			# status is (self.STATUS_CHUNK_OUT_OF_FILE, self.STATUS_CHUNK_IN_HEADER,
-			#      self.STATUS_CHUNK_ZERO_LENGTH, self.STATUS_CHUNK_MISMATCHED_LENGTHS)
-			# don't trust bad headers, this chunk hasn't been generated yet, or the header is wrong
-			# This chunk should just be appended to the end of the file
-			self.file.seek(0, SEEK_END) # go to the end of the file
-			file_length = self.file.tell()-1 # current offset is file length
-			total_sectors = self._bytes_to_sector(file_length)
-			sector = total_sectors+1
-			pad_end = True
-
 
 		# write out chunk to region
 		self.file.seek(sector*4096)
@@ -532,7 +495,9 @@ class RegionFile(object):
 		Minecraft and this nbt library write chunks in old free spaces
 		when possible.
 		"""
-		# TODO: this function fails for an empty file. If that is the case, just return.
+		# This function fails for an empty file. If that is the case, just return.
+		if self.size < 8192:
+			return
 
 		# zero the region header for the chunk (offset length and time)
 		self.file.seek(4*(x+z*32))
@@ -540,9 +505,12 @@ class RegionFile(object):
 		self.file.seek(4096+4*(x+z*32))
 		self.file.write(pack(">I", 0))
 
+		# TODO: zero cleared chunks, provided that they are in the file and non-overlapping.
+		
+		# TODO: truncate file if possible.
+		
 		# update the header
-		self.parse_header()
-		self.parse_chunk_headers()
+		self._header[x, z] = _ChunkMetadata(x, z)
 
 	def _classname(self):
 		"""Return the fully qualified class name."""
