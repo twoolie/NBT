@@ -376,7 +376,6 @@ class ReadWriteTest(unittest.TestCase):
 		"""
 		self.assertRaises(ChunkHeaderError, self.region.get_nbt, 8, 1)
 
-	@unittest.expectedFailure
 	def test25ReadChunkSizeExceedsSectorSize(self):
 		"""
 		read chunk 3,1: can be read, despite that the chunk content is longer than the allocated sectors.

@@ -325,7 +325,9 @@ class RegionFile(object):
 			if chunk_header_status == self.STATUS_CHUNK_ZERO_LENGTH:
 				raise ChunkHeaderError('The length of chunk %d,%d is 0 sectors' % (x,z))
 			elif chunk_header_status == self.STATUS_CHUNK_MISMATCHED_LENGTHS:
-				raise ChunkHeaderError('The length in region header and the length in the header of chunk %d,%d are incompatible' % (x,z))
+				# Attempt to read it anyway. (TODO: use logging module to log warning)
+				pass
+				# raise ChunkHeaderError('The length in region header and the length in the header of chunk %d,%d are incompatible' % (x,z))
 
 			if (length == None) or (length <= 1):
 				raise ChunkHeaderError("Chunk length is 0 bytes")
