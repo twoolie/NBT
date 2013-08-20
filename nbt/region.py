@@ -75,8 +75,18 @@ class _ChunkMetadata(object):
 		self.length = 0
 		self.compression = None
 		self.status = RegionFile.STATUS_CHUNK_NOT_CREATED
+	def __str__(self):
+		return "%s(%d, %d, sector=%s, length=%s, timestamp=%s, lenght=%s, compression=%s, status=%s)" % \
+			(self.__class__.__name__, self.x, self.z, self.blockstart, self.blocklength, self.timestamp, \
+			self.length, self.compression, self.status)
 	def __repr__(self):
 		return "%s(%d,%d)" % (self.__class__.__name__, self.x, self.z)
+	def requiredblocks(self):
+		return (self.length + 4 + 4095) // 4096
+	def is_created(self):
+		"""return True if this chunk is created according to the header.
+		This includes chunks which are not readable for other reasons."""
+		return self.blockstart != 0
 
 class _HeaderWrapper(Mapping):
 	"""Wrapper around self._header to emulate the old self.header variable"""
@@ -245,15 +255,23 @@ class RegionFile(object):
 				m.status = self.STATUS_CHUNK_OUT_OF_FILE
 			else:
 				m.status = self.STATUS_CHUNK_OK
-			
-			# TODO: check for chunks overlapping in file
-			# make list of files sectors -> chunk (in addition to the chunk -> sectors dict)?
+		
+		# Check for chunks overlapping in the file
+		for chunks in self._sectors()[2:]:
+			if len(chunks) > 1:
+				# overlapping chunks
+				for m in chunks:
+					# Update status, unless these more severe errors take precedence
+					if m.status not in (self.STATUS_CHUNK_ZERO_LENGTH, \
+							self.STATUS_CHUNK_IN_HEADER, self.STATUS_CHUNK_OUT_OF_FILE):
+						m.status = self.STATUS_CHUNK_OVERLAPPING
 
 	def parse_chunk_headers(self):
 		for x in range(32):
 			for z in range(32):
 				m = self._header[x, z]
-				if m.status not in (self.STATUS_CHUNK_OK,):
+				if m.status not in (self.STATUS_CHUNK_OK, self.STATUS_CHUNK_OVERLAPPING, \
+						self.STATUS_CHUNK_MISMATCHED_LENGTHS):
 					continue
 				try:
 					self.file.seek(m.blockstart*4096) # offset comes in sectors of 4096 bytes
@@ -269,7 +287,23 @@ class RegionFile(object):
 				elif m.length + 4 > m.blocklength * 4096:
 					# There are not enough sectors allocated for the whole block
 					m.status = self.STATUS_CHUNK_MISMATCHED_LENGTHS
-		
+
+	def _sectors(self):
+		"""
+		Return a list of all sectors, each sector is a list of chunks occupying the block.
+		"""
+		sectorsize = self._bytes_to_sector(self.size)
+		sectors = [[] for s in range(sectorsize)]
+		sectors[0] = None # locations
+		sectors[1] = None # timestamps
+		for m in self._header.values():
+			if not m.is_created():
+				continue
+			if m.blocklength and m.blockstart:
+				for b in range(m.blockstart, m.blockstart + m.blocklength):
+					if 2 <= b < sectorsize:
+						sectors[b].append(m)
+		return sectors
 
 	def locate_free_space(self, required_sectors):
 		pass

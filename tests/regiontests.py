@@ -386,7 +386,6 @@ class ReadWriteTest(unittest.TestCase):
 		# reading should succeed, despite the overlap (next chunk is free)
 		nbt = self.region.get_nbt(3, 1)
 
-	@unittest.expectedFailure
 	def test26ReadChunkOverlapping(self):
 		"""
 		chunk 4,0 and chunk 12,0 overlap: status should be STATUS_CHUNK_OVERLAPPING
