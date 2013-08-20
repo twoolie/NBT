@@ -360,8 +360,8 @@ class ReadWriteTest(unittest.TestCase):
 		read chunk 13,0: error (zero-length)
 		"""
 		self.assertRaises(RegionHeaderError, self.region.get_nbt, 13, 0)
-		self.assertEqual(self.region.header[13,0], (21, 0, 1376433958, RegionFile.STATUS_CHUNK_MISMATCHED_LENGTHS))
-		self.assertEqual(self.region.chunk_headers[13,0], (None, None, RegionFile.STATUS_CHUNK_MISMATCHED_LENGTHS))
+		self.assertEqual(self.region.header[13,0], (21, 0, 1376433958, RegionFile.STATUS_CHUNK_ZERO_LENGTH))
+		self.assertEqual(self.region.chunk_headers[13,0], (None, None, RegionFile.STATUS_CHUNK_ZERO_LENGTH))
 
 	def test23ReadInvalidLengthChunk(self):
 		"""
@@ -970,6 +970,8 @@ class EmptyFileTest(unittest.TestCase):
 # Also test if an exception is raised if RegionFile is called incorrectly (e.g. both filename and fileobj are specified, or none)
 
 # TODO: test what happens with a corrupt region file, of 5000 bytes in size. Read a chunk, write a chunk
+# TODO: test what happens if a file is trucated, but the chunk is still readable. This should return the chunk.
+#       also test writing; does the file get padded?
 
 if __name__ == '__main__':
 	logger = logging.getLogger("nbt.tests.regiontests")
