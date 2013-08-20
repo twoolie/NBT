@@ -260,18 +260,12 @@ class RegionFile(object):
 		This includes chunks which may not be readable for whatever reason.
 		"""
 		# TODO: deprecate this function, and replace with one that returns objects instead of a dict, and has a better name (get_chunk_metadata(), get_metadata()?)
-		# TODO: allow iteration over RegionFile self. (thus: for chunk in RegionFile('region.mcr'): ... )
-		# TODO: this function fails for an empty file. Better use self.header and self.chunk_headers
-		index = 0
-		self.file.seek(index)
 		chunks = []
-		while (index < 4096):
-			offset, length = unpack(">IB", b"\0"+self.file.read(4))
-			if offset:
-				x = int(index//4) % 32
-				z = int(index//4)//32
-				chunks.append({'x':x,'z':z,'length':length})
-			index += 4
+		for x in range(32):
+			for z in range(32):
+				length = self.chunk_headers[x,z]
+				if self.header[x,z][0] > 0:
+					chunks.append({'x': x, 'z': z, 'length': length})
 		return chunks
 
 	def iter_chunks(self):
@@ -281,6 +275,7 @@ class RegionFile(object):
 		Warning: this function returns a NBTFile() object, use Chunk(nbtfile) to get a
 		Chunk instance.
 		"""
+		# TODO: allow iteration over RegionFile self. (thus: for chunk in RegionFile('region.mcr'): ... )
 		for cc in self.get_chunk_coords():
 			try:
 				yield self.get_chunk(cc['x'], cc['z'])
@@ -289,11 +284,9 @@ class RegionFile(object):
 
 	def get_timestamp(self, x, z):
 		"""Return the timestamp of when this region file was last modified."""
-		# TODO: this function fails for an empty file. Better use self.header and self.chunk_headers
 		# TODO: raise an exception if chunk does not exist?
-		self.file.seek(4096+4*(x+z*32))
-		timestamp = unpack(">I",self.file.read(4))[0]
-		return timestamp
+		# TODO: return a datetime.datetime object using datetime.fromtimestamp()
+		return self.header[x,z][2]
 
 	def chunk_count(self):
 		"""Return the number of defined chunks. This includes potentially corrupt chunks."""

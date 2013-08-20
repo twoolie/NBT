@@ -15,7 +15,7 @@ if parentdir not in sys.path:
 
 from nbt.region import RegionFile, RegionFileFormatError, NoRegionHeader, \
 	RegionHeaderError, ChunkHeaderError, ChunkDataError, InconceivedChunk
-from nbt.nbt import NBTFile, TAG_Compound, TAG_Byte_Array
+from nbt.nbt import NBTFile, TAG_Compound, TAG_Byte_Array, TAG_Long, TAG_Int, TAG_String
 
 REGIONTESTFILE = os.path.join(os.path.dirname(__file__), 'regiontest.mca')
 
@@ -945,19 +945,20 @@ class EmptyFileTest(unittest.TestCase):
 		level.tags.append(player)
 		return level
 
-	# TODO: Known failure; silence unittest for the time being
-	@unittest.expectedFailure
 	def test01ReadFile(self):
 		self.stream = BytesIO(b"")
 		self.stream.seek(0)
-		self.region = RegionFile(fileobj=self.stream)
-		self.assertEqual(self.region.chunk_count(), 0)
+		region = RegionFile(fileobj=self.stream)
+		self.assertEqual(region.chunk_count(), 0)
 	
 	# TODO: Known failure; silence unittest for the time being
 	@unittest.expectedFailure
 	def test02WriteFile(self):
 		chunk = self.generate_level()
-		self.region.write_chunk(0, 0, chunk)
+		self.stream = BytesIO(b"")
+		self.stream.seek(0)
+		region = RegionFile(fileobj=self.stream)
+		region.write_chunk(0, 0, chunk)
 		self.assertEqual(self.region.get_size(), 3*4096)
 		self.assertEqual(self.region.chunk_count(), 1)
 
