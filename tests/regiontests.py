@@ -507,8 +507,6 @@ class ReadWriteTest(unittest.TestCase):
 		self.assertEqual(header[1], 1, "Chunk length must be 2 sectors")
 		self.assertEqual(header[3], RegionFile.STATUS_CHUNK_OK)
 
-	# TODO: bug in sector size calculation
-	@unittest.expectedFailure
 	def test52WriteNewChunk4097byte(self):
 		"""
 		write 4092+5-byte (2 sector) chunk 1,2 (should go to 010-011)

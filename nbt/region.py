@@ -212,7 +212,7 @@ class RegionFile(object):
 					compression = compression[0]
 					if length == 0: # chunk can't be zero length
 						chunk_status = self.STATUS_CHUNK_ZERO_LENGTH
-					elif length > region_header_length*4096: # TODO: correct for 4 byte(?) length value
+					elif length + 4 > region_header_length*4096: # Add 4 length bytes in the chunk header
 						# the lengths stored in region header and chunk
 						# header are not compatible
 						chunk_status = self.STATUS_CHUNK_MISMATCHED_LENGTHS
@@ -364,8 +364,8 @@ class RegionFile(object):
 		compressed = zlib.compress(data.getvalue()) #use zlib compression, rather than Gzip
 		data = BytesIO(compressed)
 
-		nsectors = self._bytes_to_sector(len(data.getvalue()))
-		# TODO: add the 5 bytes required for the chunk block header
+		# 5 extra bytes are required for the chunk block header
+		nsectors = self._bytes_to_sector(len(data.getvalue()) + 5)
 		# TODO: raise error if nsectors > 256 (because the length byte can no longer fit in the 1-byte length field in the header)
 
 		# search for a place where to write the chunk:
