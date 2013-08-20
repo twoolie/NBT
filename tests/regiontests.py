@@ -807,10 +807,7 @@ class ReadWriteTest(unittest.TestCase):
 		self.region.unlink_chunk(3, 1)
 		self.assertEqual(self.region.get_size(), 24*4096, "File should be truncated as far as possible when last sector(s) are freed")
 
-	# TODO: enable test again
 	@unittest.skip('Test takes too much time')
-	# TODO: Check for maximum sector size.
-	@unittest.expectedFailure
 	def test90WriteChunkTooLarge(self):
 		"""
 		Chunks of size >= 256 sectors are not supported by the file format

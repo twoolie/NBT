@@ -350,7 +350,6 @@ class RegionFile(object):
 		Warning: this function returns a NBTFile() object, use Chunk(nbtfile) to get a
 		Chunk instance.
 		"""
-		# TODO: allow iteration over RegionFile self. (thus: for chunk in RegionFile('region.mcr'): ... )
 		for m in self.get_chunk_metadata():
 			try:
 				yield self.get_chunk(m.x, m.z)
@@ -439,7 +438,9 @@ class RegionFile(object):
 
 		# 5 extra bytes are required for the chunk block header
 		nsectors = self._bytes_to_sector(len(data.getvalue()) + 5)
-		# TODO: raise error if nsectors > 256 (because the length byte can no longer fit in the 1-byte length field in the header)
+
+		if nsectors >= 256:
+			raise ChunkDataError("Chunk is too large (%d sectors exceeds 255 maximum)" % (nsectors))
 
 		# search for a place where to write the chunk:
 		offset, length, timestamp, status = self.header[x, z]
