@@ -319,13 +319,11 @@ class ReadWriteTest(unittest.TestCase):
 		self.assertEqual(self.region.header[15,0], (30, 1, 1376433961, RegionFile.STATUS_CHUNK_OUT_OF_FILE))
 		self.assertEqual(self.region.chunk_headers[15,0], (None, None, RegionFile.STATUS_CHUNK_OUT_OF_FILE))
 
-	# TODO: sector length of 0 should give a STATUS_CHUNK_MISMATCHED_LENGTHS status.
-	@unittest.expectedFailure
 	def test22ReadZeroLengthHeader(self):
 		"""
 		read chunk 13,0: error (zero-length)
 		"""
-		self.assertRaises(ChunkHeaderError, self.region.get_nbt, 13, 0)
+		self.assertRaises(RegionHeaderError, self.region.get_nbt, 13, 0)
 		self.assertEqual(self.region.header[13,0], (21, 0, 1376433958, RegionFile.STATUS_CHUNK_MISMATCHED_LENGTHS))
 		self.assertEqual(self.region.chunk_headers[13,0], (None, None, RegionFile.STATUS_CHUNK_MISMATCHED_LENGTHS))
 

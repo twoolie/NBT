@@ -99,6 +99,7 @@ class RegionFile(object):
 		timestamp is a Unix timestamps (seconds since epoch) (32 bits)
 		status is determined from offset, sectionlength and file size.
 		Status can be any of:
+		- STATUS_CHUNK_MISMATCHED_LENGTHS
 		- STATUS_CHUNK_IN_HEADER
 		- STATUS_CHUNK_OUT_OF_FILE
 		- STATUS_CHUNK_OK
@@ -112,7 +113,7 @@ class RegionFile(object):
 		compression is 1 (Gzip) or 2 (bzip) (8 bit int)
 		chunk_status is determined from sectionlength and status (as found in the header).
 		chunk_status can be any of:
-		- STATUS_CHUNK_MISMATCHED_LENGTHS (status will be STATUS_CHUNK_OK)
+		- STATUS_CHUNK_MISMATCHED_LENGTHS (status will be STATUS_CHUNK_OK or STATUS_CHUNK_MISMATCHED_LENGTHS)
 		- STATUS_CHUNK_ZERO_LENGTH (status will be STATUS_CHUNK_OK)
 		- STATUS_CHUNK_IN_HEADER
 		- STATUS_CHUNK_OUT_OF_FILE
@@ -173,6 +174,9 @@ class RegionFile(object):
 			if offset == 0 and length == 0:
 				status = self.STATUS_CHUNK_NOT_CREATED
 
+			elif length == 0:
+				status = self.STATUS_CHUNK_MISMATCHED_LENGTHS
+
 			elif offset < 2 and offset != 0:
 				status = self.STATUS_CHUNK_IN_HEADER
 			
@@ -229,12 +233,10 @@ class RegionFile(object):
 						compression = None
 						chunk_status = self.STATUS_CHUNK_OUT_OF_FILE
 
-				elif status == self.STATUS_CHUNK_IN_HEADER:
+				else:
 					length = None
 					compression = None
-					chunk_status = self.STATUS_CHUNK_IN_HEADER
-				
-				# TODO: make this last elif into an else in case of other error codes
+					chunk_status = status
 
 				self.chunk_headers[x, z] = (length, compression, chunk_status)
 
@@ -311,6 +313,9 @@ class RegionFile(object):
 
 		elif region_header_status == self.STATUS_CHUNK_IN_HEADER:
 			raise RegionHeaderError('Chunk %d,%d is in the region header' % (x,z))
+
+		elif region_header_status == self.STATUS_CHUNK_MISMATCHED_LENGTHS:
+			raise RegionHeaderError('Chunk %d,%d is has zero length' % (x,z))
 
 		elif region_header_status == self.STATUS_CHUNK_OUT_OF_FILE:
 			raise RegionHeaderError('Chunk %d,%d is partially/completely outside the file' % (x,z))
