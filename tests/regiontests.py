@@ -627,6 +627,7 @@ class ReadWriteTest(unittest.TestCase):
 		self.assertEqual(header[1], 3, "Chunk length must be 3 sectors")
 		self.assertEqual(header[0], 2, "Chunk should be placed in sector 2")
 
+	@unittest.expectedFailure
 	def test70WriteOutOfFileChunk(self):
 		"""
 		write 1 sector chunk 13,0 (should go to 004)

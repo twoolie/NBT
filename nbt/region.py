@@ -411,7 +411,7 @@ class RegionFile(object):
 				if not found: # append chunk to the end of the file
 					self.file.seek(0, SEEK_END) # go to the end of the file
 					file_length = self.file.tell()-1 # current offset is file length
-					total_sectors = file_length/4096 # TODO: / or // ?
+					total_sectors = self._bytes_to_sector(file_length)
 					sector = total_sectors+1
 					pad_end = True
 		else:
@@ -421,7 +421,7 @@ class RegionFile(object):
 			# This chunk should just be appended to the end of the file
 			self.file.seek(0, SEEK_END) # go to the end of the file
 			file_length = self.file.tell()-1 # current offset is file length
-			total_sectors = file_length/4096
+			total_sectors = self._bytes_to_sector(file_length)
 			sector = total_sectors+1
 			pad_end = True
 
@@ -435,7 +435,7 @@ class RegionFile(object):
 			# Write zeros up to the end of the chunk
 			self.file.seek((sector+nsectors)*4096-1)
 			# TODO: this would write only one zero-byte, shouldn't this be more bytes long?
-			self.file.write(chr(0))
+			self.file.write(b"\x00")
 
 		#seek to header record and write offset and length records
 		self.file.seek(4*(x+z*32))
