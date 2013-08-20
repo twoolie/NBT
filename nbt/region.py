@@ -385,49 +385,43 @@ class RegionFile(object):
 				raise RegionHeaderError('Chunk %d,%d has zero length' % (x,z))
 			else:
 				raise ChunkHeaderError('Chunk %d,%d has zero length' % (x,z))
-		# elif region_header_status == self.STATUS_CHUNK_MISMATCHED_LENGTHS:
-		# 	raise RegionHeaderError('Chunk %d,%d has invalid length' % (x,z))
-		else:
-			# status is STATUS_CHUNK_OK, STATUS_CHUNK_MISMATCHED_LENGTHS or STATUS_CHUNK_OVERLAPPING.
-			# The chunk is always read, but in case of an error, the exception may be different 
-			# based on the status.
-			length, compression, chunk_header_status = self.chunk_headers[x, z]
 
+		# status is STATUS_CHUNK_OK, STATUS_CHUNK_MISMATCHED_LENGTHS or STATUS_CHUNK_OVERLAPPING.
+		# The chunk is always read, but in case of an error, the exception may be different 
+		# based on the status.
 
+		# offset comes in sectors of 4096 bytes + length bytes + compression byte
+		self.file.seek(m.blockstart * 4096 + 5)
+		chunk = self.file.read(m.length-1) # the length in the file includes the compression byte
 
-				# raise ChunkHeaderError('The length in region header and the length in the header of chunk %d,%d are incompatible' % (x,z))
-
-			# offset comes in sectors of 4096 bytes + length bytes + compression byte
-			self.file.seek(m.blockstart * 4096 + 5)
-			chunk = self.file.read(m.length-1) # the length in the file includes the compression byte
-
-			err = None
-			if compression > 2:
-				raise ChunkDataError('Unknown chunk compression/format (%d)' % compression)
-			try:
-				if (compression == 1):
-					chunk = gzip.decompress(chunk)
-				elif (compression == 2):
-					chunk = zlib.decompress(chunk)
-				chunk = BytesIO(chunk)
-				return NBTFile(buffer=chunk) # this may raise a MalformedFileError.
-			except Exception as e:
-				# Deliberately catch the Exception and re-raise.
-				# The details in gzip/zlib/nbt are irrelevant, just that the data is garbled.
-				err = str(e)
-			finally:
-				if err:
-					# don't raise during exception handling to avoid the warning 
-					# "During handling of the above exception, another exception occurred".
-					# Python 3.3 solution (see PEP 409 & 415): "raise ChunkDataError(str(e)) from None"
-					if m.status == self.STATUS_CHUNK_MISMATCHED_LENGTHS:
-						raise ChunkHeaderError('The length in region header and the length in the header of chunk %d,%d are incompatible' % (x,z))
-					elif m.status == self.STATUS_CHUNK_OVERLAPPING:
-						raise ChunkHeaderError('Chunk %d,%d is overlapping with another chunk' % (x,z))
-					else:
-						raise ChunkDataError(err)
-		# else:
-		# 	raise RegionHeaderError("Chunk has unknown status %d" % (region_header_status))
+		if m.compression == None:
+			print(m)
+			print(self.header[m])
+		
+		err = None
+		if m.compression > 2:
+			raise ChunkDataError('Unknown chunk compression/format (%d)' % m.compression)
+		try:
+			if (m.compression == 1):
+				chunk = gzip.decompress(chunk)
+			elif (m.compression == 2):
+				chunk = zlib.decompress(chunk)
+			chunk = BytesIO(chunk)
+			return NBTFile(buffer=chunk) # this may raise a MalformedFileError.
+		except Exception as e:
+			# Deliberately catch the Exception and re-raise.
+			# The details in gzip/zlib/nbt are irrelevant, just that the data is garbled.
+			err = str(e)
+		if err:
+			# don't raise during exception handling to avoid the warning 
+			# "During handling of the above exception, another exception occurred".
+			# Python 3.3 solution (see PEP 409 & 415): "raise ChunkDataError(str(e)) from None"
+			if m.status == self.STATUS_CHUNK_MISMATCHED_LENGTHS:
+				raise ChunkHeaderError('The length in region header and the length in the header of chunk %d,%d are incompatible' % (x,z))
+			elif m.status == self.STATUS_CHUNK_OVERLAPPING:
+				raise ChunkHeaderError('Chunk %d,%d is overlapping with another chunk' % (x,z))
+			else:
+				raise ChunkDataError(err)
 
 	def write_chunk(self, x, z, nbt_file):
 		""" A simple chunk writer. """
