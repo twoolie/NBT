@@ -308,6 +308,14 @@ class RegionFile(object):
 	def locate_free_space(self, required_sectors):
 		pass
 
+	def get_chunk_metadata(self):
+		"""
+		Return the metadata of each chunk that is defined in te regionfile.
+		This includes chunks which may not be readable for whatever reason,
+		but excludes chunks that are not yet defined.
+		"""
+		return [m for m in self._header if m.is_created()]
+
 	def get_chunks(self):
 		"""
 		Return coordinates and length of all chunks.
