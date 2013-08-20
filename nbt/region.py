@@ -314,7 +314,7 @@ class RegionFile(object):
 		This includes chunks which may not be readable for whatever reason,
 		but excludes chunks that are not yet defined.
 		"""
-		return [m for m in self._header if m.is_created()]
+		return [m for m in self._header.values() if m.is_created()]
 
 	def get_chunks(self):
 		"""
@@ -323,6 +323,8 @@ class RegionFile(object):
 		Warning: despite the name, this function does not actually return the chunk,
 		but merely it's metadata. Use get_chunk(x,z) to get the NBTFile, and then Chunk()
 		to get the actual chunk.
+		
+		This method is deprecated. Use get_chunk_metadata() instead.
 		"""
 		return self.get_chunk_coords()
 
@@ -330,8 +332,9 @@ class RegionFile(object):
 		"""
 		Return the x,z coordinates and length of the chunks that are defined in te regionfile.
 		This includes chunks which may not be readable for whatever reason.
+		
+		This method is deprecated. Use get_chunk_metadata() instead.
 		"""
-		# TODO: deprecate this function, and replace with one that returns objects instead of a dict, and has a better name (get_chunk_metadata(), get_metadata()?)
 		chunks = []
 		for x in range(32):
 			for z in range(32):
@@ -348,11 +351,14 @@ class RegionFile(object):
 		Chunk instance.
 		"""
 		# TODO: allow iteration over RegionFile self. (thus: for chunk in RegionFile('region.mcr'): ... )
-		for cc in self.get_chunk_coords():
+		for m in self.get_chunk_metadata():
 			try:
-				yield self.get_chunk(cc['x'], cc['z'])
+				yield self.get_chunk(m.x, m.z)
 			except RegionFileFormatError:
 				pass
+	
+	def __iter__(self):
+		return self.iter_chunks()
 
 	def get_timestamp(self, x, z):
 		"""Return the timestamp of when this region file was last modified."""
@@ -362,7 +368,7 @@ class RegionFile(object):
 
 	def chunk_count(self):
 		"""Return the number of defined chunks. This includes potentially corrupt chunks."""
-		return len(self.get_chunk_coords())
+		return len(self.get_chunk_metadata())
 
 	def get_nbt(self, x, z):
 		"""Return a NBTFile"""
