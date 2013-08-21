@@ -457,9 +457,10 @@ class RegionFile(object):
 
 		compressed = zlib.compress(data.getvalue()) # use zlib compression, rather than Gzip
 		data = BytesIO(compressed)
+		length = len(data.getvalue())
 
 		# 5 extra bytes are required for the chunk block header
-		nsectors = self._bytes_to_sector(len(data.getvalue()) + 5)
+		nsectors = self._bytes_to_sector(length + 5)
 
 		if nsectors >= 256:
 			raise ChunkDataError("Chunk is too large (%d sectors exceeds 255 maximum)" % (nsectors))
@@ -467,19 +468,16 @@ class RegionFile(object):
 		# search for a place where to write the chunk:
 		current = self._header[x, z]
 		sector = self.locate_free_space(nsectors, ignore_chunk = current, preferred = current.blockstart)
-		
-		pad_end = False
 
 		# write out chunk to region
 		self.file.seek(sector*4096)
-		self.file.write(pack(">I", len(data.getvalue())+1)) #length field
+		self.file.write(pack(">I", length + 1)) #length field
 		self.file.write(pack(">B", RegionFile.COMPRESSION_ZLIB)) #compression field
 		self.file.write(data.getvalue()) #compressed data
-		if pad_end:
-			# Write zeros up to the end of the chunk
-			self.file.seek((sector+nsectors)*4096-1)
-			# TODO: this would write only one zero-byte, shouldn't this be more bytes long?
-			self.file.write(b"\x00")
+
+		# Write zeros up to the end of the chunk
+		remaininglength = 4096 * nsectors - length - 5
+		self.file.write(remaininglength * b"\x00")
 
 		#seek to header record and write offset and length records
 		self.file.seek(4*(x+z*32))
@@ -490,6 +488,10 @@ class RegionFile(object):
 		timestamp = int(time.time())
 		self.file.write(pack(">I", timestamp))
 
+		# TODO: zero cleared chunks, provided that they are in the file and non-overlapping.
+		
+		# TODO: truncate file if possible.
+		
 		# update file size and header information
 		self.parse_header()
 		self.parse_chunk_headers()

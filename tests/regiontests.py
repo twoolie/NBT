@@ -541,8 +541,6 @@ class ReadWriteTest(unittest.TestCase):
 		self.assertEqual(header[0], 10, "Chunk should be placed in sector 10")
 		self.assertEqual(header[3], RegionFile.STATUS_CHUNK_OK)
 
-	# TODO: file increasement should be supported
-	@unittest.expectedFailure
 	def test53WriteNewChunkIncreaseFile(self):
 		"""
 		write 3 sector chunk 2,2 (should go to 026-028) (increase file size)
@@ -953,8 +951,10 @@ class EmptyFileTest(unittest.TestCase):
 # Also test if an exception is raised if RegionFile is called incorrectly (e.g. both filename and fileobj are specified, or none)
 
 # TODO: test what happens with a corrupt region file, of 5000 bytes in size. Read a chunk, write a chunk
+
 # TODO: test what happens if a file is trucated, but the chunk is still readable. This should return the chunk.
 #       also test writing; does the file get padded?
+#       also test writing another chunk. What happens is seek() jumps to a point larger than file size? Are bytes zeroed. Should we do that manually?
 
 if __name__ == '__main__':
 	logger = logging.getLogger("nbt.tests.regiontests")
