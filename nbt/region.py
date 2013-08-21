@@ -514,16 +514,26 @@ class RegionFile(object):
 		if truncate_count > 0:
 			self.size = 4096 * (len(free_sectors) - truncate_count)
 			self.file.truncate(self.size)
+			free_sectors = free_sectors[:-truncate_count]
 		
 		# Calculate freed sectors
-		# ... TODO ...
-		# TODO: zero cleared chunks, provided that they are in the file and non-overlapping.
-		
-		# TODO: truncate file if possible.
+		for s in range(current.blockstart, min(current.blockstart + current.blocklength, len(free_sectors))):
+			if free_sectors[s]:
+				# zero sector s
+				self.file.seek(4096*s)
+				self.file.write(4096*b'\x00')
 		
 		# update file size and header information
-		self.parse_header()
-		self.parse_chunk_headers()
+		self.size = self.get_size()
+		current.blockstart = sector
+		current.blocklength = nsectors
+		current.status = RegionFile.STATUS_CHUNK_OK
+		current.timestamp = timestamp
+		current.length = length + 1
+		current.compression = RegionFile.COMPRESSION_ZLIB
+
+		# self.parse_header()
+		# self.parse_chunk_headers()
 
 
 	def unlink_chunk(self, x, z):

@@ -783,8 +783,6 @@ class ReadWriteTest(unittest.TestCase):
 		nbt = generate_compressed_level(minsize = maxsize + 100, maxsize = maxsize + 4000)
 		self.assertRaises(ChunkDataError, self.region.write_chunk, 2, 2, nbt)
 
-	# TODO: Unused bytes in sector should be zeroed after writing
-	@unittest.expectedFailure
 	def test91WriteZeroPadding(self):
 		"""
 		write 1 sector chunk 16,0 (should go to existing 017) (should free sector 018)
@@ -798,7 +796,7 @@ class ReadWriteTest(unittest.TestCase):
 		oldsectorlength = 2 * 4096
 		chunklength = 4 + chunk_header[0]
 		unusedlength = oldsectorlength - chunklength
-		self.region.file.seek(sectorlocation + chunklength)
+		self.region.file.seek(4096*sectorlocation + chunklength)
 		unused = self.region.file.read(unusedlength)
 		zeroes = unused.count(b'\x00')
 		self.assertEqual(zeroes, unusedlength, "All unused bytes should be zeroed after writing a chunk")
