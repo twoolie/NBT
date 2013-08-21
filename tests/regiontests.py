@@ -741,17 +741,7 @@ class ReadWriteTest(unittest.TestCase):
 		self.assertEqual(header[1], 3) # length
 		self.assertEqual(header[0], 14, "No longer overlapping chunks should be written to same location when when possible")
 
-	# TODO: File should be truncated when last sector(s) are freed
-	@unittest.expectedFailure
-	def test80FileTruncateFreeTail(self):
-		"""
-		delete chunk 3,1 (free 025: truncate file size)
-		verify file size: 25*4096 bytes
-		"""
-		self.region.unlink_chunk(3, 1)
-		self.assertEqual(self.region.get_size(), 25*4096, "File should be truncated when last sector(s) are freed")
-
-	def test81FileTruncateLastChunkDecrease(self):
+	def test80FileTruncateLastChunkDecrease(self):
 		"""
 		write 1 sector chunk 3,1 (should remain in 025) (free 026)
 		verify file size is truncated: 26*4096 bytes
@@ -759,6 +749,16 @@ class ReadWriteTest(unittest.TestCase):
 		nbt = generate_compressed_level(minsize = 100, maxsize = 4000)
 		self.region.write_chunk(3, 1, nbt)
 		self.assertEqual(self.region.get_size(), 26*4096, "File should be truncated when last chunk is reduced in size")
+
+	# TODO: File should be truncated when last sector(s) are freed
+	@unittest.expectedFailure
+	def test81FileTruncateFreeTail(self):
+		"""
+		delete chunk 3,1 (free 025: truncate file size)
+		verify file size: 25*4096 bytes
+		"""
+		self.region.unlink_chunk(3, 1)
+		self.assertEqual(self.region.get_size(), 25*4096, "File should be truncated when last sector(s) are freed")
 
 	# TODO: File should be truncated when last sector(s) are freed
 	@unittest.expectedFailure
@@ -827,9 +827,23 @@ class ReadWriteTest(unittest.TestCase):
 		self.region.file.seek((sectorlocation + 1) * 4096)
 		unused = self.region.file.read(4096)
 		zeroes = unused.count(b'\x00')
-		self.assertNotEqual(zeroes, 4096, "Bytes should be zeroed after deleting an overlapping chunk")
+		self.assertNotEqual(zeroes, 4096, "Bytes should not be zeroed after deleting an overlapping chunk")
 	
-	def test94DeleteZeroPaddingMismatchLength(self):
+	def test94MoveOverlappingNoZeroPadding(self):
+		"""
+		write 2 sector chunk 4,0 to a different location. Due to overlapping chunks, bytes should not be zeroed.
+		Check if bytes in sector 015 are not all zeroed.
+		"""
+		header = self.region.header[4, 0]
+		sectorlocation = header[0]
+		nbt = generate_compressed_level(minsize = 5000, maxsize = 7000)
+		self.region.write_chunk(4, 0, nbt)
+		self.region.file.seek((sectorlocation + 1) * 4096)
+		unused = self.region.file.read(4096)
+		zeroes = unused.count(b'\x00')
+		self.assertNotEqual(zeroes, 4096, "Bytes should not be zeroed after moving an overlapping chunk")
+	
+	def test95DeleteZeroPaddingMismatchLength(self):
 		"""
 		unlink chunk 3,1. (which has a length mismatch)
 		Check if bytes in sector 025 are all zeroed.
