@@ -751,9 +751,18 @@ class ReadWriteTest(unittest.TestCase):
 		self.region.unlink_chunk(3, 1)
 		self.assertEqual(self.region.get_size(), 25*4096, "File should be truncated when last sector(s) are freed")
 
+	def test81FileTruncateLastChunkDecrease(self):
+		"""
+		write 1 sector chunk 3,1 (should remain in 025) (free 026)
+		verify file size is truncated: 26*4096 bytes
+		"""
+		nbt = generate_compressed_level(minsize = 100, maxsize = 4000)
+		self.region.write_chunk(3, 1, nbt)
+		self.assertEqual(self.region.get_size(), 26*4096, "File should be truncated when last chunk is reduced in size")
+
 	# TODO: File should be truncated when last sector(s) are freed
 	@unittest.expectedFailure
-	def test81FileTruncateMergeFree(self):
+	def test82FileTruncateMergeFree(self):
 		"""
 		delete chunk 8,1 (free 024)
 		delete chunk 3,1 (free 025: truncate file size, including 024)

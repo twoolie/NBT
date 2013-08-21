@@ -314,27 +314,35 @@ class RegionFile(object):
 						sectors[b].append(m)
 		return sectors
 
-	def locate_free_space(self, required_sectors=1, ignore_chunk=None, preferred=0):
+	def _locate_free_sectors(self, ignore_chunk=None):
+		"""Return a list of booleans, indicating the free sectors."""
 		sectors = self._sectors(ignore_chunk=ignore_chunk)
-		free_locations = [i != None and len(i) == 0 for i in sectors] + required_sectors*[True]
-		
+		return [i != None and len(i) == 0 for i in sectors] #+ required_sectors*[True]
+
+	def _find_free_location(self, free_locations, required_sectors=1, preferred=None):
+		"""
+		Given a list of booleans, find a list of <required_sectors> consecutive True values.
+		If no such list is found, return length(free_locations).
+		Assumes first two values are always False.
+		"""
 		# check preferred (current) location
-		if all(free_locations[preferred:preferred+required_sectors]):
+		if preferred and all(free_locations[preferred:preferred+required_sectors]):
 			return preferred
 		
 		# check other locations
-		i = 2
-		while i < len(sectors):
+		i = 2 # First two sectors are in use by the header
+		while i < len(free_locations):
 			if all(free_locations[i:i+required_sectors]):
 				break
 			i += 1
 		return i
-		# i = len(sectors) - required_sectors
+		# TODO: test codes with the following algorithm as well. (this starts searching free blocks at the end of the file.)
+		# i = len(free_locations) - required_sectors
 		# while i >= 2:
 		# 	if all(free_locations[i:i+required_sectors]):
 		# 		return i
 		# 	i -= 1
-		# return len(sectors)
+		# return len(free_locations)
 
 	def get_chunk_metadata(self):
 		"""
@@ -473,7 +481,8 @@ class RegionFile(object):
 
 		# search for a place where to write the chunk:
 		current = self._header[x, z]
-		sector = self.locate_free_space(nsectors, ignore_chunk = current, preferred = current.blockstart)
+		free_sectors = self._locate_free_sectors(ignore_chunk=current)
+		sector = self._find_free_location(free_sectors, nsectors, preferred = current.blockstart)
 
 		# write out chunk to region
 		self.file.seek(sector*4096)
@@ -494,6 +503,20 @@ class RegionFile(object):
 		timestamp = int(time.time())
 		self.file.write(pack(">I", timestamp))
 
+		# Update free_sectors with newly written block
+		# This is required for calculating file truncation and zeroing freed blocks.
+		free_sectors.extend((sector + nsectors - len(free_sectors)) * [True])
+		for s in range(sector, sector + nsectors):
+			free_sectors[s] = False
+		
+		# Check if file should be truncated:
+		truncate_count = list(reversed(free_sectors)).index(False)
+		if truncate_count > 0:
+			self.size = 4096 * (len(free_sectors) - truncate_count)
+			self.file.truncate(self.size)
+		
+		# Calculate freed sectors
+		# ... TODO ...
 		# TODO: zero cleared chunks, provided that they are in the file and non-overlapping.
 		
 		# TODO: truncate file if possible.
