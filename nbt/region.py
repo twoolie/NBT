@@ -309,7 +309,7 @@ class RegionFile(object):
 			if ignore_chunk == m:
 				continue
 			if m.blocklength and m.blockstart:
-				for b in range(m.blockstart, m.blockstart + m.blocklength):
+				for b in range(m.blockstart, m.blockstart + max(m.blocklength, m.requiredblocks())):
 					if 2 <= b < sectorsize:
 						sectors[b].append(m)
 		return sectors
@@ -329,6 +329,12 @@ class RegionFile(object):
 				break
 			i += 1
 		return i
+		# i = len(sectors) - required_sectors
+		# while i >= 2:
+		# 	if all(free_locations[i:i+required_sectors]):
+		# 		return i
+		# 	i -= 1
+		# return len(sectors)
 
 	def get_chunk_metadata(self):
 		"""

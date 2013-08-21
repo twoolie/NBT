@@ -108,7 +108,7 @@ class ReadWriteTest(unittest.TestCase):
 	sector 023: chunk 4 ,1  part 1/1 <<-- zero-byte length value in chunk (invalid header)
 	sector 024: chunk 8 ,1  part 1/1 <<-- one-byte length value in chunk (no data)
 	sector 025: chunk 3 ,1  part 1/1 <<-- 2 sectors required, but 1 sector allocated (length 4+1+4092)
-	sector 026: empty
+	sector 026: empty                <<-- unregistered overlap from chunk 3,1
 	
 	in addition, the following (corrupted) chunks are defined in the header of regiontest.mca:
 	sector 021: 0-sector length chunk 13,0 (and overlapping with chunk 6,1)
@@ -487,21 +487,16 @@ class ReadWriteTest(unittest.TestCase):
 		write 1 sector chunk 1,2 (should go to 004)
 		write 1 sector chunk 2,2 (should go to 010)
 		write 1 sector chunk 3,2 (should go to 011)
-		write 1 sector chunk 4,2 (should go to 026)
 		verify file size remains 027*4096
 		"""
 		nbt = generate_compressed_level(minsize = 100, maxsize = 4000)
-		locations = []
+		availablelocations = (4, 10, 11, 26)
 		self.region.write_chunk(1, 2, nbt)
-		locations.append(self.region.header[1, 2][0])
+		self.assertIn(self.region.header[1, 2][0], availablelocations)
 		self.region.write_chunk(2, 2, nbt)
-		locations.append(self.region.header[2, 2][0])
+		self.assertIn(self.region.header[2, 2][0], availablelocations)
 		self.region.write_chunk(3, 2, nbt)
-		locations.append(self.region.header[3, 2][0])
-		self.region.write_chunk(4, 2, nbt)
-		locations.append(self.region.header[4, 2][0])
-		locations.sort()
-		self.assertEqual(locations, [4, 10, 11, 26])
+		self.assertIn(self.region.header[3, 2][0], availablelocations)
 
 	def test50WriteNewChunk2sector(self):
 		"""
@@ -543,15 +538,15 @@ class ReadWriteTest(unittest.TestCase):
 
 	def test53WriteNewChunkIncreaseFile(self):
 		"""
-		write 3 sector chunk 2,2 (should go to 026-028) (increase file size)
+		write 3 sector chunk 2,2 (should go to 026-028 or 027-029) (increase file size)
 		verify file size is 29*4096
 		"""
 		nbt = generate_compressed_level(minsize = 9000, maxsize = 11000)
 		self.region.write_chunk(1, 2, nbt)
 		header = self.region.header[1, 2]
 		self.assertEqual(header[1], 3, "Chunk length must be 3 sectors")
-		self.assertEqual(header[0], 26, "Chunk should be placed in sector 26")
-		self.assertEqual(self.region.get_size(), 29*4096)
+		self.assertIn(header[0], (26, 27), "Chunk should be placed in sector 26")
+		self.assertEqual(self.region.get_size(), (header[0] + header[1])*4096, "File size should be multiple of 4096")
 		self.assertEqual(header[3], RegionFile.STATUS_CHUNK_OK)
 
 	def test54WriteExistingChunkDecreaseSector(self):
@@ -746,42 +741,9 @@ class ReadWriteTest(unittest.TestCase):
 		self.assertEqual(header[1], 3) # length
 		self.assertEqual(header[0], 14, "No longer overlapping chunks should be written to same location when when possible")
 
-	# TODO: bug in free sector calculation for overlapping chunks (precondition fails)
-	@unittest.expectedFailure
-	def test80FileTruncateSimple(self):
-		"""
-		write 1 sector chunk 1,2 (should go to 004)
-		write 1 sector chunk 2,2 (should go to 010)
-		write 1 sector chunk 3,2 (should go to 011)
-		write 1 sector chunk 4,2 (should go to 026)
-		delete chunk 1,2
-		delete chunk 2,2
-		delete chunk 3,2
-		delete chunk 4,2 (free 026: truncate file size)
-		verify file size: 26*4096 bytes
-		"""
-		self.assertEqual(self.region.get_size(), 27*4096)
-		# Write 1-sector chunks to check which sectors are "free"
-		nbt = generate_compressed_level(minsize = 100, maxsize = 4000)
-		locations = []
-		self.region.write_chunk(1, 2, nbt)
-		locations.append(self.region.header[1, 2][0])
-		self.region.write_chunk(2, 2, nbt)
-		locations.append(self.region.header[2, 2][0])
-		self.region.write_chunk(3, 2, nbt)
-		locations.append(self.region.header[3, 2][0])
-		self.region.write_chunk(4, 2, nbt)
-		locations.append(self.region.header[4, 2][0])
-		self.assertEqual(locations, [4, 10, 11, 26])
-		self.region.unlink_chunk(1, 2)
-		self.region.unlink_chunk(2, 2)
-		self.region.unlink_chunk(3, 2)
-		self.region.unlink_chunk(4, 2)
-		self.assertEqual(self.region.get_size(), 26*4096, "Removing the last chunk in the file should reduce the file size")
-
 	# TODO: File should be truncated when last sector(s) are freed
 	@unittest.expectedFailure
-	def test81FileTruncateFreeTail(self):
+	def test80FileTruncateFreeTail(self):
 		"""
 		delete chunk 3,1 (free 025: truncate file size)
 		verify file size: 25*4096 bytes
@@ -791,7 +753,7 @@ class ReadWriteTest(unittest.TestCase):
 
 	# TODO: File should be truncated when last sector(s) are freed
 	@unittest.expectedFailure
-	def test82FileTruncateMergeFree(self):
+	def test81FileTruncateMergeFree(self):
 		"""
 		delete chunk 8,1 (free 024)
 		delete chunk 3,1 (free 025: truncate file size, including 024)
