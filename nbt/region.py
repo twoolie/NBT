@@ -140,6 +140,13 @@ class RegionFile(object):
 	STATUS_CHUNK_NOT_CREATED = 1
 	"""Constant indicating an normal status: the chunk does not exist"""
 	
+	COMPRESSION_NONE = 0
+	"""Constant indicating tha tthe chunk is not compressed."""
+	COMPRESSION_GZIP = 1
+	"""Constant indicating tha tthe chunk is GZip compressed."""
+	COMPRESSION_ZLIB = 2
+	"""Constant indicating tha tthe chunk is zlib compressed."""
+	
 	def __init__(self, filename=None, fileobj=None):
 		"""
 		Read a region file by filename of file object. 
@@ -245,16 +252,16 @@ class RegionFile(object):
 			m.timestamp = unpack(">I", self.file.read(4))[0]
 			
 			if offset == 0 and length == 0:
-				m.status = self.STATUS_CHUNK_NOT_CREATED
+				m.status = RegionFile.STATUS_CHUNK_NOT_CREATED
 			elif length == 0:
-				m.status = self.STATUS_CHUNK_ZERO_LENGTH
+				m.status = RegionFile.STATUS_CHUNK_ZERO_LENGTH
 			elif offset < 2 and offset != 0:
-				m.status = self.STATUS_CHUNK_IN_HEADER
+				m.status = RegionFile.STATUS_CHUNK_IN_HEADER
 			elif 4096 * offset + 5 > self.size:
 				# Chunk header can't be read.
-				m.status = self.STATUS_CHUNK_OUT_OF_FILE
+				m.status = RegionFile.STATUS_CHUNK_OUT_OF_FILE
 			else:
-				m.status = self.STATUS_CHUNK_OK
+				m.status = RegionFile.STATUS_CHUNK_OK
 		
 		# Check for chunks overlapping in the file
 		for chunks in self._sectors()[2:]:
@@ -262,16 +269,16 @@ class RegionFile(object):
 				# overlapping chunks
 				for m in chunks:
 					# Update status, unless these more severe errors take precedence
-					if m.status not in (self.STATUS_CHUNK_ZERO_LENGTH, \
-							self.STATUS_CHUNK_IN_HEADER, self.STATUS_CHUNK_OUT_OF_FILE):
-						m.status = self.STATUS_CHUNK_OVERLAPPING
+					if m.status not in (RegionFile.STATUS_CHUNK_ZERO_LENGTH, \
+							RegionFile.STATUS_CHUNK_IN_HEADER, RegionFile.STATUS_CHUNK_OUT_OF_FILE):
+						m.status = RegionFile.STATUS_CHUNK_OVERLAPPING
 
 	def parse_chunk_headers(self):
 		for x in range(32):
 			for z in range(32):
 				m = self._header[x, z]
-				if m.status not in (self.STATUS_CHUNK_OK, self.STATUS_CHUNK_OVERLAPPING, \
-						self.STATUS_CHUNK_MISMATCHED_LENGTHS):
+				if m.status not in (RegionFile.STATUS_CHUNK_OK, RegionFile.STATUS_CHUNK_OVERLAPPING, \
+						RegionFile.STATUS_CHUNK_MISMATCHED_LENGTHS):
 					continue
 				try:
 					self.file.seek(m.blockstart*4096) # offset comes in sectors of 4096 bytes
@@ -280,13 +287,13 @@ class RegionFile(object):
 					compression = unpack(">B",self.file.read(1))
 					m.compression = compression[0]
 				except IOError:
-					m.status = self.STATUS_CHUNK_OUT_OF_FILE
+					m.status = RegionFile.STATUS_CHUNK_OUT_OF_FILE
 					continue
 				if m.length <= 1: # chunk can't be zero length
-					m.status = self.STATUS_CHUNK_ZERO_LENGTH
+					m.status = RegionFile.STATUS_CHUNK_ZERO_LENGTH
 				elif m.length + 4 > m.blocklength * 4096:
 					# There are not enough sectors allocated for the whole block
-					m.status = self.STATUS_CHUNK_MISMATCHED_LENGTHS
+					m.status = RegionFile.STATUS_CHUNK_MISMATCHED_LENGTHS
 
 	def _sectors(self, ignore_chunk=None):
 		"""
@@ -394,13 +401,13 @@ class RegionFile(object):
 		# TODO: deprecate in favour of get_nbt?
 		m = self._header[x, z]
 		offset, length, timestamp, region_header_status = self.header[x, z]
-		if m.status == self.STATUS_CHUNK_NOT_CREATED:
+		if m.status == RegionFile.STATUS_CHUNK_NOT_CREATED:
 			raise InconceivedChunk("Chunk is not created")
-		elif m.status == self.STATUS_CHUNK_IN_HEADER:
+		elif m.status == RegionFile.STATUS_CHUNK_IN_HEADER:
 			raise RegionHeaderError('Chunk %d,%d is in the region header' % (x,z))
-		elif region_header_status == self.STATUS_CHUNK_OUT_OF_FILE:
+		elif region_header_status == RegionFile.STATUS_CHUNK_OUT_OF_FILE:
 			raise RegionHeaderError('Chunk %d,%d is partially/completely outside the file' % (x,z))
-		elif m.status == self.STATUS_CHUNK_ZERO_LENGTH:
+		elif m.status == RegionFile.STATUS_CHUNK_ZERO_LENGTH:
 			if m.blocklength == 0:
 				raise RegionHeaderError('Chunk %d,%d has zero length' % (x,z))
 			else:
@@ -422,9 +429,9 @@ class RegionFile(object):
 		if m.compression > 2:
 			raise ChunkDataError('Unknown chunk compression/format (%d)' % m.compression)
 		try:
-			if (m.compression == 1):
+			if (m.compression == RegionFile.COMPRESSION_GZIP):
 				chunk = gzip.decompress(chunk)
-			elif (m.compression == 2):
+			elif (m.compression == RegionFile.COMPRESSION_ZLIB):
 				chunk = zlib.decompress(chunk)
 			chunk = BytesIO(chunk)
 			return NBTFile(buffer=chunk) # this may raise a MalformedFileError.
@@ -436,9 +443,9 @@ class RegionFile(object):
 			# don't raise during exception handling to avoid the warning 
 			# "During handling of the above exception, another exception occurred".
 			# Python 3.3 solution (see PEP 409 & 415): "raise ChunkDataError(str(e)) from None"
-			if m.status == self.STATUS_CHUNK_MISMATCHED_LENGTHS:
+			if m.status == RegionFile.STATUS_CHUNK_MISMATCHED_LENGTHS:
 				raise ChunkHeaderError('The length in region header and the length in the header of chunk %d,%d are incompatible' % (x,z))
-			elif m.status == self.STATUS_CHUNK_OVERLAPPING:
+			elif m.status == RegionFile.STATUS_CHUNK_OVERLAPPING:
 				raise ChunkHeaderError('Chunk %d,%d is overlapping with another chunk' % (x,z))
 			else:
 				raise ChunkDataError(err)
@@ -466,7 +473,7 @@ class RegionFile(object):
 		# write out chunk to region
 		self.file.seek(sector*4096)
 		self.file.write(pack(">I", len(data.getvalue())+1)) #length field
-		self.file.write(pack(">B", 2)) #compression field
+		self.file.write(pack(">B", RegionFile.COMPRESSION_ZLIB)) #compression field
 		self.file.write(data.getvalue()) #compressed data
 		if pad_end:
 			# Write zeros up to the end of the chunk
