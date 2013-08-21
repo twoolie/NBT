@@ -797,8 +797,6 @@ class ReadWriteTest(unittest.TestCase):
 		zeroes = unused.count(b'\x00')
 		self.assertEqual(zeroes, unusedlength, "All unused bytes should be zeroed after writing a chunk")
 	
-	# TODO: Sector should be zeroed after unlinking
-	@unittest.expectedFailure
 	def test92DeleteZeroPadding(self):
 		"""
 		unlink chunk 7,1
@@ -807,7 +805,7 @@ class ReadWriteTest(unittest.TestCase):
 		header = self.region.header[7, 1]
 		sectorlocation = header[0]
 		self.region.unlink_chunk(7, 1)
-		self.region.file.seek(sectorlocation)
+		self.region.file.seek(sectorlocation*4096)
 		unused = self.region.file.read(4096)
 		zeroes = unused.count(b'\x00')
 		self.assertEqual(zeroes, 4096, "All bytes should be zeroed after deleting a chunk")
