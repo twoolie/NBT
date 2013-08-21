@@ -553,6 +553,23 @@ class RegionFile(object):
 		self.file.seek(4096+4*(x+z*32))
 		self.file.write(pack(">I", 0))
 
+		# Check if file should be truncated:
+		current = self._header[x, z]
+		free_sectors = self._locate_free_sectors(ignore_chunk=current)
+		truncate_count = list(reversed(free_sectors)).index(False)
+		if truncate_count > 0:
+			self.size = 4096 * (len(free_sectors) - truncate_count)
+			self.file.truncate(self.size)
+			free_sectors = free_sectors[:-truncate_count]
+		
+		# Calculate freed sectors
+		for s in range(current.blockstart, min(current.blockstart + current.blocklength, len(free_sectors))):
+			if free_sectors[s]:
+				# zero sector s
+				self.file.seek(4096*s)
+				self.file.write(4096*b'\x00')
+		
+
 		# TODO: zero cleared chunks, provided that they are in the file and non-overlapping.
 		
 		# TODO: truncate file if possible.

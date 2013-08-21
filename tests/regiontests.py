@@ -750,8 +750,6 @@ class ReadWriteTest(unittest.TestCase):
 		self.region.write_chunk(3, 1, nbt)
 		self.assertEqual(self.region.get_size(), 26*4096, "File should be truncated when last chunk is reduced in size")
 
-	# TODO: File should be truncated when last sector(s) are freed
-	@unittest.expectedFailure
 	def test81FileTruncateFreeTail(self):
 		"""
 		delete chunk 3,1 (free 025: truncate file size)
@@ -760,8 +758,6 @@ class ReadWriteTest(unittest.TestCase):
 		self.region.unlink_chunk(3, 1)
 		self.assertEqual(self.region.get_size(), 25*4096, "File should be truncated when last sector(s) are freed")
 
-	# TODO: File should be truncated when last sector(s) are freed
-	@unittest.expectedFailure
 	def test82FileTruncateMergeFree(self):
 		"""
 		delete chunk 8,1 (free 024)
@@ -828,6 +824,14 @@ class ReadWriteTest(unittest.TestCase):
 		unused = self.region.file.read(4096)
 		zeroes = unused.count(b'\x00')
 		self.assertNotEqual(zeroes, 4096, "Bytes should not be zeroed after deleting an overlapping chunk")
+		self.region.file.seek((sectorlocation) * 4096)
+		unused = self.region.file.read(4096)
+		zeroes = unused.count(b'\x00')
+		self.assertEqual(zeroes, 4096, "Bytes should be zeroed after deleting non-overlapping portions of a chunk")
+		self.region.file.seek((sectorlocation + 2) * 4096)
+		unused = self.region.file.read(4096)
+		zeroes = unused.count(b'\x00')
+		self.assertEqual(zeroes, 4096, "Bytes should be zeroed after deleting non-overlapping portions of a chunk")
 	
 	def test94MoveOverlappingNoZeroPadding(self):
 		"""
