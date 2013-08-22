@@ -270,6 +270,15 @@ class RegionFile(object):
 			self.file.close()
 		# Parent object() has no __del__ method, otherwise it should be called here.
 
+	def _init_file(self):
+		"""Initialise the file header. This will erase any data previously in the file."""
+		header_length = 2*SECTOR_LENGTH
+		if self.size > header_length:
+			self.file.truncate(header_length)
+		self.file.seek(0)
+		self.file.write(header_length*b'\x00')
+		self.size = header_length
+
 	def _init_header(self):
 		for x in range(32):
 			for z in range(32):
@@ -548,6 +557,10 @@ class RegionFile(object):
 
 		if nsectors >= 256:
 			raise ChunkDataError("Chunk is too large (%d sectors exceeds 255 maximum)" % (nsectors))
+
+		# Ensure file has a header
+		if self.size < 2*SECTOR_LENGTH:
+			self._init_file()
 
 		# search for a place where to write the chunk:
 		current = self.metadata[x, z]
