@@ -254,8 +254,10 @@ class RegionFile(object):
 
 	def get_size(self):
 		""" Returns the file object size. """
-		# seek(0,2) jumps to 0-bytes from the end of the file, and returns the position
-		return self.file.seek(0, SEEK_END)
+		# seek(0,2) jumps to 0-bytes from the end of the file.
+		# Python 2.6 support: seek does not yet return the position.
+		self.file.seek(0, SEEK_END)
+		return self.file.tell()
 
 	@staticmethod
 	def _bytes_to_sector(bsize, sectorlength=SECTOR_LENGTH):
@@ -296,7 +298,7 @@ class RegionFile(object):
 			# as empty region files.
 			return
 		elif self.size < 2*SECTOR_LENGTH:
-			raise NoRegionHeader('The region file is too small in size to have a header.')
+			raise NoRegionHeader('The region file is %d bytes, too small in size to have a header.' % self.size)
 		
 		for index in range(0, SECTOR_LENGTH, 4):
 			x = int(index//4) % 32
@@ -400,13 +402,6 @@ class RegionFile(object):
 				break
 			i += 1
 		return i
-		# TODO: test codes with the following algorithm as well. (this starts searching free blocks at the end of the file.)
-		# i = len(free_locations) - required_sectors
-		# while i >= 2:
-		# 	if all(free_locations[i:i+required_sectors]):
-		# 		return i
-		# 	i -= 1
-		# return len(free_locations)
 
 	def get_metadata(self):
 		"""
@@ -499,7 +494,10 @@ class RegionFile(object):
 			raise ChunkDataError('Unknown chunk compression/format (%d)' % m.compression)
 		try:
 			if (m.compression == COMPRESSION_GZIP):
-				chunk = gzip.decompress(chunk)
+				# Python 3.1 and earlier do not yet support gzip.decompress(chunk)
+				f = gzip.GzipFile(fileobj=BytesIO(chunk))
+				chunk = bytes(f.read())
+				f.close()
 			elif (m.compression == COMPRESSION_ZLIB):
 				chunk = zlib.decompress(chunk)
 			return chunk

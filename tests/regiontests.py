@@ -999,6 +999,13 @@ class TruncatedFileTest(unittest.TestCase):
 # - file is not closed (for fileobj)
 # Also test if an exception is raised if RegionFile is called incorrectly (e.g. both filename and fileobj are specified, or none)
 
+# TODO: avoid the following functions to support Python 2.6:
+# AttributeError: 'module' object has no attribute 'SkipTest'
+# AttributeError: 'ReadWriteTest' object has no attribute 'assertGreaterEqual'
+# AttributeError: 'ReadWriteTest' object has no attribute 'assertIn'
+# AttributeError: 'ReadWriteTest' object has no attribute 'assertIsInstance'
+# AttributeError: 'ReadWriteTest' object has no attribute 'assertLessEqual'
+# AttributeError: 'ReadWriteTest' object has no attribute 'assertNotIn'
 
 
 if __name__ == '__main__':
