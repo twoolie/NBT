@@ -45,9 +45,11 @@ Backward Incompatible Changes since 1.3.0
 Known Bugs
 ~~~~~~~~~~
 See https://github.com/twoolie/NBT/issues
-* Still no support for Anvil Chunks. It is possible to access the NBT structure,
-  just the anvil-specifics are not implemented, such as the exact locations of
-  blocks in the NBT structure.
+
+* It is posible to access the NBT structure of any world folder, including
+  McRegion and Anvil worlds. However, chunk specifics (such as the location
+  of blocks in the NBT structure) are only available for McRegion, not yet for
+  Anvil.
 * The name of a variable generally only supports 2-byte Unicode characters (the
   Basic Multilingual Plane). For Full Unicode support, use Python 3.3 or higher,
   or compile Python --with-wide-unicode.

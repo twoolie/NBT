@@ -1,5 +1,5 @@
 """
-Handle a region file, containing 32x32 chunks
+Handle a region file, containing 32x32 chunks.
 For more info of the region file format look:
 http://www.minecraftwiki.net/wiki/Region_file_format
 """
@@ -18,7 +18,7 @@ from os import SEEK_END
 # constants
 
 SECTOR_LENGTH = 4096
-"""Length of a sector; A Region file is divided in sectors of 4096 bytes each."""
+"""Constant indicating the length of a sector. A Region file is divided in sectors of 4096 bytes each."""
 
 # Status is a number representing:
 # -5 = Error, the chunk is overlapping with another chunk
@@ -80,49 +80,43 @@ class InconceivedChunk(LookupError):
 
 
 class ChunkMetadata(object):
-	# Redefine constants for backward compatibility.
-	SECTORLEN = SECTOR_LENGTH
-	STATUS_CHUNK_OVERLAPPING = STATUS_CHUNK_OVERLAPPING
-	STATUS_CHUNK_MISMATCHED_LENGTHS = STATUS_CHUNK_MISMATCHED_LENGTHS
-	STATUS_CHUNK_ZERO_LENGTH = STATUS_CHUNK_ZERO_LENGTH
-	STATUS_CHUNK_IN_HEADER = STATUS_CHUNK_IN_HEADER
-	STATUS_CHUNK_OUT_OF_FILE = STATUS_CHUNK_OUT_OF_FILE
-	STATUS_CHUNK_OK = STATUS_CHUNK_OK
-	STATUS_CHUNK_NOT_CREATED = STATUS_CHUNK_NOT_CREATED
-	
 	"""
 	Metadata for a particular chunk found in the 8 kiByte header and 5-byte chunk header.
-	x, z: coordinates of the chunk in the file
-	blockstart: start of the chunk block, counted in 4 kiByte sectors from the
-	    start of the file. (24 bit int)
-	blocklength: amount of 4 kiBytes sectors in the block (8 bit int)
-	timestamp: a Unix timestamps (seconds since epoch) (32 bits), found in the
-	    second sector in the file.
-	length: length of the block in bytes. This excludes the 4-byte length header,
-	    and includes the 1-byte compression byte. (32 bit int)
-	compression: type of compression used for the chunk block. (8 bit int).
-	- 0: uncompressed
-	- 1: gzip compression
-	- 2: zlib compression
-	status: status as determined from blockstart, blocklength, length, file size
-	    and location of other chunks in the file.
-	- STATUS_CHUNK_OVERLAPPING
-	- STATUS_CHUNK_MISMATCHED_LENGTHS
-	- STATUS_CHUNK_ZERO_LENGTH
-	- STATUS_CHUNK_IN_HEADER
-	- STATUS_CHUNK_OUT_OF_FILE
-	- STATUS_CHUNK_OK
-	- STATUS_CHUNK_NOT_CREATED
 	"""
+
 	def __init__(self, x, z):
 		self.x = x
+		"""x-coordinate of the chunk in the file"""
 		self.z = z
+		"""z-coordinate of the chunk in the file"""
 		self.blockstart = 0
+		"""start of the chunk block, counted in 4 kiByte sectors from the
+	    start of the file. (24 bit int)"""
 		self.blocklength = 0
+		"""amount of 4 kiBytes sectors in the block (8 bit int)"""
 		self.timestamp = 0
+		"""a Unix timestamps (seconds since epoch) (32 bits), found in the
+	    second sector in the file."""
 		self.length = 0
+		"""length of the block in bytes. This excludes the 4-byte length header,
+	    and includes the 1-byte compression byte. (32 bit int)"""
 		self.compression = None
+		"""type of compression used for the chunk block. (8 bit int).
+	
+	    - 0: uncompressed
+	    - 1: gzip compression
+	    - 2: zlib compression"""
 		self.status = STATUS_CHUNK_NOT_CREATED
+		"""status as determined from blockstart, blocklength, length, file size
+	    and location of other chunks in the file.
+	    
+	    - STATUS_CHUNK_OVERLAPPING
+	    - STATUS_CHUNK_MISMATCHED_LENGTHS
+	    - STATUS_CHUNK_ZERO_LENGTH
+	    - STATUS_CHUNK_IN_HEADER
+	    - STATUS_CHUNK_OUT_OF_FILE
+	    - STATUS_CHUNK_OK
+	    - STATUS_CHUNK_NOT_CREATED"""
 	def __str__(self):
 		return "%s(%d, %d, sector=%s, length=%s, timestamp=%s, lenght=%s, compression=%s, status=%s)" % \
 			(self.__class__.__name__, self.x, self.z, self.blockstart, self.blocklength, self.timestamp, \
@@ -163,38 +157,29 @@ class _ChunkHeaderWrapper(Mapping):
 class RegionFile(object):
 	"""A convenience class for extracting NBT files from the Minecraft Beta Region Format."""
 	
-	SECTOR_LENGTH = 4096
-	"""Length of a sector; A Region file is divided in sectors of 4096 bytes each."""
-
-	# Status is a number representing:
-	# -5 = Error, the chunk is overlapping with another chunk
-	# -4 = Error, the chunk length is too large to fit in the sector length in the region header
-	# -3 = Error, chunk header has a 0 length
-	# -2 = Error, chunk inside the header of the region file
-	# -1 = Error, chunk partially/completely outside of file
-	#  0 = Ok
-	#  1 = Chunk non-existant yet
-	STATUS_CHUNK_OVERLAPPING = -5
-	"""Constant indicating an error status: the chunk is allocated a sector already occupied by another chunk"""
-	STATUS_CHUNK_MISMATCHED_LENGTHS = -4
-	"""Constant indicating an error status: the region header length and the chunk length are incompatible"""
-	STATUS_CHUNK_ZERO_LENGTH = -3
-	"""Constant indicating an error status: chunk header has a 0 length"""
-	STATUS_CHUNK_IN_HEADER = -2
-	"""Constant indicating an error status: chunk inside the header of the region file"""
-	STATUS_CHUNK_OUT_OF_FILE = -1
-	"""Constant indicating an error status: chunk partially/completely outside of file"""
-	STATUS_CHUNK_OK = 0
-	"""Constant indicating an normal status: the chunk exists and the metadata is valid"""
-	STATUS_CHUNK_NOT_CREATED = 1
-	"""Constant indicating an normal status: the chunk does not exist"""
-	
-	COMPRESSION_NONE = 0
-	"""Constant indicating tha tthe chunk is not compressed."""
-	COMPRESSION_GZIP = 1
-	"""Constant indicating tha tthe chunk is GZip compressed."""
-	COMPRESSION_ZLIB = 2
-	"""Constant indicating tha tthe chunk is zlib compressed."""
+	# Redefine constants for backward compatibility.
+	STATUS_CHUNK_OVERLAPPING = STATUS_CHUNK_OVERLAPPING
+	"""Constant indicating an error status: the chunk is allocated a sector
+	already occupied by another chunk. 
+	Deprecated. Use :const:`nbt.region.STATUS_CHUNK_OVERLAPPING` instead."""
+	STATUS_CHUNK_MISMATCHED_LENGTHS = STATUS_CHUNK_MISMATCHED_LENGTHS
+	"""Constant indicating an error status: the region header length and the chunk
+	length are incompatible. Deprecated. Use :const:`nbt.region.STATUS_CHUNK_MISMATCHED_LENGTHS` instead."""
+	STATUS_CHUNK_ZERO_LENGTH = STATUS_CHUNK_ZERO_LENGTH
+	"""Constant indicating an error status: chunk header has a 0 length.
+	Deprecated. Use :const:`nbt.region.STATUS_CHUNK_ZERO_LENGTH` instead."""
+	STATUS_CHUNK_IN_HEADER = STATUS_CHUNK_IN_HEADER
+	"""Constant indicating an error status: chunk inside the header of the region file.
+	Deprecated. Use :const:`nbt.region.STATUS_CHUNK_IN_HEADER` instead."""
+	STATUS_CHUNK_OUT_OF_FILE = STATUS_CHUNK_OUT_OF_FILE
+	"""Constant indicating an error status: chunk partially/completely outside of file.
+	Deprecated. Use :const:`nbt.region.STATUS_CHUNK_OUT_OF_FILE` instead."""
+	STATUS_CHUNK_OK = STATUS_CHUNK_OK
+	"""Constant indicating an normal status: the chunk exists and the metadata is valid.
+	Deprecated. Use :const:`nbt.region.STATUS_CHUNK_OK` instead."""
+	STATUS_CHUNK_NOT_CREATED = STATUS_CHUNK_NOT_CREATED
+	"""Constant indicating an normal status: the chunk does not exist.
+	Deprecated. Use :const:`nbt.region.STATUS_CHUNK_NOT_CREATED` instead."""
 	
 	def __init__(self, filename=None, fileobj=None):
 		"""
@@ -220,32 +205,43 @@ class RegionFile(object):
 		"""
 		dict containing ChunkMetadata objects, gathered from metadata found in the
 		8 kiByte header and 5-byte chunk header.
+		
+		``metadata[x, z]: ChunkMetadata()``
 		"""
 		self.header = _HeaderWrapper(self.metadata)
 		"""
 		dict containing the metadata found in the 8 kiByte header:
-		(x,y): (offset, sectionlength, timestamp, status)
-		offset counts in 4 kiByte sectors, starting from the start of the file. (24 bit int)
-		blocklength is in 4 kiByte sectors (8 bit int)
-		timestamp is a Unix timestamps (seconds since epoch) (32 bits)
-		status is determined from offset, sectionlength and file size.
-		Status can be any of:
-		- STATUS_CHUNK_OVERLAPPING
-		- STATUS_CHUNK_MISMATCHED_LENGTHS
-		- STATUS_CHUNK_ZERO_LENGTH
-		- STATUS_CHUNK_IN_HEADER
-		- STATUS_CHUNK_OUT_OF_FILE
-		- STATUS_CHUNK_OK
-		- STATUS_CHUNK_NOT_CREATED
+		
+		``header[x, z]: (offset, sectionlength, timestamp, status)``
+		
+		:offset: counts in 4 kiByte sectors, starting from the start of the file. (24 bit int)
+		:blocklength: is in 4 kiByte sectors (8 bit int)
+		:timestamp: is a Unix timestamps (seconds since epoch) (32 bits)
+		:status: can be any of:
+		
+			- STATUS_CHUNK_OVERLAPPING
+			- STATUS_CHUNK_MISMATCHED_LENGTHS
+			- STATUS_CHUNK_ZERO_LENGTH
+			- STATUS_CHUNK_IN_HEADER
+			- STATUS_CHUNK_OUT_OF_FILE
+			- STATUS_CHUNK_OK
+			- STATUS_CHUNK_NOT_CREATED
+		
+		Deprecated. Use :attr:`metadata` instead.
 		"""
 		self.chunk_headers = _ChunkHeaderWrapper(self.metadata)
 		"""
 		dict containing the metadata found in each chunk block:
-		(x,y): (length, compression, chunk_status)
-		chunk length in bytes, starting from the compression byte (32 bit int)
-		compression is 1 (Gzip) or 2 (bzip) (8 bit int)
-		chunk_status is equal to status in self.header.
+		
+		``chunk_headers[x, z]: (length, compression, chunk_status)``
+		
+		:chunk length: in bytes, starting from the compression byte (32 bit int)
+		:compression: is 1 (Gzip) or 2 (bzip) (8 bit int)
+		:chunk_status: is equal to status in :attr:`header`.
+		
 		If the chunk is not defined, the tuple is (None, None, STATUS_CHUNK_NOT_CREATED)
+		
+		Deprecated. Use :attr:`metadata` instead.
 		"""
 
 		self._init_header()
@@ -253,7 +249,7 @@ class RegionFile(object):
 		self._parse_chunk_headers()
 
 	def get_size(self):
-		""" Returns the file object size. """
+		""" Returns the file size in bytes. """
 		# seek(0,2) jumps to 0-bytes from the end of the file.
 		# Python 2.6 support: seek does not yet return the position.
 		self.file.seek(0, SEEK_END)
@@ -405,7 +401,7 @@ class RegionFile(object):
 
 	def get_metadata(self):
 		"""
-		Return the metadata of each chunk that is defined in te regionfile.
+		Return a list of the metadata of each chunk that is defined in te regionfile.
 		This includes chunks which may not be readable for whatever reason,
 		but excludes chunks that are not yet defined.
 		"""
@@ -420,7 +416,7 @@ class RegionFile(object):
 		but merely it's metadata. Use get_chunk(x,z) to get the NBTFile, and then Chunk()
 		to get the actual chunk.
 		
-		This method is deprecated. Use get_metadata() instead.
+		This method is deprecated. Use :meth:`get_metadata` instead.
 		"""
 		return self.get_chunk_coords()
 
@@ -429,7 +425,7 @@ class RegionFile(object):
 		Return the x,z coordinates and length of the chunks that are defined in te regionfile.
 		This includes chunks which may not be readable for whatever reason.
 		
-		This method is deprecated. Use get_metadata() instead.
+		This method is deprecated. Use :meth:`get_metadata` instead.
 		"""
 		chunks = []
 		for x in range(32):
@@ -443,8 +439,8 @@ class RegionFile(object):
 		"""
 		Yield each readable chunk present in the region.
 		Chunks that can not be read for whatever reason are silently skipped.
-		Warning: this function returns a NBTFile() object, use Chunk(nbtfile) to get a
-		Chunk instance.
+		Warning: this function returns a :class:`nbt.nbt.NBTFile` object, use ``Chunk(nbtfile)`` to get a
+		:class:`nbt.chunk.Chunk` instance.
 		"""
 		for m in self.get_metadata():
 			try:

@@ -20,7 +20,7 @@ class BugfixTest(unittest.TestCase):
 	def testEmptyFiles(self):
 		"""
 		Opening an empty file causes an uncaught exception.
-		https://github.com/twoolie/NBT/issues/issue/4
+		https://github.com/twoolie/NBT/issue/4
 		"""
 		temp = BytesIO(b"")
 		temp.seek(0)
