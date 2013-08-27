@@ -1,2 +1,3 @@
+# Note: OS-specific or editor-specific config files should be set in a global ignore file.
+# Use: git config --global core.excludesfile
 *.pyc
-.DS_Store
