@@ -11,23 +11,49 @@ Git trunk can be found at https://github.com/twoolie/NBT/tree/master
 
 New Features since 1.3.0
 ~~~~~~~~~~~~~~~~~~~~~~~~
-* Added documentation
+* Added documentation.
 * WorldFolder.iter_chunks() returns Chunk subclass (McRegionChunk / AnvilChunk)
 * Add exception when opening files too small to be a region file.
 * Examples/map.py example now works with Python 3 as well.
   The recommended library is Pillow, a fork of PIL that supports Python 3.
+* Rewrote chunk writing algorithm in nbt.region, and added lots of code checks
+  to verify that it never overwrite chunks.
+* Support writing to corrupt region files, working around corrupt parts.
+* Support reading uncompressed chunks in region files.
+* Added detection for overlapping chunks in region files.
+* Added RegionFileFormatError exception.
+* Allow easy iteration over chunks in a RegionFile:
+  `for chunk in RegionFile(filename)`
+* RegionFile.iter_chunks() now silently ignore unreadable chunks.
+* Better display of filenames in NBTFile and RegionFiles when initialised with
+  a fileobject.
+* Truncate region file size when possible.
+* Add RegionFile.get_chunk_metadata() method.
+* Expose more detailed read and write methods in RegionFile: get_blockdata(), 
+  get_nbt(), get_chunk(), write_blockdata(), write_chunk().
 
 Bug Fixes since 1.3.0
 ~~~~~~~~~~~~~~~~~~~~~
-* Automatic testing now also runs example scripts
-* Automatic testing now also runs Python 3.3
 * generate_heightmap now ignores non-solid blocks (such as tall grass).
-* Fix `__delitem__` in TAG_list.
-* Fix behavior of `__delitem__` on TAG_Compound.
+* Fix behavior of `__delitem__` in TAG_list and TAG_Compound.
 * Fix infinite loop while writing a chunk changing the way in which free 
   space is searched in the region file.
 * Fixed a bug that sometimes made write chunks in the region file header.
+* Fixed a bug that corrupted the file when writing a chunk that was between
+  4093 and 4096 bytes after compression.
+* Now possible to write and immediately read chunks in region files.
+* Allow increase in region file size.
 * Allow trailing slash in world folder in example scripts
+* Replace all `import *` with specific imports.
+
+Changes in Auxiliary Scripts since 1.3.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Automatic testing now also runs example scripts
+* Automatic testing now also runs Python 3.3
+* Code for automatic documentation generation forked in a seperate package,
+  sphinxcontrib-restbuilder.
+* Automatic testing for Python 2.6 now requires unittest2 package.
+* Documented automatic code generation and simplified Makefile.
 
 Backward Incompatible Changes since 1.3.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,9 +64,22 @@ Backward Incompatible Changes since 1.3.0
   responsibility to close these files.
 * RegionFile.get_chunk() raises InconceivedChunk when a chunk does not exist
   instead of returning None.
-* The default value for Numeric tags is now 0 instead None. The default value
-  for TAG_String is now "" instead of None. This makes named tags more similar
-  to native Python objects (e.g. int() also returns 0).
+* Exceptions raised while reading chunks are always a RegionFileFormatError or
+  subclass thereof. GZip, zlib and nbt.MalformedFileError are no longer raised.
+* init_header(), parse_header() and parse_chunk_headers() in RegionFile are no
+  longer public methods.
+
+Deprecated features since 1.3.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Constants in nbt.region moved to module level. They are still available in
+  the class for backwards compatibility.
+* `nbt.region.RegionFile.header` and `nbt.region.RegionFile.chunk_headers` are
+  deprecated in favour of `nbt.region.RegionFile.metadata`. They are still
+  available for backward compatibility.
+* Deprecate `RegionFile.get_chunks()` and `RegionFile.get_chunk_coords()` in
+  favour of `RegionFile.get_metadata()`.
+* RegionFile.get_chunk() method may later be changed to return a Chunk() object.
+  Use RegionFile.get_nbt() to retain the current behaviour.
 
 Known Bugs
 ~~~~~~~~~~
