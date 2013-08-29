@@ -1,8 +1,15 @@
 #!/usr/bin/env python
-import sys,os,unittest
+import sys,os
 import tempfile, shutil
 from io import BytesIO
 from gzip import GzipFile
+
+import unittest
+try:
+	from unittest import skip as _skip
+except ImportError:
+	# Python 2.6 has an older unittest API. The backported package is available from pypi.
+	import unittest2 as unittest
 
 # Search parent directory first, to make sure we test the local nbt module, 
 # not an installed nbt module.

@@ -3,10 +3,12 @@
 Documentation (information for maintainers of the NBT package)
 ==============================================================
 
-The documentation of the NBT library is available on the wiki (https://github.com/twoolie/NBT/wiki), and is automatically generated from the source code in combination with auxiliary files in the doc directory.
+The documentation of the NBT library is available on the wiki
+(https://github.com/twoolie/NBT/wiki), and is automatically generated from the
+source code in combination with auxiliary files in the doc directory.
 
-Install requirements
---------------------
+Requirements
+------------
 
 Install requirements::
 

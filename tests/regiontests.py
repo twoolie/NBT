@@ -1,11 +1,18 @@
 #!/usr/bin/env python
-import sys,os,unittest
+import sys,os
 import tempfile, shutil
 from io import BytesIO
 import logging
 import random
 import time
 import zlib
+
+import unittest
+try:
+	from unittest import skip as _skip
+except ImportError:
+	# Python 2.6 has an older unittest API. The backported package is available from pypi.
+	import unittest2 as unittest
 
 # Search parent directory first, to make sure we test the local nbt module, 
 # not an installed nbt module.
@@ -933,7 +940,7 @@ class EmptyFileTest(unittest.TestCase):
 	def test01ReadFile(self):
 		region = RegionFile(fileobj=self.stream)
 		self.assertEqual(region.chunk_count(), 0)
-	
+
 	def test02WriteFile(self):
 		chunk = self.generate_level()
 		region = RegionFile(fileobj=self.stream)
@@ -941,6 +948,18 @@ class EmptyFileTest(unittest.TestCase):
 		self.assertEqual(region.get_size(), 3*4096)
 		self.assertEqual(region.chunk_count(), 1)
 
+
+# class PartialHeaderFileTest(EmptyFileTest):
+# 	"""Test for file support with only a partial header file.
+# 	These files should be treated as a valid region file without any stored chunk."""
+# 	
+# 	def setUp(self):
+# 		self.stream = BytesIO(4096*b"\x00" + b"\x52\x1E\x8B\xE6")
+# 		self.stream.seek(0)
+# 
+# 	def test03GetTimestampNoChunk(self):
+# 		region = RegionFile(fileobj=self.stream)
+# 		self.assertEqual(region.get_timestamp(0,0), 1377733606)
 
 
 class TruncatedFileTest(unittest.TestCase):
@@ -1013,7 +1032,4 @@ if __name__ == '__main__':
 	if len(logger.handlers) == 0:
 		# Logging is not yet configured. Configure it.
 		logging.basicConfig(level=logging.INFO, stream=sys.stderr, format='%(levelname)-8s %(message)s')
-	if sys.version_info[0:2] >= (2,7):
-		unittest.main(verbosity=2, catchbreak=True)
-	else:
-		unittest.main()
+	unittest.main(verbosity=2, catchbreak=True)

@@ -3,6 +3,21 @@
 Unit tests
 ==========
 
+The NBT library comes with a number of unit tests, although they have been
+added later and do not cover all possible methods and options available.
+These teste are automatically executed by the `Travis continuous integration
+service <https://travis-ci.org/>`_.
+
+Requirements
+------------
+
+The unit tests are written with help of unittest2. This package is available
+in the standard library (as unittest) starting with Python 2.7.
+Python 2.6 includes an older version of unittest, and unittest2 need to be
+manually installed::
+
+    pip install unittest2
+
 ``downloadsample`` script
 -------------------------
 
@@ -39,10 +54,7 @@ Unit tests for :ref:`module:nbt.chunk`
 
 Unit tests for :ref:`module:nbt.region`
 
-*No tests available (yet)*
-
-..  commented out; no tests exist yet
-    automodule:: regiontests
+..  automodule:: regiontests
     :members:
     :undoc-members:
     :show-inheritance:
