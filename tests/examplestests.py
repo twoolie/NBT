@@ -153,7 +153,7 @@ def has_PIL():
 		return False
 
 class MapScriptTest(ScriptTestCase):
-	@skipIf(not has_PIL(), "PIL library not available")
+	@unittest.skipIf(not has_PIL(), "PIL library not available")
 	def testMcRegionWorld(self):
 		output = self.runScript('map.py', ['--noshow', self.mcregionfolder])
 		self.assertTrue(output[-1].startswith("Saved map as "))
