@@ -1032,4 +1032,4 @@ if __name__ == '__main__':
 	if len(logger.handlers) == 0:
 		# Logging is not yet configured. Configure it.
 		logging.basicConfig(level=logging.INFO, stream=sys.stderr, format='%(levelname)-8s %(message)s')
-	unittest.main(verbosity=2, catchbreak=True)
+	unittest.main()
