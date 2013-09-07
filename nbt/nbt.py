@@ -221,7 +221,7 @@ class TAG_Int_Array(TAG, MutableSequence):
 	def __setitem__(self, key, value):
 		self.value[key] = value
 
-	def __delitem__(self, key, value):
+	def __delitem__(self, key):
 		del(self.value[key])
 
 	def insert(self, key, value):
