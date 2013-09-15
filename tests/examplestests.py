@@ -6,22 +6,20 @@ Run all scripts in examples on specific sample world.
 
 import sys
 import os
-import unittest
 import subprocess
 import shutil
 import tempfile
 import glob
+
+import unittest
+try:
+	from unittest import skip as _skip
+except ImportError:
+	# Python 2.6 has an older unittest API. The backported package is available from pypi.
+	import unittest2 as unittest
+
 # local modules
 import downloadsample
-
-try:
-	from unittest import skipIf
-except ImportError:
-	# Support for Python 2.6
-	def skipIf(condition, message):
-		def decorator(f):
-			return None if condition else f
-		return decorator
 
 if sys.version_info[0] < 3:
 	def _deletechars(text, deletechars):
@@ -155,7 +153,7 @@ def has_PIL():
 		return False
 
 class MapScriptTest(ScriptTestCase):
-	@skipIf(not has_PIL(), "PIL library not available")
+	@unittest.skipIf(not has_PIL(), "PIL library not available")
 	def testMcRegionWorld(self):
 		output = self.runScript('map.py', ['--noshow', self.mcregionfolder])
 		self.assertTrue(output[-1].startswith("Saved map as "))
@@ -240,22 +238,5 @@ def tearDownModule():
 	ScriptTestCase.anvilfolder = None
 
 
-if sys.version_info[0:2] < (2,7):
-	class TestSuite(unittest.TestSuite):
-		"""Test suite which backports the setUpModule/tearDownModule fixture 
-		to Python 2.6."""
-		def run(self, tests=[]):
-			setUpModule()
-			super(TestSuite, self).run(tests)
-			tearDownModule()
-
-
 if __name__ == '__main__':
-	if sys.version_info[0:2] >= (2,7):
-		unittest.main(verbosity=2, failfast=True, catchbreak=True)
-	else:
-		module = sys.modules[__name__]
-		suite = unittest.TestLoader().loadTestsFromModule(module)
-		suite = TestSuite(suite)
-		testresult = unittest.TextTestRunner(verbosity=2).run(suite)
-		sys.exit(not testresult.wasSuccessful())
+	unittest.main(verbosity=2, failfast=True)
