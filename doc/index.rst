@@ -48,6 +48,7 @@ Auxiliary Documentation
     specification
     changelog
     tests
+    documentation
 
 
 Indices and tables

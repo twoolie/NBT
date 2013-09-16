@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import unittest
 import sys
 import logging
 
-testmodules = ['examplestests', 'nbttests']
+import unittest
+try:
+	from unittest import skip as _skip
+except ImportError:
+	# Python 2.6 has an older unittest API. The backported package is available from pypi.
+	import unittest2 as unittest
+
+testmodules = ['examplestests', 'nbttests', 'regiontests']
 """Files to check for test cases. Do not include the .py extension."""
 
 

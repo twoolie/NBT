@@ -478,14 +478,18 @@ class NBTFile(TAG_Compound):
 		if filename:
 			self.file = GzipFile(filename, 'rb')
 		elif buffer:
+			if hasattr(buffer, 'name'):
+				self.filename = buffer.name
 			self.file = buffer
 			closefile = False
 		elif fileobj:
+			if hasattr(fileobj, 'name'):
+				self.filename = fileobj.name
 			self.file = GzipFile(fileobj=fileobj)
 		else:
 			self.file = None
 			closefile = False
-		#parse the file given intitially
+		#parse the file given initially
 		if self.file:
 			self.parse_file()
 			if closefile:
@@ -502,8 +506,12 @@ class NBTFile(TAG_Compound):
 		if filename:
 			self.file = GzipFile(filename, 'rb')
 		elif buffer:
+			if hasattr(buffer, 'name'):
+				self.filename = buffer.name
 			self.file = buffer
 		elif fileobj:
+			if hasattr(fileobj, 'name'):
+				self.filename = fileobj.name
 			self.file = GzipFile(fileobj=fileobj)
 		if self.file:
 			try:

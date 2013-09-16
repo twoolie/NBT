@@ -5,17 +5,18 @@ Useful utility functions for handling large NBT structures elegantly and
 Pythonically.
 """
 
+import os,sys
+
 # local module
 try:
-	# Yes, yes, I know. Importing * may give namespace collisions. Fix it if you like.
-	from nbt import *
+	import nbt
 except ImportError:
 	# nbt not in search path. Let's see if it can be found in the parent folder
 	extrasearchpath = os.path.realpath(os.path.join(__file__,os.pardir,os.pardir))
 	if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
 		raise
 	sys.path.append(extrasearchpath)
-	from nbt import *
+from nbt.nbt import NBTFile, TAG_Long, TAG_Int, TAG_String, TAG_List, TAG_Compound
 
 def unpack_nbt(tag):
 	"""
