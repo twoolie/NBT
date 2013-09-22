@@ -9,7 +9,7 @@ from .region import InconceivedChunk
 
 class UnknownWorldFormat(Exception):
 	"""Unknown or invalid world folder."""
-	def __init__(self, msg):
+	def __init__(self, msg=""):
 		self.msg = msg
 
 

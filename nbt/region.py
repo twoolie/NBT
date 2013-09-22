@@ -56,7 +56,7 @@ COMPRESSION_ZLIB = 2
 class RegionFileFormatError(Exception):
 	"""Base class for all file format errors.
 	Note: InconceivedChunk is not a child class, because it is not considered a format error."""
-	def __init__(self, msg):
+	def __init__(self, msg=""):
 		self.msg = msg
 	def __str__(self):
 		return self.msg
@@ -75,7 +75,7 @@ class ChunkDataError(RegionFileFormatError):
 
 class InconceivedChunk(LookupError):
 	"""Specified chunk has not yet been generated."""
-	def __init__(self, msg):
+	def __init__(self, msg=""):
 		self.msg = msg
 
 
