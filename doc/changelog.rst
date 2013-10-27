@@ -45,6 +45,7 @@ Bug Fixes since 1.3.0
 * Allow increase in region file size.
 * Allow trailing slash in world folder in example scripts
 * Replace all `import *` with specific imports.
+* Support for (empty) TAG_Lists with TAG_End objects.
 
 Changes in Auxiliary Scripts since 1.3.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

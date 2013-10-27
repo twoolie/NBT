@@ -92,6 +92,19 @@ class _TAG_Numeric(TAG):
 	def _render_buffer(self, buffer):
 		buffer.write(self.fmt.pack(self.value))
 
+class _TAG_End(TAG):
+	id = TAG_END
+	fmt = Struct(">b")
+
+	def _parse_buffer(self, buffer):
+		# Note: buffer.read() may raise an IOError, for example if buffer is a corrupt gzip.GzipFile
+		value = self.fmt.unpack(buffer.read(1))[0]
+		if value != 0:
+			raise ValueError("A Tag End must be rendered as '0', not as '%d'." % (value))
+
+	def _render_buffer(self, buffer):
+		buffer.write(b'\x00')
+
 #== Value Tags ==#
 class TAG_Byte(_TAG_Numeric):
 	"""Represent a single tag storing 1 byte."""
@@ -284,12 +297,13 @@ class TAG_List(TAG, MutableSequence):
 		super(TAG_List, self).__init__(value, name)
 		if type:
 			self.tagID = type.id
-		else: self.tagID = None
+		else:
+			self.tagID = None
 		self.tags = []
 		if buffer:
 			self._parse_buffer(buffer)
-		if not self.tagID:
-			raise ValueError("No type specified for list")
+		if self.tagID == None:
+			raise ValueError("No type specified for list: %s" % (name))
 
 	#Parsers and Generators
 	def _parse_buffer(self, buffer):
@@ -465,7 +479,7 @@ class TAG_Compound(TAG, MutableMapping):
 		return '\n'.join(output)
 
 
-TAGLIST = {TAG_BYTE:TAG_Byte, TAG_SHORT:TAG_Short, TAG_INT:TAG_Int, TAG_LONG:TAG_Long, TAG_FLOAT:TAG_Float, TAG_DOUBLE:TAG_Double, TAG_BYTE_ARRAY:TAG_Byte_Array, TAG_STRING:TAG_String, TAG_LIST:TAG_List, TAG_COMPOUND:TAG_Compound, TAG_INT_ARRAY:TAG_Int_Array}
+TAGLIST = {TAG_END: _TAG_End, TAG_BYTE:TAG_Byte, TAG_SHORT:TAG_Short, TAG_INT:TAG_Int, TAG_LONG:TAG_Long, TAG_FLOAT:TAG_Float, TAG_DOUBLE:TAG_Double, TAG_BYTE_ARRAY:TAG_Byte_Array, TAG_STRING:TAG_String, TAG_LIST:TAG_List, TAG_COMPOUND:TAG_Compound, TAG_INT_ARRAY:TAG_Int_Array}
 
 class NBTFile(TAG_Compound):
 	"""Represent an NBT file object."""
