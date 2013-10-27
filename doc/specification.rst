@@ -140,56 +140,56 @@ in the TAG_Compound is over, and indeed all of the NBT file.
 
 So we ended up with this::
 
-	TAG_Compound("hello world"): 1 entries
-	{
-	   TAG_String("name"): Bananrama
-	}
+    TAG_Compound("hello world"): 1 entries
+    {
+       TAG_String("name"): Bananrama
+    }
 
 For a slightly longer test, download http://www.minecraft.net/docs/bigtest.nbt.
 You should end up with this::
 
-	TAG_Compound("Level"): 11 entries
-	{
-	   TAG_Short("shortTest"): 32767
-	   TAG_Long("longTest"): 9223372036854775807
-	   TAG_Float("floatTest"): 0.49823147
-	   TAG_String("stringTest"): HELLO WORLD THIS IS A TEST STRING ÅÄÖ!
-	   TAG_Int("intTest"): 2147483647
-	   TAG_Compound("nested compound test"): 2 entries
-	   {
-	      TAG_Compound("ham"): 2 entries
-	      {
-	         TAG_String("name"): Hampus
-	         TAG_Float("value"): 0.75
-	      }
-	      TAG_Compound("egg"): 2 entries
-	      {
-	         TAG_String("name"): Eggbert
-	         TAG_Float("value"): 0.5
-	      }
-	   }
-	   TAG_List("listTest (long)"): 5 entries of type TAG_Long
-	   {
-	      TAG_Long: 11
-	      TAG_Long: 12
-	      TAG_Long: 13
-	      TAG_Long: 14
-	      TAG_Long: 15
-	   }
-	   TAG_Byte("byteTest"): 127
-	   TAG_List("listTest (compound)"): 2 entries of type TAG_Compound
-	   {
-	      TAG_Compound: 2 entries
-	      {
-	         TAG_String("name"): Compound tag #0
-	         TAG_Long("created-on"): 1264099775885
-	      }
-	      TAG_Compound: 2 entries
-	      {
-	         TAG_String("name"): Compound tag #1
-	         TAG_Long("created-on"): 1264099775885
-	      }
-	   }
-	   TAG_Byte_Array("byteArrayTest (the first 1000 values of (n*n*255+n*7)%100, starting with n=0 (0, 62, 34, 16, 8, ...))"): [1000 bytes]
-	   TAG_Double("doubleTest"): 0.4931287132182315
-	}
+    TAG_Compound("Level"): 11 entries
+    {
+       TAG_Short("shortTest"): 32767
+       TAG_Long("longTest"): 9223372036854775807
+       TAG_Float("floatTest"): 0.49823147
+       TAG_String("stringTest"): HELLO WORLD THIS IS A TEST STRING ÅÄÖ!
+       TAG_Int("intTest"): 2147483647
+       TAG_Compound("nested compound test"): 2 entries
+       {
+          TAG_Compound("ham"): 2 entries
+          {
+             TAG_String("name"): Hampus
+             TAG_Float("value"): 0.75
+          }
+          TAG_Compound("egg"): 2 entries
+          {
+             TAG_String("name"): Eggbert
+             TAG_Float("value"): 0.5
+          }
+       }
+       TAG_List("listTest (long)"): 5 entries of type TAG_Long
+       {
+          TAG_Long: 11
+          TAG_Long: 12
+          TAG_Long: 13
+          TAG_Long: 14
+          TAG_Long: 15
+       }
+       TAG_Byte("byteTest"): 127
+       TAG_List("listTest (compound)"): 2 entries of type TAG_Compound
+       {
+          TAG_Compound: 2 entries
+          {
+             TAG_String("name"): Compound tag #0
+             TAG_Long("created-on"): 1264099775885
+          }
+          TAG_Compound: 2 entries
+          {
+             TAG_String("name"): Compound tag #1
+             TAG_Long("created-on"): 1264099775885
+          }
+       }
+       TAG_Byte_Array("byteArrayTest (the first 1000 values of (n*n*255+n*7)%100, starting with n=0 (0, 62, 34, 16, 8, ...))"): [1000 bytes]
+       TAG_Double("doubleTest"): 0.4931287132182315
+    }

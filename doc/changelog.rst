@@ -22,6 +22,14 @@ See https://github.com/twoolie/NBT/issues
   or compile Python --with-wide-unicode.
 
 
+NBT 1.4.1 (27 October 2013)
+---------------------------
+
+New Features since 1.4.0
+~~~~~~~~~~~~~~~~~~~~~~~~
+* Change indentation from tabs to spaces.
+
+
 NBT 1.4.0 (27 October 2013)
 ---------------------------
 

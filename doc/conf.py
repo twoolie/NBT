@@ -18,11 +18,11 @@ import sys, os
 # in the site-packages
 parentdir = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 if not os.path.exists(os.path.join(parentdir, 'nbt')):
-	raise ImportError("Can not find nbt module at %s" % parentdir)
+    raise ImportError("Can not find nbt module at %s" % parentdir)
 if os.path.exists(os.path.join(parentdir, 'examples')):
-	sys.path.insert(1, os.path.join(parentdir, 'examples'))
+    sys.path.insert(1, os.path.join(parentdir, 'examples'))
 if os.path.exists(os.path.join(parentdir, 'tests')):
-	sys.path.insert(1, os.path.join(parentdir, 'tests'))
+    sys.path.insert(1, os.path.join(parentdir, 'tests'))
 sys.path.insert(1, parentdir)
 # setuptools (which is used by pip) sometimes places a .pth file in the
 # site-package folder which overrides sys.path by manipulating sys.modules.
