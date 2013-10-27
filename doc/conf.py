@@ -2,7 +2,7 @@
 #
 # Sphinx configuration for NBT documentation.
 #
-# This file is execfile()d with the current directory set to its containing dir.
+# This file is execfile()d by sphinx-build with the current directory set to its containing dir.
 
 # To generate the documentation, run:
 # sphinx-build -b rst -a path-to/NBT/doc path-to/NBT.wiki
@@ -24,6 +24,13 @@ if os.path.exists(os.path.join(parentdir, 'examples')):
 if os.path.exists(os.path.join(parentdir, 'tests')):
 	sys.path.insert(1, os.path.join(parentdir, 'tests'))
 sys.path.insert(1, parentdir)
+# setuptools (which is used by pip) sometimes places a .pth file in the
+# site-package folder which overrides sys.path by manipulating sys.modules.
+# Undo this manipulation, to ensure we're not using nbt in the site-package
+# folder when generating documentation.
+if 'nbt' in sys.modules:
+    del sys.modules['nbt']
+
 import nbt
 
 # -- General configuration -----------------------------------------------------
