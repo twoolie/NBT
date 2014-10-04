@@ -365,7 +365,11 @@ class RegionFile(object):
             if ignore_chunk == m:
                 continue
             if m.blocklength and m.blockstart:
-                for b in range(m.blockstart, m.blockstart + max(m.blocklength, m.requiredblocks())):
+                # When a chunk has mismatched length status, the length in bytes attribute can be HUGE
+                # and a call to _sectros can take minutes to finish. Only trust length when the chunk has not
+                # a mismatched length status.
+                num_blocks = m.requiredblocks() if m.status != STATUS_CHUNK_MISMATCHED_LENGTHS else m.blocklength
+                for b in range(m.blockstart, m.blockstart + num_blocks):
                     if 2 <= b < sectorsize:
                         sectors[b].append(m)
         return sectors
