@@ -1011,6 +1011,88 @@ class TruncatedFileTest(unittest.TestCase):
         self.assertEqual(unusedlength, zeroes)
 
 
+class LengthTest(unittest.TestCase):
+    """Test for length calculations for blocks with inconsistent lenghts.
+    
+    This operates on a simple testfile with:
+    file length: 4 sectors (00-04)
+    chunk 0,0: header lenght 4 sectors; chunk lenght 10240 bytes (3 sectors); sector 02-05
+    chunk 1,0: header lenght 3 sectors; chunk lenght 613566756 bytes (149797 sectors); sector 03-149799
+    """
+    # max length value in header: 255 sectors = 1044480 bytes (1 MiByte)
+    # max length value in chunk: 4294967295 bytes (4 GiBye) = 1048576 sectors
+    def setUp(self):
+        data = b'\x00\x00\x02\x04\x00\x00\x03\x03' + 8184*b'\x00' + \
+               b'\x00\x00\x28\x00\x00' + 4091*b'\x01' + \
+               b'\x24\x92\x49\x24\x00' + 4091*b'\x02'
+        self.length = 16384
+        self.assertEqual(len(data), self.length)
+        stream = BytesIO(data)
+        stream.seek(0)
+        self.region = RegionFile(fileobj=stream)
+    
+    def tearDown(self):
+        del self.region
+
+    def test00FileProperties(self):
+        self.assertEqual(self.region.get_size(), self.length)
+        self.assertEqual(self.region.chunk_count(), 2)
+    
+    def testSectors(self):
+        """Test if RegionFile._sectors() detects the correct overlap."""
+        sectors = self.region._sectors()
+        chunk00metadata = self.region.metadata[0,0]
+        chunk10metadata = self.region.metadata[1,0]
+        self.assertEqual(len(sectors), 4)
+        self.assertEqual(sectors[0], True)
+        self.assertEqual(sectors[1], True)
+        self.assertEqual(len(sectors[2]), 1)
+        self.assertIn(chunk00metadata, sectors[2])
+        self.assertNotIn(chunk10metadata, sectors[2])
+        self.assertEqual(len(sectors[3]), 2)
+        self.assertIn(chunk00metadata, sectors[3])
+        self.assertIn(chunk10metadata, sectors[3])
+    
+    def testMetaDataLenghts(self):
+        chunk00metadata = self.region.metadata[0,0]
+        chunk10metadata = self.region.metadata[1,0]
+        self.assertEqual(chunk00metadata.blocklength, 4)
+        self.assertEqual(chunk00metadata.length, 10240)
+        self.assertEqual(chunk10metadata.blocklength, 3)
+        self.assertEqual(chunk10metadata.length, 613566756)
+    
+    def testMetaDataLengthCalculations(self):
+        chunk00metadata = self.region.metadata[0,0]
+        chunk10metadata = self.region.metadata[1,0]
+        self.assertEqual(chunk00metadata.requiredblocks(), 3)
+        self.assertEqual(chunk10metadata.requiredblocks(), 149797)
+        
+    def testMetaDataStatus(self):
+        # performa low-level read, ensure it does not read past the file length
+        # and does not modify the file
+        chunk00metadata = self.region.metadata[0,0]
+        chunk10metadata = self.region.metadata[1,0]
+        self.assertIn(chunk00metadata.status, 
+                    (RegionFile.STATUS_CHUNK_OVERLAPPING, RegionFile.STATUS_CHUNK_OUT_OF_FILE))
+        self.assertIn(chunk10metadata.status, 
+                    (RegionFile.STATUS_CHUNK_MISMATCHED_LENGTHS, RegionFile.STATUS_CHUNK_OVERLAPPING, 
+                     RegionFile.STATUS_CHUNK_OUT_OF_FILE))
+    
+    def testChunkRead(self):
+        # performa low-level read, ensure it does not read past the file length
+        # and does not modify the file
+        data = self.region.get_blockdata(0, 0) # May raise a ChunkHeaderError() or ChunkDataError()
+        self.assertEqual(len(data), 8187)
+        data = self.region.get_blockdata(1, 0) # May raise a ChunkHeaderError() or ChunkDataError()
+        self.assertEqual(len(data), 4091)
+    
+    def testDeleteChunk(self):
+        """Try to remove the chunk 1,0 with ridiculous large size. 
+        This should be reasonably fast."""
+        self.region.unlink_chunk(1, 0)
+        self.assertEqual(self.region.chunk_count(), 1)
+
+
 # TODO: test suite to test the different __init__ parameters of RegionFile
 # (filename or fileobj), write to it, delete RegionFile object, and test if:
 # - file is properly written to

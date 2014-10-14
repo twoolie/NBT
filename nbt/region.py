@@ -365,9 +365,10 @@ class RegionFile(object):
             if ignore_chunk == m:
                 continue
             if m.blocklength and m.blockstart:
-                for b in range(m.blockstart, m.blockstart + max(m.blocklength, m.requiredblocks())):
-                    if 2 <= b < sectorsize:
-                        sectors[b].append(m)
+                blockend = m.blockstart + max(m.blocklength, m.requiredblocks())
+                # Ensure 2 <= b < sectorsize, as well as m.blockstart <= b < blockend
+                for b in range(max(m.blockstart, 2), min(blockend, sectorsize)):
+                    sectors[b].append(m)
         return sectors
 
     def _locate_free_sectors(self, ignore_chunk=None):
