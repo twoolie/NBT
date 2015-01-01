@@ -154,6 +154,7 @@ def install(url=URL, workdir=workdir, checksums=checksums):
     # - posixpaths: list of relative posix paths -- to filter tar extraction
     # - nchecksums: as checksum, but with normalised absolute paths
     # - files: list of normalised absolute path of files (non-directories)
+    logger = logging.getLogger("nbt.tests.downloadsample")
     posixpaths = checksums.keys()
     nchecksums = dict([(os.path.join(workdir, os.path.normpath(path)), checksums[path]) \
             for path in posixpaths if checksums[path] != None])

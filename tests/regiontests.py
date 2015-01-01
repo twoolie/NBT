@@ -1097,7 +1097,7 @@ class RegionFileInitTest(unittest.TestCase):
         tempdir = tempfile.mkdtemp()
         filename = os.path.join(tempdir, 'regiontest.mca')
         shutil.copy(REGIONTESTFILE, filename)
-        fileobj = open(filename, "br")
+        fileobj = open(filename, "r+b")
         
         try:
             openfiles_before = open_files()
@@ -1126,7 +1126,7 @@ class RegionFileInitTest(unittest.TestCase):
         shutil.copy(REGIONTESTFILE, filename_name)
         filename_obj = os.path.join(tempdir, 'regiontest_obj.mca')
         shutil.copy(REGIONTESTFILE, filename_obj)
-        fileobj = open(filename_obj, "br")
+        fileobj = open(filename_obj, "r+b")
         
         try:
             openfiles_before = open_files()
