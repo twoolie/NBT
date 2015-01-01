@@ -6,6 +6,8 @@ import logging
 import random
 import time
 import zlib
+import subprocess
+import locale
 
 import unittest
 try:
@@ -84,6 +86,42 @@ def generate_compressed_level(minsize = 2000, maxsize = None):
             sys.stderr.write("Failed to generate NBT file of %d bytes after %d tries. Result is %d bytes.\n" % (targetsize, tries, resultsize))
             break
     return level
+
+def open_files(pid=None):
+    """
+    Return a dict of open files for the given process.
+    The key of the dict is the file descriptor (a number).
+    
+    If PID is not specified, the PID of the current program is used.
+    Only regular open files are returned.
+    
+    This function relies on the external `lsof` program.
+    This function may raise an OSError.
+    """
+    if pid is None:
+        pid = os.getpid()
+    files = {}
+    # lsof lists open files, including sockets, etc.
+    command = ['lsof', '-nlP', '-b', '-w', '-p', str(pid), '-F', 'ftn']
+    # set LC_ALL=UTF-8, so non-ASCII files are properly reported.
+    env = dict(os.environ).copy()
+    env['LC_ALL'] = 'UTF-8'
+    # Open a subprocess, wait till it is done, and get the STDOUT result
+    output = subprocess.Popen(command, stdout=subprocess.PIPE, env=env).communicate()[0]
+    # decode the output and split in lines.
+    output = output.decode('utf-8').split('\n')
+    state = {'f': '', 't': ''}
+    for line in output:
+        try:
+            linetype, line = line[0], line[1:]
+        except IndexError:
+            continue
+        state[linetype] = line
+        if linetype == 'n':
+            if state['t'] == 'REG' and state['f'].isdigit():
+                files[int(state['f'])] = line
+                state = {'f': '', 't': ''}
+    return files
 
 class PedanticFileWrapper(object):
     """Pedantic wrapper around a file object. 
@@ -992,6 +1030,87 @@ class EmptyFileTest(unittest.TestCase):
         self.assertEqual(region.get_size(), 3*4096)
         self.assertEqual(region.chunk_count(), 1)
 
+class RegionFileInitTest(unittest.TestCase):
+    """Tests for the various init parameters provided for RegionFile()."""
+    
+    # def setUp(self):
+    #     self.stream = BytesIO(b"")
+    #     self.stream.seek(0)
+
+    def testCreateFromFilename(self):
+        """
+        Creating a RegionFile with filename, and deleting the instance should 
+        close the underlying file.
+        """
+        tempdir = tempfile.mkdtemp()
+        filename = os.path.join(tempdir, 'regiontest.mca')
+        shutil.copy(REGIONTESTFILE, filename)
+        try:
+            openfiles_before = open_files()
+        except OSError:
+            raise unittest.SkipTest("Can't get a list of open files")
+        region = RegionFile(filename = filename)
+        openfiles_during = open_files()
+        del region
+        openfiles_after = open_files()
+        
+        self.assertNotEqual(len(openfiles_during), 0)
+        self.assertNotEqual(openfiles_before, openfiles_during)
+        self.assertEqual(openfiles_before, openfiles_after, "File is not closed")
+
+    def testCreateFromFileobject(self):
+        """
+        Creating RegionFile with file object, and deleting the instance should 
+        not close the underlying file.
+        """
+        tempdir = tempfile.mkdtemp()
+        filename = os.path.join(tempdir, 'regiontest.mca')
+        shutil.copy(REGIONTESTFILE, filename)
+        fileobj = open(filename, "br")
+        
+        try:
+            openfiles_before = open_files()
+        except OSError:
+            raise unittest.SkipTest("Can't get a list of open files")
+        region = RegionFile(fileobj = fileobj)
+        openfiles_during = open_files()
+        del region
+        openfiles_after = open_files()
+        
+        fileobj.close()
+        self.assertNotEqual(len(openfiles_during), 0)
+        self.assertEqual(openfiles_before, openfiles_during)
+        self.assertEqual(openfiles_before, openfiles_after, \
+                "File is closed, while it should remain open")
+
+    def testNoParameters(self):
+        """Calling RegionFile without parameters should raise a ValueError"""
+        # Equivalent to: region = RegionFile()
+        self.assertRaises(ValueError, RegionFile)
+
+    def testTwoParameters(self):
+        """Calling RegionFile with both filename and fileobject should ignore the fileobject."""
+        tempdir = tempfile.mkdtemp()
+        filename_name = os.path.join(tempdir, 'regiontest_name.mca')
+        shutil.copy(REGIONTESTFILE, filename_name)
+        filename_obj = os.path.join(tempdir, 'regiontest_obj.mca')
+        shutil.copy(REGIONTESTFILE, filename_obj)
+        fileobj = open(filename_obj, "br")
+        
+        try:
+            openfiles_before = open_files()
+        except OSError:
+            raise unittest.SkipTest("Can't get a list of open files")
+        region = RegionFile(filename = filename_name, fileobj = fileobj)
+        openfiles_during = open_files()
+        self.assertEqual(region.filename, region.file.name)
+        self.assertEqual(region.filename, filename_name)
+        del region
+        openfiles_after = open_files()
+        
+        fileobj.close()
+        self.assertEqual(openfiles_before, openfiles_after)
+
 
 # class PartialHeaderFileTest(EmptyFileTest):
 #   """Test for file support with only a partial header file.
@@ -1135,22 +1254,6 @@ class LengthTest(unittest.TestCase):
         This should be reasonably fast."""
         self.region.unlink_chunk(1, 0)
         self.assertEqual(self.region.chunk_count(), 1)
-
-
-# TODO: test suite to test the different __init__ parameters of RegionFile
-# (filename or fileobj), write to it, delete RegionFile object, and test if:
-# - file is properly written to
-# - file is closed (for filename)
-# - file is not closed (for fileobj)
-# Also test if an exception is raised if RegionFile is called incorrectly (e.g. both filename and fileobj are specified, or none)
-
-# TODO: avoid the following functions to support Python 2.6:
-# AttributeError: 'module' object has no attribute 'SkipTest'
-# AttributeError: 'ReadWriteTest' object has no attribute 'assertGreaterEqual'
-# AttributeError: 'ReadWriteTest' object has no attribute 'assertIn'
-# AttributeError: 'ReadWriteTest' object has no attribute 'assertIsInstance'
-# AttributeError: 'ReadWriteTest' object has no attribute 'assertLessEqual'
-# AttributeError: 'ReadWriteTest' object has no attribute 'assertNotIn'
 
 
 if __name__ == '__main__':
