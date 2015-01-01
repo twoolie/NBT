@@ -484,6 +484,15 @@ TAGLIST = {TAG_END: _TAG_End, TAG_BYTE:TAG_Byte, TAG_SHORT:TAG_Short, TAG_INT:TA
 class NBTFile(TAG_Compound):
     """Represent an NBT file object."""
     def __init__(self, filename=None, buffer=None, fileobj=None):
+        """
+        Create a new NBTFile object.
+        Specify either a filename, file object or data buffer.
+        If filename of file object is specified, data should be GZip-compressed.
+        If a data buffer is specified, it is assumed to be uncompressed.
+        
+        If filename is specified, the file is closed after reading and writing.
+        If file object is specified, the caller is responsible for closing the file.
+        """
         super(NBTFile, self).__init__()
         self.filename = filename
         self.type = TAG_Byte(self.id)

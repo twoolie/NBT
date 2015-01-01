@@ -318,7 +318,7 @@ class ReadWriteTest(unittest.TestCase):
         read headers of chunk 9,0: 
         sector 6, 1 sector length, timestamp 1334530101, status STATUS_CHUNK_OK.
         read chunk headers of chunk 9,0: 
-        lenght (incl. compression byte): 3969 bytes, zlip (2) compression, status STATUS_CHUNK_OK.
+        length (incl. compression byte): 3969 bytes, zlip (2) compression, status STATUS_CHUNK_OK.
         """
         self.assertEqual(self.region.header[9,0], (6, 1, 1334530101, RegionFile.STATUS_CHUNK_OK))
         self.assertEqual(self.region.chunk_headers[9,0], (3969, 2, RegionFile.STATUS_CHUNK_OK))
@@ -368,11 +368,10 @@ class ReadWriteTest(unittest.TestCase):
         """
         self.assertRaises(ChunkDataError, self.region.get_nbt, 3, 0)
 
-    # TODO: raise nbt.region.ChunkDataError instead of nbt.nbt.MalformedFileError, or make them the same.
     def test015ReadMalformedNBT(self):
         """
         read chunk 5,1: valid compression, but not a valid NBT file. 
-        Reading should raise a ChunkDataError.
+        Reading should raise a ChunkDataError, not a nbt.nbt.MalformedFileError.
         """
         self.assertRaises(ChunkDataError, self.region.get_nbt, 5, 1)
 
@@ -424,7 +423,6 @@ class ReadWriteTest(unittest.TestCase):
         Reading should raise a RegionHeaderError.
         """
         self.assertRaises(RegionHeaderError, self.region.get_nbt, 14, 0)
-        # TODO:
         self.assertEqual(self.region.header[14,0], 
                          (1, 1, 1376433960, RegionFile.STATUS_CHUNK_IN_HEADER))
         self.assertEqual(self.region.chunk_headers[14,0], 
@@ -1064,10 +1062,6 @@ class EmptyFileTest(unittest.TestCase):
 class RegionFileInitTest(unittest.TestCase):
     """Tests for the various init parameters provided for RegionFile()."""
     
-    # def setUp(self):
-    #     self.stream = BytesIO(b"")
-    #     self.stream.seek(0)
-
     def testCreateFromFilename(self):
         """
         Creating a RegionFile with filename, and deleting the instance should 
@@ -1203,11 +1197,15 @@ class TruncatedFileTest(unittest.TestCase):
         self.assertEqual(size, 3*4096)
     
     def test03WriteChunk(self):
+        """Test if a new chunk extends the file to sector sizes."""
         nbt = generate_compressed_level(minsize = 100, maxsize = 4000)
         self.region.write_chunk(0, 1, nbt)
         self.assertEqual(self.region.get_size(), 4*4096)
+        self.assertEqual(self.region.size, 4*4096)
         self.assertEqual(self.region.chunk_count(), 2)
         self.region.file.seek(self.length)
+        # The file length was extended to a block length.
+        # Test if the padding contains zeroes.
         unusedlength = 3*4096 - self.length
         unused = self.region.file.read(unusedlength)
         zeroes = unused.count(b'\x00')
@@ -1215,12 +1213,12 @@ class TruncatedFileTest(unittest.TestCase):
 
 
 class LengthTest(unittest.TestCase):
-    """Test for length calculations for blocks with inconsistent lenghts.
+    """Test for length calculations for blocks with inconsistent lengths.
     
     This operates on a simple testfile with:
-    file length: 4 sectors (00-04)
-    chunk 0,0: header lenght 4 sectors; chunk lenght 10240 bytes (3 sectors); sector 02-05
-    chunk 1,0: header lenght 3 sectors; chunk lenght 613566756 bytes (149797 sectors); sector 03-149799
+    file length: 4 sectors (00-03, inclusive)
+    chunk 0,0: header length 4 sectors; chunk length 10240 bytes (3 sectors); sector 02-05
+    chunk 1,0: header length 3 sectors; chunk length 613566756 bytes (149797 sectors); sector 03-149799
     """
     # max length value in header: 255 sectors = 1044480 bytes (1 MiByte)
     # max length value in chunk: 4294967295 bytes (4 GiBye) = 1048576 sectors
@@ -1256,7 +1254,7 @@ class LengthTest(unittest.TestCase):
         self.assertIn(chunk00metadata, sectors[3])
         self.assertIn(chunk10metadata, sectors[3])
     
-    def testMetaDataLenghts(self):
+    def testMetaDataLengths(self):
         chunk00metadata = self.region.metadata[0,0]
         chunk10metadata = self.region.metadata[1,0]
         self.assertEqual(chunk00metadata.blocklength, 4)
