@@ -76,14 +76,16 @@ def generate_compressed_level(minsize = 2000, maxsize = None):
         c = zlib.compress(b, 1)
         # check if the compressed size is sufficient.
         resultsize = len(c)
-        logger.debug("try %d: uncompressed %d bytes -> compressed %d bytes" % (tries, bytesize, resultsize))
+        logger.debug("try %d: uncompressed %d bytes -> compressed %d bytes" % \
+                     (tries, bytesize, resultsize))
         if minsize <= resultsize <= maxsize:
             break
         # size is not good enough. Try again, with new targetsize.
         bytesize = int(round(bytesize * targetsize / resultsize))
         tries += 1
         if tries > 20:
-            sys.stderr.write("Failed to generate NBT file of %d bytes after %d tries. Result is %d bytes.\n" % (targetsize, tries, resultsize))
+            sys.stderr.write("Failed to generate NBT file of %d bytes after %d tries. " + \
+                             "Result is %d bytes.\n" % (targetsize, tries, resultsize))
             break
     return level
 
@@ -326,7 +328,8 @@ class ReadWriteTest(unittest.TestCase):
         read headers & chunk_headers of chunk 2,2
         """
         self.assertEqual(self.region.header[2,2], (0, 0, 0, RegionFile.STATUS_CHUNK_NOT_CREATED))
-        self.assertEqual(self.region.chunk_headers[2,2], (None, None, RegionFile.STATUS_CHUNK_NOT_CREATED))
+        self.assertEqual(self.region.chunk_headers[2,2], \
+                        (None, None, RegionFile.STATUS_CHUNK_NOT_CREATED))
     
     def test010ReadChunkZlibCompression(self):
         """
@@ -368,7 +371,8 @@ class ReadWriteTest(unittest.TestCase):
     # TODO: raise nbt.region.ChunkDataError instead of nbt.nbt.MalformedFileError, or make them the same.
     def test015ReadMalformedNBT(self):
         """
-        read chunk 5,1: valid compression, but not a valid NBT file. Reading should raise a ChunkDataError.
+        read chunk 5,1: valid compression, but not a valid NBT file. 
+        Reading should raise a ChunkDataError.
         """
         self.assertRaises(ChunkDataError, self.region.get_nbt, 5, 1)
 
@@ -421,24 +425,30 @@ class ReadWriteTest(unittest.TestCase):
         """
         self.assertRaises(RegionHeaderError, self.region.get_nbt, 14, 0)
         # TODO:
-        self.assertEqual(self.region.header[14,0], (1, 1, 1376433960, RegionFile.STATUS_CHUNK_IN_HEADER))
-        self.assertEqual(self.region.chunk_headers[14,0], (None, None, RegionFile.STATUS_CHUNK_IN_HEADER))
+        self.assertEqual(self.region.header[14,0], 
+                         (1, 1, 1376433960, RegionFile.STATUS_CHUNK_IN_HEADER))
+        self.assertEqual(self.region.chunk_headers[14,0], 
+                         (None, None, RegionFile.STATUS_CHUNK_IN_HEADER))
 
     def test021ReadOutOfFile(self):
         """
         read chunk 15,0: error (out of file)
         """
         self.assertRaises(RegionHeaderError, self.region.get_nbt, 15, 0)
-        self.assertEqual(self.region.header[15,0], (30, 1, 1376433961, RegionFile.STATUS_CHUNK_OUT_OF_FILE))
-        self.assertEqual(self.region.chunk_headers[15,0], (None, None, RegionFile.STATUS_CHUNK_OUT_OF_FILE))
+        self.assertEqual(self.region.header[15,0], 
+                         (30, 1, 1376433961, RegionFile.STATUS_CHUNK_OUT_OF_FILE))
+        self.assertEqual(self.region.chunk_headers[15,0], 
+                         (None, None, RegionFile.STATUS_CHUNK_OUT_OF_FILE))
 
     def test022ReadZeroLengthHeader(self):
         """
         read chunk 13,0: error (zero-length)
         """
         self.assertRaises(RegionHeaderError, self.region.get_nbt, 13, 0)
-        self.assertEqual(self.region.header[13,0], (21, 0, 1376433958, RegionFile.STATUS_CHUNK_ZERO_LENGTH))
-        self.assertEqual(self.region.chunk_headers[13,0], (None, None, RegionFile.STATUS_CHUNK_ZERO_LENGTH))
+        self.assertEqual(self.region.header[13,0], 
+                         (21, 0, 1376433958, RegionFile.STATUS_CHUNK_ZERO_LENGTH))
+        self.assertEqual(self.region.chunk_headers[13,0],
+                         (None, None, RegionFile.STATUS_CHUNK_ZERO_LENGTH))
 
     def test023ReadInvalidLengthChunk(self):
         """
@@ -455,11 +465,13 @@ class ReadWriteTest(unittest.TestCase):
 
     def test025ReadChunkSizeExceedsSectorSize(self):
         """
-        read chunk 3,1: can be read, despite that the chunk content is longer than the allocated sectors.
+        read chunk 3,1: can be read, despite that the chunk content is longer 
+        than the allocated sectors.
         In general, reading should either succeeds, or raises a ChunkDataError.
         The status should be STATUS_CHUNK_MISMATCHED_LENGTHS.
         """
-        self.assertEqual(self.region.chunk_headers[3,1][2], RegionFile.STATUS_CHUNK_MISMATCHED_LENGTHS)
+        self.assertEqual(self.region.chunk_headers[3,1][2], 
+                         RegionFile.STATUS_CHUNK_MISMATCHED_LENGTHS)
         # reading should succeed, despite the overlap (next chunk is free)
         nbt = self.region.get_nbt(3, 1)
 
@@ -467,8 +479,10 @@ class ReadWriteTest(unittest.TestCase):
         """
         chunk 4,0 and chunk 12,0 overlap: status should be STATUS_CHUNK_OVERLAPPING
         """
-        self.assertEqual(self.region.chunk_headers[4,0][2], RegionFile.STATUS_CHUNK_OVERLAPPING)
-        self.assertEqual(self.region.chunk_headers[12,0][2], RegionFile.STATUS_CHUNK_OVERLAPPING)
+        self.assertEqual(self.region.chunk_headers[4,0][2], 
+                         RegionFile.STATUS_CHUNK_OVERLAPPING)
+        self.assertEqual(self.region.chunk_headers[12,0][2], 
+                         RegionFile.STATUS_CHUNK_OVERLAPPING)
 
     def test030GetTimestampOK(self):
         """
@@ -635,7 +649,8 @@ class ReadWriteTest(unittest.TestCase):
         header = self.region.header[1, 2]
         self.assertEqual(header[1], 3, "Chunk length must be 3 sectors")
         self.assertIn(header[0], (26, 27), "Chunk should be placed in sector 26")
-        self.assertEqual(self.region.get_size(), (header[0] + header[1])*4096, "File size should be multiple of 4096")
+        self.assertEqual(self.region.get_size(), (header[0] + header[1])*4096, \
+                         "File size should be multiple of 4096")
         self.assertEqual(header[3], RegionFile.STATUS_CHUNK_OK)
 
     def test054WriteExistingChunkDecreaseSector(self):
@@ -752,7 +767,8 @@ class ReadWriteTest(unittest.TestCase):
         self.region.write_chunk(13, 0, nbt)
         header = self.region.header[13, 0]
         self.assertEqual(header[1], 1) # length
-        self.assertLessEqual(header[0], 26, "Previously out-of-file chunk should be written in-file")
+        self.assertLessEqual(header[0], 26, \
+                "Previously out-of-file chunk should be written in-file")
 
     def test071WriteZeroLengthSectorChunk(self):
         """
@@ -763,7 +779,8 @@ class ReadWriteTest(unittest.TestCase):
         self.region.write_chunk(13, 0, nbt)
         header = self.region.header[13, 0]
         self.assertEqual(header[1], 1) # length
-        self.assertNotEqual(header[0], 19, "Previously 0-length chunk should not overwrite existing chunk")
+        self.assertNotEqual(header[0], 19, \
+                "Previously 0-length chunk should not overwrite existing chunk")
 
     def test072WriteOverlappingChunkLong(self):
         """
@@ -780,8 +797,10 @@ class ReadWriteTest(unittest.TestCase):
         self.region.write_chunk(4, 0, nbt)
         header = self.region.header[4, 0]
         self.assertEqual(header[1], 2) # length
-        self.assertNotEqual(header[0], 14, "Chunk should not be written to same location when it overlaps")
-        self.assertEqual(header[0], 10, "Chunk should not be written to same location when it overlaps")
+        self.assertNotEqual(header[0], 14, \
+                "Chunk should not be written to same location when it overlaps")
+        self.assertEqual(header[0], 10, \
+                "Chunk should not be written to same location when it overlaps")
         # Write 1-sector chunks to check which sectors are "free"
         nbt = generate_compressed_level(minsize = 100, maxsize = 4000)
         locations = []
@@ -810,7 +829,8 @@ class ReadWriteTest(unittest.TestCase):
         self.region.write_chunk(12, 0, nbt)
         header = self.region.header[12, 0]
         self.assertEqual(header[1], 1) # length
-        self.assertNotEqual(header[0], 15, "Chunk should not be written to same location when it overlaps")
+        self.assertNotEqual(header[0], 15, \
+                "Chunk should not be written to same location when it overlaps")
         # Write 1-sector chunks to check which sectors are "free"
         locations = []
         self.region.write_chunk(1, 2, nbt)
@@ -834,12 +854,14 @@ class ReadWriteTest(unittest.TestCase):
         self.region.write_chunk(12, 0, nbt)
         header = self.region.header[12, 0]
         self.assertEqual(header[1], 1) # length
-        self.assertNotEqual(header[0], 15, "Chunk should not be written to same location when it overlaps")
+        self.assertNotEqual(header[0], 15, \
+                "Chunk should not be written to same location when it overlaps")
         nbt = generate_compressed_level(minsize = 9000, maxsize = 11000)
         self.region.write_chunk(4, 0, nbt)
         header = self.region.header[4, 0]
         self.assertEqual(header[1], 3) # length
-        self.assertEqual(header[0], 14, "No longer overlapping chunks should be written to same location when when possible")
+        self.assertEqual(header[0], 14, "No longer overlapping chunks " + \
+                "should be written to same location when when possible")
 
     def test080FileTruncateLastChunkDecrease(self):
         """
@@ -848,7 +870,8 @@ class ReadWriteTest(unittest.TestCase):
         """
         nbt = generate_compressed_level(minsize = 100, maxsize = 4000)
         self.region.write_chunk(3, 1, nbt)
-        self.assertEqual(self.region.get_size(), 26*4096, "File should be truncated when last chunk is reduced in size")
+        self.assertEqual(self.region.get_size(), 26*4096, \
+                "File should be truncated when last chunk is reduced in size")
 
     def test081FileTruncateFreeTail(self):
         """
@@ -856,7 +879,8 @@ class ReadWriteTest(unittest.TestCase):
         verify file size: 25*4096 bytes
         """
         self.region.unlink_chunk(3, 1)
-        self.assertEqual(self.region.get_size(), 25*4096, "File should be truncated when last sector(s) are freed")
+        self.assertEqual(self.region.get_size(), 25*4096, \
+                "File should be truncated when last sector(s) are freed")
 
     def test082FileTruncateMergeFree(self):
         """
@@ -866,7 +890,8 @@ class ReadWriteTest(unittest.TestCase):
         """
         self.region.unlink_chunk(8, 1)
         self.region.unlink_chunk(3, 1)
-        self.assertEqual(self.region.get_size(), 24*4096, "File should be truncated as far as possible when last sector(s) are freed")
+        self.assertEqual(self.region.get_size(), 24*4096, "File should be " + \
+                "truncated as far as possible when last sector(s) are freed")
 
     def test090DeleteNonExistingChunk(self):
         """
@@ -924,7 +949,8 @@ class ReadWriteTest(unittest.TestCase):
         self.region.file.seek(4096*sectorlocation + chunklength)
         unused = self.region.file.read(unusedlength)
         zeroes = unused.count(b'\x00')
-        self.assertEqual(zeroes, unusedlength, "All unused bytes should be zeroed after writing a chunk")
+        self.assertEqual(zeroes, unusedlength, \
+                "All unused bytes should be zeroed after writing a chunk")
     
     def test101DeleteZeroPadding(self):
         """
@@ -950,19 +976,23 @@ class ReadWriteTest(unittest.TestCase):
         self.region.file.seek((sectorlocation + 1) * 4096)
         unused = self.region.file.read(4096)
         zeroes = unused.count(b'\x00')
-        self.assertNotEqual(zeroes, 4096, "Bytes should not be zeroed after deleting an overlapping chunk")
+        self.assertNotEqual(zeroes, 4096, \
+                "Bytes should not be zeroed after deleting an overlapping chunk")
         self.region.file.seek((sectorlocation) * 4096)
         unused = self.region.file.read(4096)
         zeroes = unused.count(b'\x00')
-        self.assertEqual(zeroes, 4096, "Bytes should be zeroed after deleting non-overlapping portions of a chunk")
+        self.assertEqual(zeroes, 4096, "Bytes should be " + \
+                "zeroed after deleting non-overlapping portions of a chunk")
         self.region.file.seek((sectorlocation + 2) * 4096)
         unused = self.region.file.read(4096)
         zeroes = unused.count(b'\x00')
-        self.assertEqual(zeroes, 4096, "Bytes should be zeroed after deleting non-overlapping portions of a chunk")
+        self.assertEqual(zeroes, 4096, "Bytes should be " + \
+                "zeroed after deleting non-overlapping portions of a chunk")
     
     def test103MoveOverlappingNoZeroPadding(self):
         """
-        write 2 sector chunk 4,0 to a different location. Due to overlapping chunks, bytes should not be zeroed.
+        write 2 sector chunk 4,0 to a different location. 
+        Due to overlapping chunks, bytes should not be zeroed.
         Check if bytes in sector 015 are not all zeroed.
         """
         header = self.region.header[4, 0]
@@ -972,7 +1002,8 @@ class ReadWriteTest(unittest.TestCase):
         self.region.file.seek((sectorlocation + 1) * 4096)
         unused = self.region.file.read(4096)
         zeroes = unused.count(b'\x00')
-        self.assertNotEqual(zeroes, 4096, "Bytes should not be zeroed after moving an overlapping chunk")
+        self.assertNotEqual(zeroes, 4096, \
+                "Bytes should not be zeroed after moving an overlapping chunk")
     
     def test104DeleteZeroPaddingMismatchLength(self):
         """
@@ -1127,13 +1158,20 @@ class RegionFileInitTest(unittest.TestCase):
 
 class TruncatedFileTest(unittest.TestCase):
     """Test for truncated file support.
-    These files should be treated as a valid region file without any stored chunk."""
+    This files should be treated as a valid region file, as all data is present.
+    Only the padding bytes are missing."""
 
     def setUp(self):
+        # data contains 8235, just over 2 sectors.
+        # Only chunk (0,0) is stored, at sector 2, with length 1.
+        # The timestamps are all zeroed.
+        # The chunk is 0x27 = 39 bytes, excl header. Compression type 2, zlib.
         data = b'\x00\x00\x02\x01' + 8188*b'\x00' + \
-               b'\x00\x00\x00\x27\x02\x78\xda\xe3\x62\x60\x71\x49\x2c\x49\x64\x61\x60\x09\xc9\xcc\x4d' + \
-               b'\x65\x80\x00\x46\x0e\x06\x16\xbf\x44\x20\x97\x25\x24\xb5\xb8\x84\x01\x00\x6b\xb7\x06\x52'
-        self.length = 8235
+               b'\x00\x00\x00\x27\x02' + \
+               b'\x78\xda\xe3\x62\x60\x71\x49\x2c\x49\x64\x61\x60\x09\xc9' + \
+               b'\xcc\x4d\x65\x80\x00\x46\x0e\x06\x16\xbf\x44\x20\x97\x25' + \
+               b'\x24\xb5\xb8\x84\x01\x00\x6b\xb7\x06\x52'
+        self.length = 8235 # 4096 + 4096 + 4 + 39
         self.assertEqual(len(data), self.length)
         stream = PedanticFileWrapper(BytesIO(data))
         # stream.seek(0)
@@ -1147,7 +1185,8 @@ class TruncatedFileTest(unittest.TestCase):
         self.assertEqual(self.region.chunk_count(), 1)
     
     def test01ReadChunk(self):
-        """Test if a block can be read, even when the file is truncated right after the block data."""
+        """Test if a block can be read, even when the file is truncated right 
+        after the block data."""
         data = self.region.get_blockdata(0,0) # This may raise a RegionFileFormatError.
         data = BytesIO(data)
         nbt = NBTFile(buffer=data)
@@ -1155,7 +1194,8 @@ class TruncatedFileTest(unittest.TestCase):
         self.assertEqual(nbt["Name"].value, "Test")
 
     def test02ReplaceChunk(self):
-        """Test if writing the last block in a truncated file will extend the file size to the sector boundary."""
+        """Test if writing the last block in a truncated file will extend the 
+        file size to the sector boundary."""
         nbt = self.region.get_nbt(0, 0)
         self.region.write_chunk(0, 0, nbt)
         size = self.region.size
@@ -1236,9 +1276,11 @@ class LengthTest(unittest.TestCase):
         chunk00metadata = self.region.metadata[0,0]
         chunk10metadata = self.region.metadata[1,0]
         self.assertIn(chunk00metadata.status, 
-                    (RegionFile.STATUS_CHUNK_OVERLAPPING, RegionFile.STATUS_CHUNK_OUT_OF_FILE))
+                    (RegionFile.STATUS_CHUNK_OVERLAPPING, 
+                     RegionFile.STATUS_CHUNK_OUT_OF_FILE))
         self.assertIn(chunk10metadata.status, 
-                    (RegionFile.STATUS_CHUNK_MISMATCHED_LENGTHS, RegionFile.STATUS_CHUNK_OVERLAPPING, 
+                    (RegionFile.STATUS_CHUNK_MISMATCHED_LENGTHS, 
+                     RegionFile.STATUS_CHUNK_OVERLAPPING, 
                      RegionFile.STATUS_CHUNK_OUT_OF_FILE))
     
     def testChunkRead(self):

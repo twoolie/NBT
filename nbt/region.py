@@ -118,7 +118,7 @@ class ChunkMetadata(object):
         - STATUS_CHUNK_OK
         - STATUS_CHUNK_NOT_CREATED"""
     def __str__(self):
-        return "%s(%d, %d, sector=%s, length=%s, timestamp=%s, lenght=%s, compression=%s, status=%s)" % \
+        return "%s(%d, %d, sector=%s, blocklength=%s, timestamp=%s, bytelength=%s, compression=%s, status=%s)" % \
             (self.__class__.__name__, self.x, self.z, self.blockstart, self.blocklength, self.timestamp, \
             self.length, self.compression, self.status)
     def __repr__(self):
@@ -183,8 +183,8 @@ class RegionFile(object):
     
     def __init__(self, filename=None, fileobj=None):
         """
-        Read a region file by filename of file object. 
-        If a fileobj is specified, it is not closed after use; it is the callers responibility to close that.
+        Read a region file by filename or file object. 
+        If a fileobj is specified, it is not closed after use; it is the callers responibility to close it.
         """
         self.file = None
         self.filename = None
@@ -302,7 +302,7 @@ class RegionFile(object):
             m = self.metadata[x, z]
             
             self.file.seek(index)
-            offset, length = unpack(">IB", b"\0"+self.file.read(4))
+            offset, length = unpack(">IB", b"\0" + self.file.read(4))
             m.blockstart, m.blocklength = offset, length
             self.file.seek(index + SECTOR_LENGTH)
             m.timestamp = unpack(">I", self.file.read(4))[0]

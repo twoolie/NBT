@@ -53,4 +53,4 @@ if __name__ == "__main__":
         # Logging is not yet configured. Configure it.
         logging.basicConfig(level=logging.INFO, stream=sys.stderr, format='%(levelname)-8s %(message)s')
     testresult = unittest.TextTestRunner(verbosity=2).run(load_tests_in_modules(testmodules))
-    sys.exit(not testresult.wasSuccessful())
+    sys.exit(0 if testresult.wasSuccessful() else -1)
