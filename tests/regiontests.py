@@ -1284,12 +1284,17 @@ class LengthTest(unittest.TestCase):
                      RegionFile.STATUS_CHUNK_OUT_OF_FILE))
     
     def testChunkRead(self):
-        # performa low-level read, ensure it does not read past the file length
-        # and does not modify the file
-        data = self.region.get_blockdata(0, 0) # May raise a ChunkHeaderError() or ChunkDataError()
+        """
+        Perform a low-level read, ensure it does not read past the file length
+        and does not modify the file.
+        """
+        # Does not raise a ChunkDataError(), since the data can be read, 
+        # even though it is shorter than specified in the header.
+        data = self.region.get_blockdata(0, 0)
         self.assertEqual(len(data), 8187)
-        data = self.region.get_blockdata(1, 0) # May raise a ChunkHeaderError() or ChunkDataError()
+        data = self.region.get_blockdata(1, 0)
         self.assertEqual(len(data), 4091)
+        self.assertEqual(self.region.get_size(), self.length)
     
     def testDeleteChunk(self):
         """Try to remove the chunk 1,0 with ridiculous large size. 
