@@ -26,6 +26,7 @@ from nbt.nbt import NBTFile, TAG_Compound, TAG_Byte_Array, TAG_Long, TAG_Int, TA
 
 REGIONTESTFILE = os.path.join(os.path.dirname(__file__), 'regiontest.mca')
 
+### Helper Functions and Classes ###
 
 def generate_level(bytesize = 4):
     """Generate a level, which is a given size in bytes."""
@@ -83,6 +84,49 @@ def generate_compressed_level(minsize = 2000, maxsize = None):
             sys.stderr.write("Failed to generate NBT file of %d bytes after %d tries. Result is %d bytes.\n" % (targetsize, tries, resultsize))
             break
     return level
+
+class PedanticFileWrapper(object):
+    """Pedantic wrapper around a file object. 
+    Is guaranteed to raise an IOError if an attempt is made to:
+    - seek to a location larger than the file
+    - read behind the file boundary
+    Only works for random access files that support seek() and tell().
+    """
+    def __init__(self, stream):
+        """Create a new wrapper. stream must be a file object."""
+        self.__stream = stream
+    def seek(self, offset, whence = 0):
+        pos = self.__stream.tell()
+        self.__stream.seek(0, 2) # end of file
+        length = self.__stream.tell()
+        if whence == 1:
+            offset = pos + offset
+        elif whence == 2:
+            offset = length + offset
+        result = self.__stream.seek(offset)
+        if offset > length:
+            raise IOError("Attempt to seek at offset %d for file of %d bytes" % (offset, length))
+        elif offset < 0:
+            raise IOError("Attempt to seek at offset %d for file of %d bytes" % (offset, length))
+        return result
+    def read(self, size = -1):
+        pos = self.__stream.tell()
+        self.__stream.seek(0, 2) # end of file
+        length = self.__stream.tell()
+        self.__stream.seek(pos)
+        if pos + size > length:
+            raise IOError("Attempt to read bytes %d to %d from file of %d bytes" % \
+                        (pos, pos + size, length))
+        return self.__stream.read(size)
+    def __getattr__(self, name):
+        return getattr(self.__stream, name)
+    def __str__(self):
+        return str(self.__stream)
+    def __repr__(self):
+        return str(self.__stream)
+
+
+### Actual Test Classes ###
 
 class ReadWriteTest(unittest.TestCase):
     """Test to read, write and relocate chunks in a region file."""
@@ -934,8 +978,8 @@ class EmptyFileTest(unittest.TestCase):
         return level
 
     def setUp(self):
-        self.stream = BytesIO(b"")
-        self.stream.seek(0)
+        self.stream = PedanticFileWrapper(BytesIO(b""))
+        # self.stream.seek(0)
 
     def test01ReadFile(self):
         region = RegionFile(fileobj=self.stream)
@@ -972,8 +1016,8 @@ class TruncatedFileTest(unittest.TestCase):
                b'\x65\x80\x00\x46\x0e\x06\x16\xbf\x44\x20\x97\x25\x24\xb5\xb8\x84\x01\x00\x6b\xb7\x06\x52'
         self.length = 8235
         self.assertEqual(len(data), self.length)
-        stream = BytesIO(data)
-        stream.seek(0)
+        stream = PedanticFileWrapper(BytesIO(data))
+        # stream.seek(0)
         self.region = RegionFile(fileobj=stream)
 
     def tearDown(self):
@@ -1027,8 +1071,8 @@ class LengthTest(unittest.TestCase):
                b'\x24\x92\x49\x24\x00' + 4091*b'\x02'
         self.length = 16384
         self.assertEqual(len(data), self.length)
-        stream = BytesIO(data)
-        stream.seek(0)
+        stream = PedanticFileWrapper(BytesIO(data))
+        # stream.seek(0)
         self.region = RegionFile(fileobj=stream)
     
     def tearDown(self):
