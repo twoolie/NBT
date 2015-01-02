@@ -583,6 +583,13 @@ class RegionFile(object):
         free_sectors = self._locate_free_sectors(ignore_chunk=current)
         sector = self._find_free_location(free_sectors, nsectors, preferred=current.blockstart)
 
+        # If file is smaller than sector*SECTOR_LENGTH (it was truncated), pad it with zeroes.
+        if self.size < sector*SECTOR_LENGTH:
+            # jump to end of file
+            self.file.seek(0, SEEK_END)
+            self.file.write((sector*SECTOR_LENGTH - self.size) * b"\x00")
+            assert self.file.tell() == sector*SECTOR_LENGTH
+
         # write out chunk to region
         self.file.seek(sector*SECTOR_LENGTH)
         self.file.write(pack(">I", length + 1)) #length field
