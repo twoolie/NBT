@@ -50,8 +50,8 @@ def bounded_stats_per_chunk(chunk, block_data_totals, start, stop):
 def process_region_file(filename, start, stop):
     """Given a region filename, return the number of blocks of each ID in that file"""
     pieces = filename.split('.')
-    rx = int(pieces[1])
-    rz = int(pieces[2])
+    rx = int(pieces[-3])
+    rz = int(pieces[-2])
     
     block_data_totals = [[0]*16 for i in range(256)] # up to 16 data numbers in 256 block IDs
     
