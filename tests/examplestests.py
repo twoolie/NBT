@@ -59,7 +59,10 @@ class ScriptTestCase(unittest.TestCase):
         # Ensure we're using the same python version.
         # python = sys.argv[0]
         # args.insert(0, python)
-        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        env = dict(os.environ).copy()
+        env['LC_ALL'] = 'C'
+        # Open a subprocess, wait till it is done, and get the STDOUT result
+        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
         p.wait()
         output = [r.decode('utf-8') for r in p.stdout.readlines()]
         for l in p.stderr.readlines():
