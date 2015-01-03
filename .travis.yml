@@ -4,7 +4,9 @@ python:
  - "2.7"
  - "3.2"
  - "3.3"
+ - "3.4"
  - "pypy"
+ - "pypy3"
 install: 
  - sudo apt-get install zlib1g zlib1g-dev wget
  - sudo ln -s /usr/lib/x86_64-linux-gnu/libz.so /usr/lib/
