@@ -87,20 +87,23 @@ def download(url, destination):
             pass
     logging.info("Download complete")
 
-def download_with_wget(url, destination):
+def download_with_external_tool(url, destination):
     """
     Download the file from the specified URL, and extract the contents.
     
-    Uses the external wget program.
+    Uses the external curl program.
+    wget fails if it is compiled with older version of OpenSSL. Hence we use curl.
     
     May raise an OSError (or one of it's subclasses).
     """
     logger = logging.getLogger("nbt.tests.downloadsample")
-    logger.info("Downloading %s (with wget)" % url)
-    command = ['wget', '-O', destination, url]
+    logger.info("Downloading %s (with curl)" % url)
+    # command = ['wget', '-O', destination, url]
+    command = ['curl', '-o', destination, '-L', '-#', url]
     # Open a subprocess, wait till it is done, and get the STDOUT result
     exitcode = subprocess.call(command)
-    print("exitcode =", exitcode)
+    if exitcode != 0:
+        raise OSError("%s returned exit code %d" % (" ".join(command), exitcode))
 
 
 
@@ -197,23 +200,20 @@ def install(url=URL, workdir=workdir, checksums=checksums):
                 download(url=URL, destination=tar_file)
             except urllib.URLError as e:
                 # e.reason may be a socket.error. If so, print e.reason.strerror.
-                logger.error('Download %s failed: %s %s' % (url,type(e),e))
                 logger.error('Download %s failed: %s' % \
                         (url, e.reason.strerror if hasattr(e.reason, "strerror") else e.reason))
                 has_ssl_error = "sslv3" in ("%s" % e)
             except urllib.HTTPError as e:
                 # urllib.HTTPError.reason does not have a reason in Python 2.6 (perhaps neither in 2.7).
-                logger.error('Download %s failed: %s %s' % (url,type(e),e))
                 logger.error('Download %s failed: HTTP Error %d: %s' % (url, e.code, \
                         e.reason if hasattr(e, "reason") else e))
                 return False
             except Exception as e:
-                logger.error('Download %s failed: %s %s' % (url,type(e),e))
-                # logger.error('Download %s failed: %s' % (url, e))
+                logger.error('Download %s failed: %s' % (url, e))
                 return False
             if has_ssl_error:
                 try:
-                    download_with_wget(url=URL, destination=tar_file)
+                    download_with_external_tool(url=URL, destination=tar_file)
                 except Exception as e:
                     logger.error('Download %s failed: %s' % (url, e))
                     return False
