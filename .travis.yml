@@ -6,7 +6,7 @@ python:
  - "3.3"
  - "pypy"
 install: 
- - sudo apt-get install zlib1g zlib1g-dev
+ - sudo apt-get install zlib1g zlib1g-dev wget
  - sudo ln -s /usr/lib/x86_64-linux-gnu/libz.so /usr/lib/
  - pip install pillow unittest2 --use-mirrors ; true
 script: tests/alltests.py
