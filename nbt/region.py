@@ -263,9 +263,15 @@ class RegionFile(object):
         sectors, remainder = divmod(bsize, sectorlength)
         return sectors if remainder == 0 else sectors + 1
     
-    def __del__(self):
+    def close(self):
         if self._closefile:
-            self.file.close()
+            try:
+                self.file.close()
+            except IOError:
+                pass
+
+    def __del__(self):
+        self.close()
         # Parent object() has no __del__ method, otherwise it should be called here.
 
     def _init_file(self):
