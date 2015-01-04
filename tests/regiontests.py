@@ -85,8 +85,8 @@ def generate_compressed_level(minsize = 2000, maxsize = None):
         bytesize = int(round(bytesize * targetsize / resultsize))
         tries += 1
         if tries > 20:
-            sys.stderr.write("Failed to generate NBT file of %d bytes after %d tries. " + \
-                             "Result is %d bytes.\n" % (targetsize, tries, resultsize))
+            sys.stderr.write(("Failed to generate NBT file of %d bytes after %d tries. " + \
+                             "Result is %d bytes.\n") % (targetsize, tries, resultsize))
             break
     return level
 

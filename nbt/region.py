@@ -488,7 +488,7 @@ class RegionFile(object):
         elif m.status == STATUS_CHUNK_IN_HEADER:
             raise RegionHeaderError('Chunk %d,%d is in the region header' % (x,z))
         elif m.status == STATUS_CHUNK_OUT_OF_FILE and (m.length <= 1 or m.compression == None):
-            # Check header is outside of the file.
+            # Chunk header is outside of the file.
             raise RegionHeaderError('Chunk %d,%d is partially/completely outside the file' % (x,z))
         elif m.status == STATUS_CHUNK_ZERO_LENGTH:
             if m.blocklength == 0:

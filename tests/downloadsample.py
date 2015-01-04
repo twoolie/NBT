@@ -79,7 +79,7 @@ def download(url, destination):
             if not data: break
             localfile.write(data)
             size += len(data)
-            print("Downloaded %0.1f MiByte..." % (float(size)/1048576))
+            logging.info("Downloaded %0.1f MiByte..." % (float(size)/1048576))
     finally:
         try:
             localfile.close()
