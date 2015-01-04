@@ -18,6 +18,13 @@ manually installed::
 
     pip install unittest2
 
+Due to insecurity of HTTPS in urllib2, it does no longer work for Python up
+to 2.7.9. In that case, the external curl program is used to download a sample
+file. Note that urllib2 before 2.7.9 or 3.4.2 never checked the HTTPS (x509)
+certificates. A SHA256 checksum is calculated to check the validity of the
+downloaded files.
+
+
 ``downloadsample`` script
 -------------------------
 

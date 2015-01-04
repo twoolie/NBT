@@ -14,6 +14,8 @@ I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext rst
 
+default: wiki
+
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  wiki       to make ReST files for the NBT wiki"

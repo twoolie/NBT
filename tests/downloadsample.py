@@ -11,12 +11,14 @@ try:
 except ImportError:
     import urllib2 as urllib   # Python 2
 import logging
+import subprocess
 import tarfile
 import hashlib
 
 import glob
 import tempfile
 import shutil
+
 
 URL = "https://github.com/downloads/twoolie/NBT/Sample_World.tar.gz"
 """URL to retrieve"""
@@ -49,17 +51,27 @@ def download(url, destination):
     """
     Download the file from the specified URL, and extract the contents.
     
-    May raise an IOError (or one of it's subclasses) upon error, either
-    in reading from the URL of writing to file.
+    Uses urllib2.
+    
+    WARNING: urllib2 does not verify the certificate for Python 
+    earlier than 2.7.9 or 3.4.2 (!). Verify the checksums before using 
+    the downloaded files.
+
+    Warning: Before Python 2.7.9, urllib2 can't download over HTTPS, since 
+    it effectively only supports SSLv3, which is nowadays deprecated by websites.
+    In these cases, the following SSLError is raised:
+    error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure
+    
+    May raise an IOError or SSLError.
     """
     logger = logging.getLogger("nbt.tests.downloadsample")
     localfile = None
     remotefile = None
     try:
+        logger.info("Downloading %s" % url)
         request = urllib.Request(url)
         remotefile = urllib.urlopen(request)
         localfile = open(destination, 'wb')
-        logger.info("Downloading %s" % url)
         chunksize = 524288 # 0.5 MiB
         size = 0
         while True:
@@ -70,11 +82,30 @@ def download(url, destination):
             logging.info("Downloaded %0.1f MiByte..." % (float(size)/1048576))
     finally:
         try:
-            remotefile.close()
             localfile.close()
         except (IOError, AttributeError):
             pass
     logging.info("Download complete")
+
+def download_with_external_tool(url, destination):
+    """
+    Download the file from the specified URL, and extract the contents.
+    
+    Uses the external curl program.
+    wget fails if it is compiled with older version of OpenSSL. Hence we use curl.
+    
+    May raise an OSError (or one of it's subclasses).
+    """
+    logger = logging.getLogger("nbt.tests.downloadsample")
+    logger.info("Downloading %s (with curl)" % url)
+    # command = ['wget', '-O', destination, url]
+    command = ['curl', '-o', destination, '-L', '-#', url]
+    # Open a subprocess, wait till it is done, and get the STDOUT result
+    exitcode = subprocess.call(command)
+    if exitcode != 0:
+        raise OSError("%s returned exit code %d" % (" ".join(command), exitcode))
+
+
 
 def extract(filename, workdir, filelist):
     """
@@ -85,7 +116,7 @@ def extract(filename, workdir, filelist):
     Extraneous files will be logged as warning.
     """
     logger = logging.getLogger("nbt.tests.downloadsample")
-    logger.info("Extracting")
+    logger.info("Extracting %s" % filename)
     def filefilter(members):
         for tarinfo in members:
             if tarinfo.name in filelist:
@@ -154,30 +185,47 @@ def install(url=URL, workdir=workdir, checksums=checksums):
     # - posixpaths: list of relative posix paths -- to filter tar extraction
     # - nchecksums: as checksum, but with normalised absolute paths
     # - files: list of normalised absolute path of files (non-directories)
+    logger = logging.getLogger("nbt.tests.downloadsample")
     posixpaths = checksums.keys()
     nchecksums = dict([(os.path.join(workdir, os.path.normpath(path)), checksums[path]) \
             for path in posixpaths if checksums[path] != None])
     files = nchecksums.keys()
-    tarfile = os.path.join(workdir, os.path.basename(url))
+    tar_file = os.path.join(workdir, os.path.basename(url))
     
-    try:
-        if not any(map(os.path.exists, files)):
-            # none destination file exists. We can safely download/extract without overwriting.
-            if not os.path.exists(tarfile):
-                download(url=URL, destination=tarfile)
-            extract(filename=tarfile, workdir=workdir, filelist=posixpaths)
-        return verify(checksums=nchecksums)
-    except urllib.HTTPError as e:
-        logger.error('Download %s failed: HTTP Error %d: %s\n' % (url, e.code, e.reason))
-    except urllib.URLError as e:
-        # e.reason may be a socket.error. If so, print e.reason.strerror.
-        logger.error('Download %s failed: %s\n' % \
-                (url, e.reason.strerror if hasattr(e.reason, "strerror") else e.reason))
-    except tarfile.TarError as e:
-        logger.error('Extract %s failed: %s\n' % (tarfile, e.message))
-    except IOError as e:
-        logger.error('Download to %s failed: %s' % (e.filename, e.strerror))
-    return False
+    if not any(map(os.path.exists, files)):
+    # none of the destination files exist. We can safely download/extract without overwriting.
+        if not os.path.exists(tar_file):
+            has_ssl_error = False
+            try:
+                download(url=URL, destination=tar_file)
+            except urllib.URLError as e:
+                # e.reason may be a socket.error. If so, print e.reason.strerror.
+                logger.error('Download %s failed: %s' % \
+                        (url, e.reason.strerror if hasattr(e.reason, "strerror") else e.reason))
+                has_ssl_error = "sslv3" in ("%s" % e)
+            except urllib.HTTPError as e:
+                # urllib.HTTPError.reason does not have a reason in Python 2.6 (perhaps neither in 2.7).
+                logger.error('Download %s failed: HTTP Error %d: %s' % (url, e.code, \
+                        e.reason if hasattr(e, "reason") else e))
+                return False
+            except Exception as e:
+                logger.error('Download %s failed: %s' % (url, e))
+                return False
+            if has_ssl_error:
+                try:
+                    download_with_external_tool(url=URL, destination=tar_file)
+                except Exception as e:
+                    logger.error('Download %s failed: %s' % (url, e))
+                    return False
+        try:
+            extract(filename=tar_file, workdir=workdir, filelist=posixpaths)
+        except tarfile.TarError as e:
+            logger.error('Extract %s failed: %s' % (tar_file, e.message))
+            return False
+        except Exception as e:
+            logger.error('Extract %s failed: %s' % (tar_file, e))
+            return False
+    return verify(checksums=nchecksums)
 
 
 
