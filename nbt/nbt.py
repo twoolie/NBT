@@ -499,6 +499,7 @@ class NBTFile(TAG_Compound):
         closefile = True
         #make a file object
         if filename:
+            self.filename = filename
             self.file = GzipFile(filename, 'rb')
         elif buffer:
             if hasattr(buffer, 'name'):
