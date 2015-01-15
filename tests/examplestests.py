@@ -10,6 +10,7 @@ import subprocess
 import shutil
 import tempfile
 import glob
+import logging
 
 import unittest
 try:
@@ -219,6 +220,10 @@ class GenerateLevelDatScriptTest(ScriptTestCase):
         self.assertEqualString(output[11], self.expected[11])
         self.assertEqualString(output[13], self.expected[13])
 
+# Load resources once.
+# Implement as setUpModule/tearDownModule, since it only needs to be called 
+# once for the ScriptTestCase class. By default, a setUpClass/tearDownClass 
+# calls it for each subclass.
 
 def setUpModule():
     """Download sample world, and copy Anvil and McRegion files to temporary folders."""
@@ -242,4 +247,8 @@ def tearDownModule():
 
 
 if __name__ == '__main__':
+    logger = logging.getLogger("nbt.tests.exampletests")
+    if len(logger.handlers) == 0:
+        # Logging is not yet configured. Configure it.
+        logging.basicConfig(level=logging.INFO, stream=sys.stderr, format='%(levelname)-8s %(message)s')
     unittest.main(verbosity=2, failfast=True)
