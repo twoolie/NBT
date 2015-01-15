@@ -150,16 +150,24 @@ class _ChunkHeaderWrapper(Mapping):
         m = self.metadata[xz]
         return (m.length if m.length > 0 else None, m.compression, m.status)
     def __iter__(self):
-        return iter(self.metadata) # iterates of the keys
+        return iter(self.metadata) # iterates over the keys
     def __len__(self):
         return len(self.metadata)
+
+class Location(object):
+    def __init__(self, x=None, y=None, z=None):
+        self.x = x
+        self.y = y
+        self.z = z
+    def __str__(self):
+        return "%s(x=%s, y=%s, z=%s)" % (self.__class__.__name__, self.x, self.y, self.z)
 
 class RegionFile(object):
     """A convenience class for extracting NBT files from the Minecraft Beta Region Format."""
     
     # Redefine constants for backward compatibility.
     STATUS_CHUNK_OVERLAPPING = STATUS_CHUNK_OVERLAPPING
-    """Constant indicating an error status: the chunk is allocated a sector
+    """Constant indicating an error status: the chunk is allocated to a sector
     already occupied by another chunk. 
     Deprecated. Use :const:`nbt.region.STATUS_CHUNK_OVERLAPPING` instead."""
     STATUS_CHUNK_MISMATCHED_LENGTHS = STATUS_CHUNK_MISMATCHED_LENGTHS
@@ -244,6 +252,9 @@ class RegionFile(object):
         Deprecated. Use :attr:`metadata` instead.
         """
 
+        self.loc = Location()
+        """Optional: x,z location of a region within a world."""
+        
         self._init_header()
         self._parse_header()
         self._parse_chunk_headers()
@@ -549,7 +560,13 @@ class RegionFile(object):
         data = BytesIO(data)
         err = None
         try:
-            return NBTFile(buffer=data)
+            nbt = NBTFile(buffer=data)
+            if self.loc.x != None:
+                x += self.loc.x*32
+            if self.loc.z != None:
+                z += self.loc.z*32
+            nbt.loc = Location(x=x, z=z)
+            return nbt
             # this may raise a MalformedFileError. Convert to ChunkDataError.
         except MalformedFileError as e:
             err = '%s' % e # avoid str(e) due to Unicode issues in Python 2.
