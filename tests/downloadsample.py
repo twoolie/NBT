@@ -193,7 +193,7 @@ def install(url=URL, workdir=workdir, checksums=checksums):
     tar_file = os.path.join(workdir, os.path.basename(url))
     
     if not any(map(os.path.exists, files)):
-    # none of the destination files exist. We can safely download/extract without overwriting.
+        # none of the destination files exist. We can safely download/extract without overwriting.
         if not os.path.exists(tar_file):
             has_ssl_error = False
             try:
@@ -246,7 +246,9 @@ def _copyrename(srcdir, destdir, src, dest):
 def temp_mcregion_world(worldfolder=worlddir):
     """Create a McRegion worldfolder in a temporary directory, based on the 
     files in the given mixed worldfolder. Returns the temporary directory path."""
+    logger = logging.getLogger("nbt.tests.downloadsample")
     tmpfolder = tempfile.mkdtemp(prefix="nbtmcregion")
+    logger.info("Create temporary McRegion world folder at %s" % tmpfolder)
     _mkdir(tmpfolder, 'region')
     _copyglob(worldfolder, tmpfolder, "region/*.mcr")
     _copyrename(worldfolder, tmpfolder, "level.dat_mcr", "level.dat")
@@ -254,13 +256,17 @@ def temp_mcregion_world(worldfolder=worlddir):
 def temp_anvil_world(worldfolder=worlddir):
     """Create a Anvil worldfolder in a temporary directory, based on the 
     files in the given mixed worldfolder. Returns the temporary directory path."""
+    logger = logging.getLogger("nbt.tests.downloadsample")
     tmpfolder = tempfile.mkdtemp(prefix="nbtanvil")
+    logger.info("Create temporary Anvil world folder at %s" % tmpfolder)
     _mkdir(tmpfolder, 'region')
     _copyglob(worldfolder, tmpfolder, "region/*.mca")
     _copyrename(worldfolder, tmpfolder, "level.dat", "level.dat")
     return tmpfolder
 def cleanup_temp_world(tmpfolder):
     """Remove a temporary directory"""
+    logger = logging.getLogger("nbt.tests.downloadsample")
+    logger.info("Remove temporary world folder at %s" % tmpfolder)
     shutil.rmtree(tmpfolder, ignore_errors=True)
 
 if __name__ == '__main__':
