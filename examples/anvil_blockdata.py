@@ -6,6 +6,11 @@ This supports regular blocks with ID 0-255 and non-standard blocks with ID 256-4
 import os, sys
 import itertools
 
+try:
+    zip_longest = itertools.zip_longest
+except AttributeError:
+    zip_longest = itertools.izip_longest
+
 # local module
 try:
     import nbt
@@ -52,7 +57,7 @@ def grouper(iterable, n, fillvalue=None):
     # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
     # Taken from itertools recipe.
     args = [iter(iterable)] * n
-    return itertools.zip_longest(*args, fillvalue=fillvalue)
+    return zip_longest(*args, fillvalue=fillvalue)
 
 def print_chunklayer(blocks, data, add, yoffset):
     blocks = blocks[yoffset*256:(yoffset+1)*256]
