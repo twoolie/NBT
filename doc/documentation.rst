@@ -14,6 +14,7 @@ Install requirements::
 
     pip install sphinx
     pip install sphinxcontrib-restbuilder
+    pip install pygments
 
 Check out the wiki repository and make a symlink to it::
 
