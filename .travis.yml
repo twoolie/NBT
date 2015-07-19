@@ -1,13 +1,13 @@
-# Configuration file for travis-ci.org. Travis is a /continuous integration/ tool that runs tests
+# Configuration file for travis-ci.org. Travis is a /continuous integration/ tool that runs tests.
 language: python
 python:
- - "2.6"
- - "2.7"
- - "3.2"
- - "3.3"
- - "3.4"
- - "pypy"
- - "pypy3"
+  - "2.6"
+  - "2.7"
+  - "3.2"
+  - "3.3"
+  - "3.4"
+  - "pypy"
+  - "pypy3"
 sudo: false
 addons:
   apt:
@@ -22,8 +22,10 @@ install:
  - pip install coveralls
  # pillow is (only) used for examples/map.py
  - pip install pillow
-# alltests.py is where the action is :)
-script: tests/alltests.py
+script:
+  # run tests/alltests.py (which runs the actual tests)
+  # wrap in coverage, which reports the amount of code is covered by the tests.
+  - coverage run --source=nbt tests/alltests.py
 after_success:
-    # coveralls.io checks the extends to which all code is covered by tests.
-    coveralls
+  # Send test coverage results to https://coverage.io/
+  coveralls
