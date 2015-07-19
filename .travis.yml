@@ -1,3 +1,4 @@
+# Configuration file for travis-ci.org. Travis is a /continuous integration/ tool that runs tests
 language: python
 python:
  - "2.6"
@@ -14,7 +15,13 @@ addons:
     - curl
     - zlib1g
     - zlib1g-dev
-install: 
+install:
+ # unittest2 is not yet included in Python 2.6. Install using pip.
  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then travis_retry pip install unittest2; fi
+ # pillow is (only) used for examples/map.py
  - pip install pillow
+# alltests.py is where the action is :)
 script: tests/alltests.py
+# after_success:
+#     # coveralls.io checks the extends to which all code is covered by tests.
+#     coveralls
