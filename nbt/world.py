@@ -34,6 +34,9 @@ class _BaseWorldFolder(object):
         self.set_regionfiles(self.get_filenames())
 
     def get_filenames(self):
+        """Find all matching file names in the world folder.
+        
+        This method is private, and it's use it deprecated. Use get_regionfiles() instead."""
         # Warning: glob returns a empty list if the directory is unreadable, without raising an Exception
         return list(glob.glob(os.path.join(self.worldfolder,'region','r.*.*.'+self.extension)))
 
@@ -59,13 +62,13 @@ class _BaseWorldFolder(object):
                 pass
             self.regionfiles[(x,z)] = filename
 
-    def nonempty(self):
-        """Return True is the world is non-empty."""
-        return len(self.regionfiles) > 0
-
     def get_regionfiles(self):
         """Return a list of full path of all region files."""
         return list(self.regionfiles.values())
+
+    def nonempty(self):
+        """Return True is the world is non-empty."""
+        return len(self.regionfiles) > 0
 
     def get_region(self, x,z):
         """Get a region using x,z coordinates of a region. Cache results."""
@@ -75,6 +78,9 @@ class _BaseWorldFolder(object):
             else:
                 # Return an empty RegionFile object
                 # TODO: this does not yet allow for saving of the region file
+                # TODO: this currently fails with a ValueError!
+                # TODO: generate the correct name, and create the file
+                # and add the fie to self.regionfiles
                 self.regions[(x,z)] = region.RegionFile()
         return self.regions[(x,z)]
 

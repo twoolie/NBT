@@ -9,6 +9,14 @@ NBT Trunk
 ---------
 Git trunk can be found at https://github.com/twoolie/NBT/tree/master
 
+Bug Fixes since 1.4.1
+~~~~~~~~~~~~~~~~~~~~~
+* Faster reading chunks with corrupt header. (#76)
+
+Changes in Auxiliary Scripts since 1.4.1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Automatic testing now also runs Python 3.4 and pypy3.
+
 Known Bugs
 ~~~~~~~~~~
 See https://github.com/twoolie/NBT/issues
@@ -125,7 +133,7 @@ New Features since 1.2.0
 * Block analysis example takes data value of blocks into account
 * Subclass of Worldfolder: McRegionWorldfolder and AnvilWorldFolder
 * Added iterator functions: iter_chunks, iter_nbt, iter_regions in
-  WorlFolder and iter_nbt in 
+  WorlFolder and iter_nbt in RegionFile
 * Move unit tests and sample file to tests directory
 
 Bug Fixes since 1.2.0

@@ -721,6 +721,8 @@ class ReadWriteTest(unittest.TestCase):
         self.assertEqual(header[1], 3, "Chunk length must be 3 sectors")
         self.assertEqual(header[0], 2, "Chunk should be placed in sector 2")
 
+    # TODO: test write_blockdata, with different compressions. Check the metadata. Read the data back.
+
     def test070WriteOutOfFileChunk(self):
         """
         write 1 sector chunk 13,0 (should go to 004)
@@ -975,6 +977,7 @@ class ReadWriteTest(unittest.TestCase):
         Check if first byte in sector 026 is not zeroed.
         """
         raise unittest.SkipTest("Test can't use this testfile")
+        # TODO: Why not? Create other test file
 
 
 
@@ -1068,6 +1071,7 @@ class RegionFileInitTest(unittest.TestCase):
         openfiles_after = open_files()
         
         fileobj.close()
+
         self.assertNotEqual(len(openfiles_during), 0)
         self.assertEqual(openfiles_before, openfiles_during)
         self.assertEqual(openfiles_before, openfiles_after, \
@@ -1102,6 +1106,7 @@ class RegionFileInitTest(unittest.TestCase):
         self.assertEqual(openfiles_before, openfiles_after)
 
 
+# TODO: write tests
 # class PartialHeaderFileTest(EmptyFileTest):
 #   """Test for file support with only a partial header file.
 #   These files should be treated as a valid region file without any stored chunk."""
@@ -1265,6 +1270,9 @@ class LengthTest(unittest.TestCase):
         self.region.unlink_chunk(1, 0)
         self.assertEqual(self.region.chunk_count(), 1)
 
+
+# TODO: check if metadata is updated after deleting or writing a chunk
+# TODO: in tests, replace region.header or region.chunk_headers with region.metadata
 
 if __name__ == '__main__':
     logger = logging.getLogger("nbt.tests.regiontests")

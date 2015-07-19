@@ -87,6 +87,8 @@ class ReadWriteTest(unittest.TestCase):
 # TODO: test if self.file is NOT closed for NBTFile.write_file([buffer])
 # TODO: test if NBTFile([buffer]) followed by mynbt.write_file() fails
 
+# TODO: test if two nbt files with equal contents are equal in comparison. (test __eq__())
+
 class TreeManipulationTest(unittest.TestCase):
 
     def setUp(self):
