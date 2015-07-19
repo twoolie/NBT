@@ -15,7 +15,7 @@ except ImportError:
         raise
     sys.path.append(extrasearchpath)
 from nbt.region import RegionFile
-from nbt.chunk import Chunk
+from nbt.chunk import McRegionChunk
 
 def stats_per_chunk(chunk, block_data_totals):
     """Given a chunk, increment the block types with the number of blocks found"""
@@ -77,7 +77,7 @@ def process_region_file(filename, start, stop):
             if ( c['x']*16 + rx*512 - 1 > int(stop[0]) or c['z']*16 + rz*512 - 1 > int(stop[2]) ):
                 continue
         
-        chunk = Chunk(file.get_chunk(c['x'], c['z']))
+        chunk = McRegionChunk(file.get_chunk(c['x'], c['z']))
         assert chunk.get_coords() == (c['x'] + rx*32, c['z'] + rz*32)
         #print("Parsing chunk ("+str(c['x'])+", "+str(c['z'])+")")
         # Parse the blocks

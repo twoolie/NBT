@@ -31,7 +31,7 @@ class Chunk(object):
 class McRegionChunk(Chunk):
     def __init__(self, nbt):
         Chunk.__init__(self, nbt)
-        self.blocks = BlockArray(chunk_data['Blocks'].value, chunk_data['Data'].value)
+        self.blocks = BlockArray(nbt['Level']['Blocks'].value, nbt['Level']['Data'].value)
 
 # TODO: Add class AnvilChunk(Chunk)
 
