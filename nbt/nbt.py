@@ -144,6 +144,7 @@ class TAG_Byte_Array(TAG, MutableSequence):
     """
     id = TAG_BYTE_ARRAY
     def __init__(self, name=None, buffer=None):
+        # TODO: add a value parameter as well
         super(TAG_Byte_Array, self).__init__(name=name)
         if buffer:
             self._parse_buffer(buffer)
@@ -198,6 +199,7 @@ class TAG_Int_Array(TAG, MutableSequence):
     """
     id = TAG_INT_ARRAY
     def __init__(self, name=None, buffer=None):
+        # TODO: add a value parameter as well
         super(TAG_Int_Array, self).__init__(name=name)
         if buffer:
             self._parse_buffer(buffer)
@@ -371,7 +373,8 @@ class TAG_Compound(TAG, MutableMapping):
     intrinsic name
     """
     id = TAG_COMPOUND
-    def __init__(self, buffer=None):
+    def __init__(self, buffer=None, name=None):
+        # TODO: add a value parameter as well
         super(TAG_Compound, self).__init__()
         self.tags = []
         self.name = ""
@@ -388,7 +391,7 @@ class TAG_Compound(TAG, MutableMapping):
             else:
                 name = TAG_String(buffer=buffer).value
                 try:
-                    tag = TAGLIST[type.value](buffer=buffer)
+                    tag = TAGLIST[type.value](buffer=buffer, name=name)
                     tag.name = name
                     self.tags.append(tag)
                 except KeyError:
