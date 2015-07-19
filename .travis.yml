@@ -15,6 +15,6 @@ addons:
     - zlib1g
     - zlib1g-dev
 install: 
- - ln -s /usr/lib/x86_64-linux-gnu/libz.so /usr/lib/
- - pip install pillow unittest2 ; true
+ - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then travis_retry pip install unittest2; fi
+ - pip install pillow
 script: tests/alltests.py
