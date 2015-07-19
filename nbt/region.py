@@ -6,7 +6,6 @@ http://www.minecraftwiki.net/wiki/Region_file_format
 
 from .nbt import NBTFile, MalformedFileError
 from struct import pack, unpack
-from gzip import GzipFile
 from collections import Mapping
 import zlib
 import gzip
@@ -571,6 +570,7 @@ class RegionFile(object):
         Return a NBTFile of the specified chunk.
         Raise InconceivedChunk if the chunk is not included in the file.
         """
+        # TODO: cache results?
         data = self.get_blockdata(x, z) # This may raise a RegionFileFormatError.
         data = BytesIO(data)
         err = None
@@ -598,12 +598,24 @@ class RegionFile(object):
         """
         return self.get_nbt(x, z)
 
-    def write_blockdata(self, x, z, data):
+    def write_blockdata(self, x, z, data, compression=COMPRESSION_ZLIB):
         """
         Compress the data, write it to file, and add pointers in the header so it 
         can be found as chunk(x,z).
         """
-        data = zlib.compress(data) # use zlib compression, rather than Gzip
+        if compression == COMPRESSION_GZIP:
+            # Python 3.1 and earlier do not yet support `data = gzip.compress(data)`.
+            compressed_file = BytesIO()
+            f = gzip.GzipFile(fileobj=compressed_file)
+            f.write(data)
+            f.close()
+            compressed_file.seek(0)
+            data = compressed_file.read()
+            del compressed_file
+        elif compression == COMPRESSION_ZLIB:
+            data = zlib.compress(data) # use zlib compression, rather than Gzip
+        elif compression != COMPRESSION_NONE:
+            raise ValueError("Unknown compression type %d" % compression)
         length = len(data)
 
         # 5 extra bytes are required for the chunk block header
@@ -631,7 +643,7 @@ class RegionFile(object):
         # write out chunk to region
         self.file.seek(sector*SECTOR_LENGTH)
         self.file.write(pack(">I", length + 1)) #length field
-        self.file.write(pack(">B", COMPRESSION_ZLIB)) #compression field
+        self.file.write(pack(">B", compression)) #compression field
         self.file.write(data) #compressed data
 
         # Write zeros up to the end of the chunk
