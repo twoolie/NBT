@@ -42,6 +42,23 @@ BIOMES = {
     20: "Mountains Edge",
     21: "Jungle",
     22: "Jungle Hills",
+    23: "Jungle Edge",
+    24: "Deep Ocean",
+    25: "Stone Beach",
+    26: "Cold Beach",
+    27: "Birch Forest",
+    28: "Birch Forest Hills",
+    29: "Roofed Forest",
+    30: "Cold Taiga",
+    31: "Cold Taiga Hills",
+    32: "Mega Taiga",
+    33: "Mega Taiga Hills",
+    34: "Extreme Hills",
+    35: "Savanna",
+    36: "Savanna Plateau",
+    37: "Mesa",
+    38: "Mesa Plateau F",
+    39: "Mesa Plateau"
     # 255: "Not yet calculated",
 }
 
