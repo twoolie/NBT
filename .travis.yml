@@ -7,8 +7,14 @@ python:
  - "3.4"
  - "pypy"
  - "pypy3"
+sudo: false
+addons:
+  apt:
+    packages:
+    - curl
+    - zlib1g
+    - zlib1g-dev
 install: 
- - sudo apt-get install zlib1g zlib1g-dev curl
- - sudo ln -s /usr/lib/x86_64-linux-gnu/libz.so /usr/lib/
+ - ln -s /usr/lib/x86_64-linux-gnu/libz.so /usr/lib/
  - pip install pillow unittest2 ; true
 script: tests/alltests.py
