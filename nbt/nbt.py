@@ -7,13 +7,12 @@ from gzip import GzipFile
 import zlib
 from collections import MutableMapping, MutableSequence, Sequence
 import os, io
+import sys
 
-try:
-    unicode
-    basestring
-except NameError:
-    unicode = str  # compatibility for Python 3
-    basestring = str  # compatibility for Python 3
+PY3 = sys.version_info > (3,)
+if PY3:
+    unicode = str
+    basestring = str
 
 
 TAG_END = 0
