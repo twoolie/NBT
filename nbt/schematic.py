@@ -1,8 +1,3 @@
-import sys
-import os
-
-nbt_path = os.path.dirname(__file__) + "\\NBT-1.4.1\\NBT"
-sys.path.append(nbt_path)
 import nbt
 
 class Schematic(nbt.NBTFile):
@@ -33,6 +28,3 @@ class Schematic(nbt.NBTFile):
     def print_tree(self):
         """Outputs a pretty tree to the console"""
         print(self.pretty_tree())
-
-if __name__ == "__main__":
-    f = Schematic("Nova.schematic")
