@@ -1,3 +1,5 @@
+# A class specifically for schematic files
+
 import nbt
 
 class Schematic(nbt.NBTFile):
