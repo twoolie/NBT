@@ -1,4 +1,4 @@
-# A class specifically for schematic files
+# A wrapper class specifically for schematic files
 
 import nbt
 
