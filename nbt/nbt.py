@@ -27,6 +27,7 @@ TAG_STRING = 8
 TAG_LIST = 9
 TAG_COMPOUND = 10
 TAG_INT_ARRAY = 11
+TAG_LONG_ARRAY = 12
 
 class MalformedFileError(Exception):
     """Exception raised on parse error."""
@@ -244,6 +245,60 @@ class TAG_Int_Array(TAG, MutableSequence):
     #Printing and Formatting of tree
     def valuestr(self):
         return "[%i int(s)]" % len(self.value)
+
+
+class TAG_Long_Array(TAG, MutableSequence):
+    """
+    TAG_Int_Array, comparable to a collections.UserList with
+    an intrinsic name whose values must be integers
+    """
+    id = TAG_LONG_ARRAY
+    def __init__(self, name=None, buffer=None):
+        super(TAG_Long_Array, self).__init__(name=name)
+        if buffer:
+            self._parse_buffer(buffer)
+
+    def update_fmt(self, length):
+        """ Adjust struct format description to length given """
+        self.fmt = Struct(">" + str(length) + "l")
+
+    #Parsers and Generators
+    def _parse_buffer(self, buffer):
+        length = TAG_Int(buffer=buffer).value
+        self.update_fmt(length)
+        self.value = list(self.fmt.unpack(buffer.read(self.fmt.size)))
+
+    def _render_buffer(self, buffer):
+        length = len(self.value)
+        self.update_fmt(length)
+        TAG_Int(length)._render_buffer(buffer)
+        buffer.write(self.fmt.pack(*self.value))
+
+    # Mixin methods
+    def __len__(self):
+        return len(self.value)
+
+    def __iter__(self):
+        return iter(self.value)
+
+    def __contains__(self, item):
+        return item in self.value
+
+    def __getitem__(self, key):
+        return self.value[key]
+
+    def __setitem__(self, key, value):
+        self.value[key] = value
+
+    def __delitem__(self, key):
+        del(self.value[key])
+
+    def insert(self, key, value):
+        self.value.insert(key, value)
+
+    #Printing and Formatting of tree
+    def valuestr(self):
+        return "[%i long(s)]" % len(self.value)
 
 
 class TAG_String(TAG, Sequence):
