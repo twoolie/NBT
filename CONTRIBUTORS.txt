@@ -6,6 +6,7 @@ kamyu2
 MacFreek (Freek Dijkstra)
 MidnightLightning (Brooks Boyd)
 MostAwesomeDude (Corbin Simpson)
+psolyca (Damien)
 SBliven (Spencer Bliven)
 Stumpylog (Trenton Holmes)
 tWoolie (Thomas Woolford)
