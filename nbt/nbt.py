@@ -260,7 +260,7 @@ class TAG_Long_Array(TAG, MutableSequence):
 
     def update_fmt(self, length):
         """ Adjust struct format description to length given """
-        self.fmt = Struct(">" + str(length) + "l")
+        self.fmt = Struct(">" + str(length) + "q")
 
     #Parsers and Generators
     def _parse_buffer(self, buffer):
