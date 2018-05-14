@@ -445,11 +445,12 @@ class TAG_Compound(TAG, MutableMapping):
             else:
                 name = TAG_String(buffer=buffer).value
                 try:
-                    tag = TAGLIST[type.value](buffer=buffer, name=name)
-                    tag.name = name
-                    self.tags.append(tag)
+                    tag = TAGLIST[type.value]()
                 except KeyError:
                     raise ValueError("Unrecognised tag type")
+                tag.name = name
+                self.tags.append(tag)
+                tag._parse_buffer(buffer)
 
     def _render_buffer(self, buffer):
         for tag in self.tags:
