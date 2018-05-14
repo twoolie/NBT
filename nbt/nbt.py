@@ -358,8 +358,8 @@ class TAG_List(TAG, MutableSequence):
         self.tags = []
         if buffer:
             self._parse_buffer(buffer)
-        if self.tagID == None:
-            raise ValueError("No type specified for list: %s" % (name))
+        # if self.tagID == None:
+        #     raise ValueError("No type specified for list: %s" % (name))
 
     #Parsers and Generators
     def _parse_buffer(self, buffer):
@@ -447,7 +447,7 @@ class TAG_Compound(TAG, MutableMapping):
                 try:
                     tag = TAGLIST[type.value]()
                 except KeyError:
-                    raise ValueError("Unrecognised tag type")
+                    raise ValueError("Unrecognised tag type %d" % (type.value))
                 tag.name = name
                 self.tags.append(tag)
                 tag._parse_buffer(buffer)
