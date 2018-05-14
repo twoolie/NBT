@@ -249,7 +249,7 @@ class TAG_Int_Array(TAG, MutableSequence):
 
 class TAG_Long_Array(TAG, MutableSequence):
     """
-    TAG_Int_Array, comparable to a collections.UserList with
+    TAG_Long_Array, comparable to a collections.UserList with
     an intrinsic name whose values must be integers
     """
     id = TAG_LONG_ARRAY
@@ -536,7 +536,7 @@ class TAG_Compound(TAG, MutableMapping):
         return '\n'.join(output)
 
 
-TAGLIST = {TAG_END: _TAG_End, TAG_BYTE:TAG_Byte, TAG_SHORT:TAG_Short, TAG_INT:TAG_Int, TAG_LONG:TAG_Long, TAG_FLOAT:TAG_Float, TAG_DOUBLE:TAG_Double, TAG_BYTE_ARRAY:TAG_Byte_Array, TAG_STRING:TAG_String, TAG_LIST:TAG_List, TAG_COMPOUND:TAG_Compound, TAG_INT_ARRAY:TAG_Int_Array}
+TAGLIST = {TAG_END: _TAG_End, TAG_BYTE:TAG_Byte, TAG_SHORT:TAG_Short, TAG_INT:TAG_Int, TAG_LONG:TAG_Long, TAG_FLOAT:TAG_Float, TAG_DOUBLE:TAG_Double, TAG_BYTE_ARRAY:TAG_Byte_Array, TAG_STRING:TAG_String, TAG_LIST:TAG_List, TAG_COMPOUND:TAG_Compound, TAG_INT_ARRAY:TAG_Int_Array, TAG_LONG_ARRAY:TAG_Long_Array}
 
 class NBTFile(TAG_Compound):
     """Represent an NBT file object."""
