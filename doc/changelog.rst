@@ -9,13 +9,10 @@ NBT Trunk
 ---------
 Git trunk can be found at https://github.com/twoolie/NBT/tree/master
 
-Bug Fixes since 1.4.1
+Bug Fixes since 1.5.0
 ~~~~~~~~~~~~~~~~~~~~~
-* Faster reading chunks with corrupt header. (#76)
+* None
 
-Changes in Auxiliary Scripts since 1.4.1
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* Automatic testing now also runs Python 3.4 and pypy3.
 
 Known Bugs
 ~~~~~~~~~~
@@ -23,11 +20,30 @@ See https://github.com/twoolie/NBT/issues
 
 * It is posible to access the NBT structure of any world folder, including
   McRegion and Anvil worlds. However, chunk specifics (such as the location
-  of blocks in the NBT structure) are only available for McRegion, not yet for
+  of blocks in the NBT structure) are only available for McRegion, not for
   Anvil.
 * The name of a variable generally only supports 2-byte Unicode characters (the
   Basic Multilingual Plane). For Full Unicode support, use Python 3.3 or higher,
   or compile Python --with-wide-unicode.
+
+
+NBT 1.5.0 (14 May 2018)
+---------------------------
+
+New Features since 1.4.1
+~~~~~~~~~~~~~~~~~~~~~~~~
+* Support for Long Arrays (used in Minecraft 1.13 and higher) (#95)
+
+Bug Fixes since 1.4.1
+~~~~~~~~~~~~~~~~~~~~~~~~
+* Faster reading chunks with corrupt header. (#76)
+
+Changes in Auxiliary Scripts since 1.4.1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Add examples/player_print.py script (courtesy k1988).
+* Automatic testing now also runs Python 3.4, 3.5, 3.6 and pypy3.
+* Review and minor improvements of tests.
+* PEP8-compatibility improvements of the code (courtesy suresttexas00)
 
 
 NBT 1.4.1 (27 October 2013)
