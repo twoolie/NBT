@@ -52,28 +52,28 @@ class TAG(object):
     def tag_info(self):
         """Return Unicode string with class, name and unnested value."""
         return self.__class__.__name__ + (
-            '(%r)' % self.name if self.name 
+            '(%r)' % self.name if self.name
             else "") + ": " + self.valuestr()
 
     def valuestr(self):
-        """Return Unicode string of unnested value. For iterators, this 
+        """Return Unicode string of unnested value. For iterators, this
         returns a summary."""
         return unicode(self.value)
 
     def pretty_tree(self, indent=0):
-        """Return formated Unicode string of self, where iterable items are 
+        """Return formated Unicode string of self, where iterable items are
         recursively listed in detail."""
         return ("\t" * indent) + self.tag_info()
 
     # Python 2 compatibility; Python 3 uses __str__ instead.
     def __unicode__(self):
-        """Return a unicode string with the result in human readable format. 
-        Unlike valuestr(), the result is recursive for iterators till at least 
+        """Return a unicode string with the result in human readable format.
+        Unlike valuestr(), the result is recursive for iterators till at least
         one level deep."""
         return unicode(self.value)
 
     def __str__(self):
-        """Return a string (ascii formated for Python 2, unicode for Python 3) 
+        """Return a string (ascii formated for Python 2, unicode for Python 3)
         with the result in human readable format. Unlike valuestr(), the result
          is recursive for iterators till at least one level deep."""
         return str(self.value)
@@ -83,10 +83,10 @@ class TAG(object):
     # iterators should use __repr__ or tag_info for each item, like
     #  regular iterators
     def __repr__(self):
-        """Return a string (ascii formated for Python 2, unicode for Python 3) 
+        """Return a string (ascii formated for Python 2, unicode for Python 3)
         describing the class, name and id for debugging purposes."""
         return "<%s(%r) at 0x%x>" % (
-        self.__class__.__name__, self.name, id(self))
+            self.__class__.__name__, self.name, id(self))
 
 
 class _TAG_Numeric(TAG):
@@ -99,7 +99,7 @@ class _TAG_Numeric(TAG):
 
     # Parsers and Generators
     def _parse_buffer(self, buffer):
-        # Note: buffer.read() may raise an IOError, for example if buffer is a 
+        # Note: buffer.read() may raise an IOError, for example if buffer is a
         # corrupt gzip.GzipFile
         self.value = self.fmt.unpack(buffer.read(self.fmt.size))[0]
 
@@ -112,12 +112,12 @@ class _TAG_End(TAG):
     fmt = Struct(">b")
 
     def _parse_buffer(self, buffer):
-        # Note: buffer.read() may raise an IOError, for example if buffer is a 
+        # Note: buffer.read() may raise an IOError, for example if buffer is a
         # corrupt gzip.GzipFile
         value = self.fmt.unpack(buffer.read(1))[0]
         if value != 0:
             raise ValueError(
-                "A Tag End must be rendered as '0', not as '%d'." % (value))
+                "A Tag End must be rendered as '0', not as '%d'." % value)
 
     def _render_buffer(self, buffer):
         buffer.write(b'\x00')
@@ -156,7 +156,7 @@ class TAG_Float(_TAG_Numeric):
 
 
 class TAG_Double(_TAG_Numeric):
-    """Represent a single tag storing 1 IEEE-754 double precision floating 
+    """Represent a single tag storing 1 IEEE-754 double precision floating
     point number."""
     id = TAG_DOUBLE
     fmt = Struct(">d")
