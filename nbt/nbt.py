@@ -27,6 +27,7 @@ TAG_STRING = 8
 TAG_LIST = 9
 TAG_COMPOUND = 10
 TAG_INT_ARRAY = 11
+TAG_LONG_ARRAY = 12
 
 class MalformedFileError(Exception):
     """Exception raised on parse error."""
@@ -246,6 +247,60 @@ class TAG_Int_Array(TAG, MutableSequence):
         return "[%i int(s)]" % len(self.value)
 
 
+class TAG_Long_Array(TAG, MutableSequence):
+    """
+    TAG_Long_Array, comparable to a collections.UserList with
+    an intrinsic name whose values must be integers
+    """
+    id = TAG_LONG_ARRAY
+    def __init__(self, name=None, buffer=None):
+        super(TAG_Long_Array, self).__init__(name=name)
+        if buffer:
+            self._parse_buffer(buffer)
+
+    def update_fmt(self, length):
+        """ Adjust struct format description to length given """
+        self.fmt = Struct(">" + str(length) + "q")
+
+    #Parsers and Generators
+    def _parse_buffer(self, buffer):
+        length = TAG_Int(buffer=buffer).value
+        self.update_fmt(length)
+        self.value = list(self.fmt.unpack(buffer.read(self.fmt.size)))
+
+    def _render_buffer(self, buffer):
+        length = len(self.value)
+        self.update_fmt(length)
+        TAG_Int(length)._render_buffer(buffer)
+        buffer.write(self.fmt.pack(*self.value))
+
+    # Mixin methods
+    def __len__(self):
+        return len(self.value)
+
+    def __iter__(self):
+        return iter(self.value)
+
+    def __contains__(self, item):
+        return item in self.value
+
+    def __getitem__(self, key):
+        return self.value[key]
+
+    def __setitem__(self, key, value):
+        self.value[key] = value
+
+    def __delitem__(self, key):
+        del(self.value[key])
+
+    def insert(self, key, value):
+        self.value.insert(key, value)
+
+    #Printing and Formatting of tree
+    def valuestr(self):
+        return "[%i long(s)]" % len(self.value)
+
+
 class TAG_String(TAG, Sequence):
     """
     TAG_String, comparable to a collections.UserString with an
@@ -303,8 +358,8 @@ class TAG_List(TAG, MutableSequence):
         self.tags = []
         if buffer:
             self._parse_buffer(buffer)
-        if self.tagID == None:
-            raise ValueError("No type specified for list: %s" % (name))
+        # if self.tagID == None:
+        #     raise ValueError("No type specified for list: %s" % (name))
 
     #Parsers and Generators
     def _parse_buffer(self, buffer):
@@ -390,11 +445,12 @@ class TAG_Compound(TAG, MutableMapping):
             else:
                 name = TAG_String(buffer=buffer).value
                 try:
-                    tag = TAGLIST[type.value](buffer=buffer, name=name)
-                    tag.name = name
-                    self.tags.append(tag)
+                    tag = TAGLIST[type.value]()
                 except KeyError:
-                    raise ValueError("Unrecognised tag type")
+                    raise ValueError("Unrecognised tag type %d" % (type.value))
+                tag.name = name
+                self.tags.append(tag)
+                tag._parse_buffer(buffer)
 
     def _render_buffer(self, buffer):
         for tag in self.tags:
@@ -481,7 +537,7 @@ class TAG_Compound(TAG, MutableMapping):
         return '\n'.join(output)
 
 
-TAGLIST = {TAG_END: _TAG_End, TAG_BYTE:TAG_Byte, TAG_SHORT:TAG_Short, TAG_INT:TAG_Int, TAG_LONG:TAG_Long, TAG_FLOAT:TAG_Float, TAG_DOUBLE:TAG_Double, TAG_BYTE_ARRAY:TAG_Byte_Array, TAG_STRING:TAG_String, TAG_LIST:TAG_List, TAG_COMPOUND:TAG_Compound, TAG_INT_ARRAY:TAG_Int_Array}
+TAGLIST = {TAG_END: _TAG_End, TAG_BYTE:TAG_Byte, TAG_SHORT:TAG_Short, TAG_INT:TAG_Int, TAG_LONG:TAG_Long, TAG_FLOAT:TAG_Float, TAG_DOUBLE:TAG_Double, TAG_BYTE_ARRAY:TAG_Byte_Array, TAG_STRING:TAG_String, TAG_LIST:TAG_List, TAG_COMPOUND:TAG_Compound, TAG_INT_ARRAY:TAG_Int_Array, TAG_LONG_ARRAY:TAG_Long_Array}
 
 class NBTFile(TAG_Compound):
     """Represent an NBT file object."""
