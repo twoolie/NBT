@@ -7,11 +7,12 @@ from gzip import GzipFile
 from collections import MutableMapping, MutableSequence, Sequence
 import sys
 
-PY3 = sys.version_info > (3,)
-if PY3:
+_PY3 = sys.version_info >= (3,)
+if _PY3:
     unicode = str
     basestring = str
-    xrange = range
+else:
+    range = xrange
 
 TAG_END = 0
 TAG_BYTE = 1
@@ -399,7 +400,7 @@ class TAG_List(TAG, MutableSequence):
         self.tagID = TAG_Byte(buffer=buffer).value
         self.tags = []
         length = TAG_Int(buffer=buffer)
-        for x in xrange(length.value):
+        for x in range(length.value):
             self.tags.append(TAGLIST[self.tagID](buffer=buffer))
 
     def _render_buffer(self, buffer):
