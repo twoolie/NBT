@@ -49,6 +49,7 @@ Auxiliary Documentation
     changelog
     tests
     documentation
+    releases
 
 
 Indices and tables
