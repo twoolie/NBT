@@ -16,16 +16,16 @@ except ImportError:
     if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
         raise
     sys.path.append(extrasearchpath)
-from nbt.nbt import NBTFile, TAG_Long, TAG_Int, TAG_String, TAG_List, TAG_Compound
+from nbt.nbt import NBTFile, TAG_Long, TAG_Int, Tag_String, Tag_List, Tag_Compound
 
 def unpack_nbt(tag):
     """
     Unpack an NBT tag into a native Python data structure.
     """
 
-    if isinstance(tag, TAG_List):
+    if isinstance(tag, Tag_List):
         return [unpack_nbt(i) for i in tag.tags]
-    elif isinstance(tag, TAG_Compound):
+    elif isinstance(tag, Tag_Compound):
         return dict((i.name, unpack_nbt(i)) for i in tag.tags)
     else:
         return tag.value
@@ -59,9 +59,9 @@ def pack_nbt(s):
     elif isinstance(s, float):
         return TAG_Double(s)
     elif isinstance(s, (str, unicode)):
-        return TAG_String(s)
+        return Tag_String(s)
     elif isinstance(s, dict):
-        tag = TAG_Compound()
+        tag = Tag_Compound()
         for k, v in s:
             v = pack_nbt(v)
             v.name = str(k)
@@ -76,10 +76,10 @@ def pack_nbt(s):
         t = type(tags[0])
         # If we're homogenous...
         if all(t == type(i) for i in tags):
-            tag = TAG_List(type=t)
+            tag = Tag_List(type=t)
             tag.tags = tags
         else:
-            tag = TAG_Compound()
+            tag = Tag_Compound()
             for i, item in enumerate(tags):
                 item.name = str(i)
             tag.tags = tags

@@ -17,7 +17,7 @@ except ImportError:
     if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
         raise
     sys.path.append(extrasearchpath)
-from nbt.nbt import NBTFile, TAG_Long, TAG_Int, TAG_String, TAG_Compound
+from nbt.nbt import NBTFile, TAG_Long, TAG_Int, Tag_String, Tag_Compound
 
 def generate_level():
     level = NBTFile() # Blank NBT
@@ -31,16 +31,16 @@ def generate_level():
         TAG_Long(name="SizeOnDisk", value=0),
         TAG_Long(name="RandomSeed", value=random.randrange(1,9999999999)),
         TAG_Int(name="version", value=19132),
-        TAG_String(name="LevelName", value="Testing")
+        Tag_String(name="LevelName", value="Testing")
     ])
     
-    player = TAG_Compound()
+    player = Tag_Compound()
     player.name = "Player"
     player.tags.extend([
         TAG_Int(name="Score", value=0),
         TAG_Int(name="Dimension", value=0)
     ])
-    inventory = TAG_Compound()
+    inventory = Tag_Compound()
     inventory.name = "Inventory"
     player.tags.append(inventory)
     level.tags.append(player)
