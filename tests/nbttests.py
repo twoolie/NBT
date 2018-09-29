@@ -17,7 +17,7 @@ parentdir = os.path.realpath(os.path.join(os.path.dirname(__file__),os.pardir))
 if parentdir not in sys.path:
     sys.path.insert(1, parentdir)  # insert ../ just after ./
 
-from nbt.nbt import _TAG_Numeric, TAG_Int, MalformedFileError, NBTFile, TAGLIST
+from nbt.nbt import _Tag_Numeric, TAG_Int, MalformedFileError, NBTFile, TAGLIST
 
 NBTTESTFILE = os.path.join(os.path.dirname(__file__), 'bigtest.nbt')
 
@@ -100,7 +100,7 @@ class TreeManipulationTest(unittest.TestCase):
 
     def testTagNumeric(self):
         for tag in TAGLIST:
-            if isinstance(TAGLIST[tag], _TAG_Numeric):
+            if isinstance(TAGLIST[tag], _Tag_Numeric):
                 tagobj = TAGLIST[tag](name="Test", value=10)
                 self.assertEqual(byte.name, "Test", "Name not set correctly for %s" % TAGLIST[tag].__class__.__name__)
                 self.assertEqual(byte.value, 10, "Value not set correctly for %s" % TAGLIST[tag].__class__.__name__)

@@ -7,13 +7,6 @@ from gzip import GzipFile
 from collections import MutableMapping, MutableSequence, Sequence
 import sys
 
-_PY3 = sys.version_info >= (3,)
-if _PY3:
-    unicode = str
-    basestring = str
-else:
-    range = xrange
-
 TAG_END = 0
 TAG_BYTE = 1
 TAG_SHORT = 2
@@ -34,9 +27,9 @@ class MalformedFileError(Exception):
     pass
 
 
-class TAG(object):
+class Tag(object):
     """TAG, a variable with an intrinsic name."""
-    id = None
+    id: int = None
 
     def __init__(self, value=None, name=None):
         self.name = name
@@ -56,27 +49,22 @@ class TAG(object):
             '(%r)' % self.name if self.name
             else "") + ": " + self.valuestr()
 
+    def tag_info2(self):
+        """Returns string with class, name and unnested value."""
+        return f"{self.__class__.__name__} {self.name}: {self.valuestr()}"
+
     def valuestr(self):
-        """Return Unicode string of unnested value. For iterators, this
-        returns a summary."""
-        return unicode(self.value)
+        """Return Unicode string of unnested value. For iterators, this returns a summary."""
+        return str(self.value)
 
     def pretty_tree(self, indent=0):
-        """Return formated Unicode string of self, where iterable items are
+        """Return formatted Unicode string of self, where iterable items are
         recursively listed in detail."""
         return ("\t" * indent) + self.tag_info()
 
-    # Python 2 compatibility; Python 3 uses __str__ instead.
-    def __unicode__(self):
-        """Return a unicode string with the result in human readable format.
-        Unlike valuestr(), the result is recursive for iterators till at least
-        one level deep."""
-        return unicode(self.value)
-
     def __str__(self):
-        """Return a string (ascii formated for Python 2, unicode for Python 3)
-        with the result in human readable format. Unlike valuestr(), the result
-         is recursive for iterators till at least one level deep."""
+        """Returns a string with the result in human readable format.
+        Unlike valuestr(), the result is recursive for iterators till at least one level deep."""
         return str(self.value)
 
     # Unlike regular iterators, __repr__() is not recursive.
@@ -90,11 +78,11 @@ class TAG(object):
             self.__class__.__name__, self.name, id(self))
 
 
-class _TAG_Numeric(TAG):
+class _Tag_Numeric(Tag):
     """_TAG_Numeric, comparable to int with an intrinsic name"""
 
     def __init__(self, value=None, name=None, buffer=None):
-        super(_TAG_Numeric, self).__init__(value, name)
+        super(_Tag_Numeric, self).__init__(value, name)
         if buffer:
             self._parse_buffer(buffer)
 
@@ -108,7 +96,7 @@ class _TAG_Numeric(TAG):
         buffer.write(self.fmt.pack(self.value))
 
 
-class _TAG_End(TAG):
+class _Tag_End(Tag):
     id = TAG_END
     fmt = Struct(">b")
 
@@ -125,45 +113,45 @@ class _TAG_End(TAG):
 
 
 # == Value Tags ==#
-class TAG_Byte(_TAG_Numeric):
+class TAG_Byte(_Tag_Numeric):
     """Represent a single tag storing 1 byte."""
     id = TAG_BYTE
     fmt = Struct(">b")
 
 
-class TAG_Short(_TAG_Numeric):
+class TAG_Short(_Tag_Numeric):
     """Represent a single tag storing 1 short."""
     id = TAG_SHORT
     fmt = Struct(">h")
 
 
-class TAG_Int(_TAG_Numeric):
+class TAG_Int(_Tag_Numeric):
     """Represent a single tag storing 1 int."""
     id = TAG_INT
     fmt = Struct(">i")
     """Struct(">i"), 32-bits integer, big-endian"""
 
 
-class TAG_Long(_TAG_Numeric):
+class TAG_Long(_Tag_Numeric):
     """Represent a single tag storing 1 long."""
     id = TAG_LONG
     fmt = Struct(">q")
 
 
-class TAG_Float(_TAG_Numeric):
+class TAG_Float(_Tag_Numeric):
     """Represent a single tag storing 1 IEEE-754 floating point number."""
     id = TAG_FLOAT
     fmt = Struct(">f")
 
 
-class TAG_Double(_TAG_Numeric):
+class TAG_Double(_Tag_Numeric):
     """Represent a single tag storing 1 IEEE-754 double precision floating
     point number."""
     id = TAG_DOUBLE
     fmt = Struct(">d")
 
 
-class TAG_Byte_Array(TAG, MutableSequence):
+class Tag_Byte_Array(Tag, MutableSequence):
     """
     TAG_Byte_Array, comparable to a collections.UserList with
     an intrinsic name whose values must be bytes
@@ -172,7 +160,7 @@ class TAG_Byte_Array(TAG, MutableSequence):
 
     def __init__(self, name=None, buffer=None):
         # TODO: add a value parameter as well
-        super(TAG_Byte_Array, self).__init__(name=name)
+        super(Tag_Byte_Array, self).__init__(name=name)
         if buffer:
             self._parse_buffer(buffer)
 
@@ -214,14 +202,12 @@ class TAG_Byte_Array(TAG, MutableSequence):
     def valuestr(self):
         return "[%i byte(s)]" % len(self.value)
 
-    def __unicode__(self):
-        return '[' + ",".join([unicode(x) for x in self.value]) + ']'
-
     def __str__(self):
-        return '[' + ",".join([str(x) for x in self.value]) + ']'
+        value = ",".join([str(x) for x in self.value])
+        return f"{value}"
 
 
-class TAG_Int_Array(TAG, MutableSequence):
+class Tag_Int_Array(Tag, MutableSequence):
     """
     TAG_Int_Array, comparable to a collections.UserList with
     an intrinsic name whose values must be integers
@@ -230,7 +216,7 @@ class TAG_Int_Array(TAG, MutableSequence):
 
     def __init__(self, name=None, buffer=None):
         # TODO: add a value parameter as well
-        super(TAG_Int_Array, self).__init__(name=name)
+        super(Tag_Int_Array, self).__init__(name=name)
         if buffer:
             self._parse_buffer(buffer)
 
@@ -277,7 +263,7 @@ class TAG_Int_Array(TAG, MutableSequence):
         return "[%i int(s)]" % len(self.value)
 
 
-class TAG_Long_Array(TAG, MutableSequence):
+class Tag_Long_Array(Tag, MutableSequence):
     """
     TAG_Long_Array, comparable to a collections.UserList with
     an intrinsic name whose values must be integers
@@ -285,7 +271,7 @@ class TAG_Long_Array(TAG, MutableSequence):
     id = TAG_LONG_ARRAY
 
     def __init__(self, name=None, buffer=None):
-        super(TAG_Long_Array, self).__init__(name=name)
+        super(Tag_Long_Array, self).__init__(name=name)
         if buffer:
             self._parse_buffer(buffer)
 
@@ -332,7 +318,7 @@ class TAG_Long_Array(TAG, MutableSequence):
         return "[%i long(s)]" % len(self.value)
 
 
-class TAG_String(TAG, Sequence):
+class Tag_String(Tag, Sequence):
     """
     TAG_String, comparable to a collections.UserString with an
     intrinsic name
@@ -340,7 +326,7 @@ class TAG_String(TAG, Sequence):
     id = TAG_STRING
 
     def __init__(self, value=None, name=None, buffer=None):
-        super(TAG_String, self).__init__(value, name)
+        super(Tag_String, self).__init__(value, name)
         if buffer:
             self._parse_buffer(buffer)
 
@@ -377,14 +363,14 @@ class TAG_String(TAG, Sequence):
 
 
 # == Collection Tags ==#
-class TAG_List(TAG, MutableSequence):
+class Tag_List(Tag, MutableSequence):
     """
     TAG_List, comparable to a collections.UserList with an intrinsic name
     """
     id = TAG_LIST
 
     def __init__(self, type=None, value=None, name=None, buffer=None):
-        super(TAG_List, self).__init__(value, name)
+        super(Tag_List, self).__init__(value, name)
         if type:
             self.tagID = type.id
         else:
@@ -445,14 +431,11 @@ class TAG_List(TAG, MutableSequence):
     def valuestr(self):
         return "[%i %s(s)]" % (len(self.tags), TAGLIST[self.tagID].__name__)
 
-    def __unicode__(self):
-        return "[" + ", ".join([tag.tag_info() for tag in self.tags]) + "]"
-
     def __str__(self):
         return "[" + ", ".join([tag.tag_info() for tag in self.tags]) + "]"
 
     def pretty_tree(self, indent=0):
-        output = [super(TAG_List, self).pretty_tree(indent)]
+        output = [super(Tag_List, self).pretty_tree(indent)]
         if len(self.tags):
             output.append(("\t" * indent) + "{")
             output.extend([tag.pretty_tree(indent + 1) for tag in self.tags])
@@ -460,7 +443,7 @@ class TAG_List(TAG, MutableSequence):
         return '\n'.join(output)
 
 
-class TAG_Compound(TAG, MutableMapping):
+class Tag_Compound(Tag, MutableMapping):
     """
     TAG_Compound, comparable to a collections.OrderedDict with an
     intrinsic name
@@ -469,7 +452,7 @@ class TAG_Compound(TAG, MutableMapping):
 
     def __init__(self, buffer=None, name=None):
         # TODO: add a value parameter as well
-        super(TAG_Compound, self).__init__()
+        super(Tag_Compound, self).__init__()
         self.tags = []
         self.name = ""
         if buffer:
@@ -483,7 +466,7 @@ class TAG_Compound(TAG, MutableMapping):
                 # print("found tag_end")
                 break
             else:
-                name = TAG_String(buffer=buffer).value
+                name = Tag_String(buffer=buffer).value
                 try:
                     tag = TAGLIST[type.value]()
                 except KeyError:
@@ -495,7 +478,7 @@ class TAG_Compound(TAG, MutableMapping):
     def _render_buffer(self, buffer):
         for tag in self.tags:
             TAG_Byte(tag.id)._render_buffer(buffer)
-            TAG_String(tag.name)._render_buffer(buffer)
+            Tag_String(tag.name)._render_buffer(buffer)
             tag._render_buffer(buffer)
         buffer.write(b'\x00')  # write TAG_END
 
@@ -515,7 +498,7 @@ class TAG_Compound(TAG, MutableMapping):
                 if tag.name == key:
                     return True
             return False
-        elif isinstance(key, TAG):
+        elif isinstance(key, Tag):
             return key in self.tags
         return False
 
@@ -534,7 +517,7 @@ class TAG_Compound(TAG, MutableMapping):
                 "not a %s" % type(key).__name__)
 
     def __setitem__(self, key, value):
-        assert isinstance(value, TAG), "value must be an nbt.TAG"
+        assert isinstance(value, Tag), "value must be an nbt.TAG"
         if isinstance(key, int):
             # Just try it. The proper error will be raised if it doesn't work.
             self.tags[key] = value
@@ -563,9 +546,6 @@ class TAG_Compound(TAG, MutableMapping):
             yield (tag.name, tag)
 
     # Printing and Formatting of tree
-    def __unicode__(self):
-        return "{" + ", ".join([tag.tag_info() for tag in self.tags]) + "}"
-
     def __str__(self):
         return "{" + ", ".join([tag.tag_info() for tag in self.tags]) + "}"
 
@@ -573,7 +553,7 @@ class TAG_Compound(TAG, MutableMapping):
         return '{%i Entries}' % len(self.tags)
 
     def pretty_tree(self, indent=0):
-        output = [super(TAG_Compound, self).pretty_tree(indent)]
+        output = [super(Tag_Compound, self).pretty_tree(indent)]
         if len(self.tags):
             output.append(("\t" * indent) + "{")
             output.extend([tag.pretty_tree(indent + 1) for tag in self.tags])
@@ -581,15 +561,15 @@ class TAG_Compound(TAG, MutableMapping):
         return '\n'.join(output)
 
 
-TAGLIST = {TAG_END: _TAG_End, TAG_BYTE: TAG_Byte, TAG_SHORT: TAG_Short,
+TAGLIST = {TAG_END: _Tag_End, TAG_BYTE: TAG_Byte, TAG_SHORT: TAG_Short,
            TAG_INT: TAG_Int, TAG_LONG: TAG_Long, TAG_FLOAT: TAG_Float,
-           TAG_DOUBLE: TAG_Double, TAG_BYTE_ARRAY: TAG_Byte_Array,
-           TAG_STRING: TAG_String, TAG_LIST: TAG_List,
-           TAG_COMPOUND: TAG_Compound, TAG_INT_ARRAY: TAG_Int_Array,
-           TAG_LONG_ARRAY: TAG_Long_Array}
+           TAG_DOUBLE: TAG_Double, TAG_BYTE_ARRAY: Tag_Byte_Array,
+           TAG_STRING: Tag_String, TAG_LIST: Tag_List,
+           TAG_COMPOUND: Tag_Compound, TAG_INT_ARRAY: Tag_Int_Array,
+           TAG_LONG_ARRAY: Tag_Long_Array}
 
 
-class NBTFile(TAG_Compound):
+class NBTFile(Tag_Compound):
     """Represent an NBT file object."""
 
     def __init__(self, filename=None, buffer=None, fileobj=None):
@@ -651,7 +631,7 @@ class NBTFile(TAG_Compound):
             try:
                 type = TAG_Byte(buffer=self.file)
                 if type.value == self.id:
-                    name = TAG_String(buffer=self.file).value
+                    name = Tag_String(buffer=self.file).value
                     self._parse_buffer(self.file)
                     self.name = name
                     self.file.close()
@@ -689,7 +669,7 @@ class NBTFile(TAG_Compound):
             )
         # Render tree to file
         TAG_Byte(self.id)._render_buffer(self.file)
-        TAG_String(self.name)._render_buffer(self.file)
+        Tag_String(self.name)._render_buffer(self.file)
         self._render_buffer(self.file)
         # make sure the file is complete
         try:
@@ -703,18 +683,18 @@ class NBTFile(TAG_Compound):
                 pass
 
     def __repr__(self):
-        """
-        Return a string (ascii formated for Python 2, unicode
-        for Python 3) describing the class, name and id for
-        debugging purposes.
-        """
         if self.filename:
-            return "<%s(%r) with %s(%r) at 0x%x>" % (
-                self.__class__.__name__, self.filename,
-                TAG_Compound.__name__, self.name, id(self)
+            return "<{}({!r}) with {}({!r}) at {:#x}>".format(
+                self.__class__.__name__,
+                self.filename,
+                Tag_Compound.__name__,
+                self.name,
+                id(self)
             )
         else:
-            return "<%s with %s(%r) at 0x%x>" % (
-                self.__class__.__name__, TAG_Compound.__name__,
-                self.name, id(self)
+            return "<{} with {}({!r}) at {:#x}>".format(
+                self.__class__.__name__,
+                Tag_Compound.__name__,
+                self.name,
+                id(self),
             )

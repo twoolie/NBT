@@ -25,7 +25,7 @@ if parentdir not in sys.path:
 
 from nbt.region import RegionFile, RegionFileFormatError, NoRegionHeader, \
     RegionHeaderError, ChunkHeaderError, ChunkDataError, InconceivedChunk
-from nbt.nbt import NBTFile, TAG_Compound, TAG_Byte_Array, TAG_Long, TAG_Int, TAG_String
+from nbt.nbt import NBTFile, Tag_Compound, Tag_Byte_Array, TAG_Long, TAG_Int, Tag_String
 
 REGIONTESTFILE = os.path.join(os.path.dirname(__file__), 'regiontest.mca')
 
@@ -39,7 +39,7 @@ def generate_level(bytesize = 4):
         bytesize -= 7
         # byte_array = TAG_Byte_Array(name=name, value=bytearray([random.randrange(256) for i in range(bytesize)]))
         # level.append(byte_array)
-        byte_array = TAG_Byte_Array(name=name)
+        byte_array = Tag_Byte_Array(name=name)
         byte_array.value = bytearray([random.randrange(256) for i in range(bytesize)])
         level.tags.append(byte_array)
     random.seed(123456789) # fixed seed to give predictable results.
@@ -264,7 +264,7 @@ class ReadWriteTest(unittest.TestCase):
         """
         chunks = []
         for chunk in self.region.iter_chunks():
-            self.assertIsInstance(chunk, TAG_Compound)
+            self.assertIsInstance(chunk, Tag_Compound)
             chunks.append(chunk)
         self.assertEqual(len(chunks), 13)
 
@@ -274,7 +274,7 @@ class ReadWriteTest(unittest.TestCase):
         """
         chunks = []
         for chunk in self.region:
-            self.assertIsInstance(chunk, TAG_Compound)
+            self.assertIsInstance(chunk, Tag_Compound)
             chunks.append(chunk)
         self.assertEqual(len(chunks), 13)
     
@@ -301,24 +301,24 @@ class ReadWriteTest(unittest.TestCase):
         chunk 9,0: regular Zlib compression. Should be read OK.
         """
         nbt = self.region.get_nbt(9, 0)
-        self.assertIsInstance(nbt, TAG_Compound)
+        self.assertIsInstance(nbt, Tag_Compound)
         # get_chunk is currently an alias of get_nbt
         chunk = self.region.get_chunk(9, 0)
-        self.assertIsInstance(chunk, TAG_Compound)
+        self.assertIsInstance(chunk, Tag_Compound)
 
     def test011ReadChunkGzipCompression(self):
         """
         chunk 10,0: deprecated GZip compression. Should be read OK.
         """
         nbt = self.region.get_nbt(10, 0)
-        self.assertIsInstance(nbt, TAG_Compound)
+        self.assertIsInstance(nbt, Tag_Compound)
 
     def test012ReadChunkUncompressed(self):
         """
         chunk 2,0: no compression. Should be read OK.
         """
         nbt = self.region.get_nbt(2, 0)
-        self.assertIsInstance(nbt, TAG_Compound)
+        self.assertIsInstance(nbt, Tag_Compound)
 
     def test013ReadUnknownEncoding(self):
         """
@@ -998,15 +998,15 @@ class EmptyFileTest(unittest.TestCase):
             TAG_Long(name="SizeOnDisk", value=0),
             TAG_Long(name="RandomSeed", value=123456789),
             TAG_Int(name="version", value=19132),
-            TAG_String(name="LevelName", value="Testing")
+            Tag_String(name="LevelName", value="Testing")
         ])
-        player = TAG_Compound()
+        player = Tag_Compound()
         player.name = "Player"
         player.tags.extend([
             TAG_Int(name="Score", value=0),
             TAG_Int(name="Dimension", value=0)
         ])
-        inventory = TAG_Compound()
+        inventory = Tag_Compound()
         inventory.name = "Inventory"
         player.tags.append(inventory)
         level.tags.append(player)
