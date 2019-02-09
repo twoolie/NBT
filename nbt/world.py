@@ -239,8 +239,7 @@ class AnvilWorldFolder(_BaseWorldFolder):
     """Represents a world save using the new Anvil format."""
     type = "Anvil"
     extension = 'mca'
-    chunkclass = chunk.Chunk
-    # chunkclass = chunk.AnvilChunk  # TODO: change to AnvilChunk when done
+    chunkclass = chunk.AnvilChunk
 
 
 class _WorldFolderFactory(object):
@@ -254,7 +253,7 @@ class _WorldFolderFactory(object):
             wf = cls(*args, **kwargs)
             if wf.nonempty(): # Check if the world is non-empty
                 return wf
-        raise UnknownWorldFormat("Empty world or unknown format: %r" % world_folder)
+        raise UnknownWorldFormat("Empty world or unknown format")
 
 WorldFolder = _WorldFolderFactory([AnvilWorldFolder, McRegionWorldFolder])
 """

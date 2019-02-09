@@ -9,15 +9,18 @@ The authors decided to focus on NBT datastructure and Region files,
 and are not actively working on chunk.py.
 Code contributions to chunk.py are welcomed!
 """
+
 from io import BytesIO
-from struct import pack, unpack
-import array, math
+from struct import pack
+import array
+import nbt
+
 
 class Chunk(object):
     """Class for representing a single chunk."""
     def __init__(self, nbt):
-        chunk_data = nbt['Level']
-        self.coords = chunk_data['xPos'],chunk_data['zPos']
+        self.chunk_data = nbt['Level']
+        self.coords = self.chunk_data['xPos'],self.chunk_data['zPos']
 
     def get_coords(self):
         """Return the coordinates of this chunk."""
@@ -28,12 +31,35 @@ class Chunk(object):
         return "Chunk("+str(self.coords[0])+","+str(self.coords[1])+")"
 
 
+# Chunk in Region old format
+
 class McRegionChunk(Chunk):
     def __init__(self, nbt):
         Chunk.__init__(self, nbt)
-        self.blocks = BlockArray(nbt['Level']['Blocks'].value, nbt['Level']['Data'].value)
+        self.blocks = BlockArray(self.chunk_data['Blocks'].value, self.chunk_data['Data'].value)
 
-# TODO: Add class AnvilChunk(Chunk)
+
+# Chunck in Anvil new format
+
+class AnvilChunk(Chunk):
+
+    def __init__(self, nbt):
+        Chunk.__init__(self, nbt)
+        chunk_version = nbt['DataVersion'].value
+        # Started to work on this class with game version 1.13.2
+        # Could work with earlier version, but has to be tested first
+        assert chunk_version >= 1631
+
+
+    def get_section(self,y):
+        """Get a section tag from Y index."""
+        for section in self.chunk_data ['Sections']:
+            if section['Y'].value == y:
+                return section
+
+        raise nbt.region.InconceivedChunk("Section not defined")
+
+
 
 class BlockArray(object):
     """Convenience class for dealing with a Block/data byte array."""
@@ -208,4 +234,3 @@ class BlockArray(object):
     def get_block_and_data(self, x,y,z, coord=False):
         """Return the tuple of (id, data) for the block at x, y, z"""
         return (self.get_block(x,y,z,coord),self.get_data(x,y,z,coord))
-

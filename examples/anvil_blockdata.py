@@ -24,17 +24,20 @@ import nbt
 
 
 def array_4bit_to_byte(array):
-    """Convert a 2048-byte array of 4096 4-bit values to an array of 4096 1-byte values.
+    """Convert an array of 4-bit values to an array of 1-byte values.
     The result is of type bytearray().
     Note that the first byte of the created arrays contains the LEAST significant 
     bits of the first byte of the Data. NOT to the MOST significant bits, as you 
     might expected. This is because Minecraft stores data in that way.
     """
     def iterarray(array):
-        for b in array:
-            yield(b & 15) # Little end of the byte
-            yield((b >> 4) & 15) # Big end of the byte
+        for l in array:
+            for p in range(0, 64, 4):
+                yield(l & 15)  # little end of the int
+                l = l >> 4
+
     return bytearray(iterarray(array))
+
 
 def array_byte_to_4bit(array):
     """Convert an array of 4096 1-byte values to a 2048-byte array of 4096 4-bit values.
@@ -52,6 +55,7 @@ def array_byte_to_4bit(array):
             yield(((b2 & 15) << 4) + (b1 & 15))
     return bytearray(iterarray(array))
 
+
 def grouper(iterable, n, fillvalue=None):
     "Collect data into fixed-length chunks or blocks"
     # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
@@ -59,54 +63,46 @@ def grouper(iterable, n, fillvalue=None):
     args = [iter(iterable)] * n
     return zip_longest(*args, fillvalue=fillvalue)
 
-def print_chunklayer(blocks, data, add, yoffset):
-    blocks = list(blocks[yoffset*256:(yoffset+1)*256])
-    data = array_4bit_to_byte(data[yoffset*128:(yoffset+1)*128])
-    if add is not None:
-        add = array_4bit_to_byte(add[yoffset*128:(yoffset+1)*128])
-        for i,v in enumerate(add):
-            blocks[i] += 256*v
-    
-    assert len(blocks) == 256
-    assert len(data) == 256
-    
-    for row in grouper(zip(blocks,data), 16):
-        print (" ".join(("%4d:%-2d" % block) for block in row))
 
-def get_section(world, chunkx, chunky, chunkz):
-    """Given a world folder, return the requested section.
-    If it is not defined, raise InconceivedChunk."""
-    chunk = world.get_nbt(chunkx, chunkz) # may raise InconceivedChunk
-    for section in chunk['Level']['Sections']:
-        if section['Y'].value == chunky:
-            return section
-    raise nbt.region.InconceivedChunk("Section not defined")
+def print_chunklayer(palette, states, yoffset):
+
+    # Block states are packed into an array of longs
+    # with variable number of bits per block
+    # Handle only array size of 256 (4 bits by block = 2048 bytes)
+
+    assert len(states) == 256
+    indexes = array_4bit_to_byte(states)
+    assert len(indexes) == 4096
+
+    # Now translate states to block names using the palette
+
+    for i in range(yoffset * 256, yoffset * 256 + 256):
+        b = palette[indexes [i]]
+        n = b['Name'].value
+        if n.startswith('minecraft:'):
+            n = n[10:]
+        print (n)
+
 
 def main(world_folder, chunkx, chunkz, height):
     world = nbt.world.WorldFolder(world_folder)
     if not isinstance(world, nbt.world.AnvilWorldFolder):
         print("%s is not an Anvil world" % (world_folder))
         return 65 # EX_DATAERR
-    chunky, yoffset = divmod(height, 16)
+
+    sect_y, yoffset = divmod(height, 16)
     try:
-        section = get_section(world, chunkx, chunky, chunkz)
+        section = world.get_chunk(chunkx, chunkz).get_section(sect_y)
         try:
-            blocks = section['Blocks'].value
-            data = section['Data'].value
+            palette = section['Palette']
+            states = section['BlockStates'].value
+            print_chunklayer(palette, states, yoffset)
         except (KeyError, AttributeError):
-            blocks = bytearray(4096)
-            data = bytearray(2048)
-        try:
-            add = section['Add'].value
-        except (KeyError, AttributeError):
-            add = None
+            print("Bad section format")
+
     except nbt.region.InconceivedChunk:
         print("Section undefined")
-        blocks = bytearray(4096)
-        data = bytearray(2048)
-        add = None
-    
-    print_chunklayer(blocks, data, add, yoffset)
+
     return 0 # NOERR
 
 
@@ -137,11 +133,11 @@ if __name__ == '__main__':
     except ValueError:
         usage('Block height Y-coordinate should be an integer')
         sys.exit(64) # EX_USAGE
-    
+
     # clean path name, eliminate trailing slashes:
     world_folder = os.path.normpath(world_folder)
     if (not os.path.exists(world_folder)):
         usage("No such folder as "+world_folder)
         sys.exit(72) # EX_IOERR
-    
+
     sys.exit(main(world_folder, chunkx, chunkz, height))
