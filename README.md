@@ -1,11 +1,14 @@
-This is a Named Binary Tag parser based upon the specification by Markus Persson.
+This is a "Named Binary Tag" parser & writer, suited for inspecting & editing
+the Minecraft data files.
 
-From The spec:
-  "NBT (Named Binary Tag) is a tag based binary format designed to carry large
-   amounts of binary data with smaller amounts of additional data.
-   An NBT file consists of a single GZIPped Named Tag of type TAG_Compound."
+From the initial specification by Markus Persson:
+```
+NBT (Named Binary Tag) is a tag based binary format designed to carry large
+amounts of binary data with smaller amounts of additional data.
+An NBT file consists of a single GZIPped Named Tag of type TAG_Compound.
+```
 
-read the full spec at http://www.minecraft.net/docs/NBT.txt
+Read the current specification on the official [Minecraft Wiki](https://minecraft.gamepedia.com/NBT_format).
 
 [![Build Status](https://secure.travis-ci.org/twoolie/NBT.png?branch=master)](http://travis-ci.org/#!/twoolie/NBT)
 [![Test Coverage Status](https://coveralls.io/repos/twoolie/NBT/badge.svg)](https://coveralls.io/r/twoolie/NBT)
