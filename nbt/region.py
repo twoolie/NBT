@@ -10,8 +10,7 @@ from collections import Mapping
 import zlib
 import gzip
 from io import BytesIO
-import math, time
-from os.path import getsize
+import time
 from os import SEEK_END
 
 # constants
