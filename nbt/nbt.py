@@ -1,5 +1,8 @@
 """
 Handle the NBT (Named Binary Tag) data format
+
+For more information about the NBT format:
+https://minecraft.gamepedia.com/NBT_format
 """
 
 from struct import Struct, error as StructError

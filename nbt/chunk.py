@@ -8,7 +8,11 @@ and do the appropriate lookups and block conversions yourself.
 The authors decided to focus on NBT datastructure and Region files, 
 and are not actively working on chunk.py.
 Code contributions to chunk.py are welcomed!
+
+For more information about the chunck format:
+https://minecraft.gamepedia.com/Chunk_format
 """
+
 from io import BytesIO
 from struct import pack, unpack
 import array, math
