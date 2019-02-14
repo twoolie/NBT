@@ -19,29 +19,6 @@ import array
 import nbt
 
 
-class Chunk(object):
-    """Class for representing a single chunk."""
-    def __init__(self, nbt):
-        self.chunk_data = nbt['Level']
-        self.coords = self.chunk_data['xPos'],self.chunk_data['zPos']
-
-    def get_coords(self):
-        """Return the coordinates of this chunk."""
-        return (self.coords[0].value,self.coords[1].value)
-
-    def __repr__(self):
-        """Return a representation of this Chunk."""
-        return "Chunk("+str(self.coords[0])+","+str(self.coords[1])+")"
-
-
-# Chunk in Region old format
-
-class McRegionChunk(Chunk):
-    def __init__(self, nbt):
-        Chunk.__init__(self, nbt)
-        self.blocks = BlockArray(self.chunk_data['Blocks'].value, self.chunk_data['Data'].value)
-
-
 # Legacy numeric block identifiers
 # mapped to alpha identifiers in best effort
 # See https://minecraft.gamepedia.com/Java_Edition_data_values/Pre-flattening
@@ -50,10 +27,10 @@ class McRegionChunk(Chunk):
 block_ids = {
      0: 'air',
      1: 'stone',
-     2: 'grass',
+     2: 'grass_block',
      3: 'dirt',
      4: 'cobblestone',
-     5: 'planks',
+     5: 'oak_planks',
      6: 'sapling',
      7: 'bedrock',
      8: 'flowing_water',
@@ -71,17 +48,25 @@ block_ids = {
     20: 'glass',
     21: 'lapis_ore',
     24: 'sandstone',
+    31: 'grass',
+    35: 'white_wool',
     37: 'dandelion',
     38: 'poppy',
+    44: 'stone_slab',
     50: 'torch',
     51: 'fire',
+    53: 'oak_stairs',
     59: 'wheat',
     60: 'farmland',
+    63: 'sign',  # will change to oak_sign in 1.14
+    65: 'ladder',
+    67: 'cobblestone_stairs',
     78: 'snow',
     79: 'ice',
     81: 'cactus',
     82: 'clay',
     83: 'sugar_cane',
+    85: 'oak_fence',
     86: 'pumpkin',
     91: 'lit_pumpkin',
     }
@@ -103,6 +88,40 @@ class AnvilBlock:
         else:
             print("warning: unknown block id %i" % bid)
             print("hint: add that block to the 'block_ids' map")
+
+
+# Generic Chunk
+
+class Chunk(object):
+    """Class for representing a single chunk."""
+    def __init__(self, nbt):
+        self.chunk_data = nbt['Level']
+        self.coords = self.chunk_data['xPos'],self.chunk_data['zPos']
+
+    def get_coords(self):
+        """Return the coordinates of this chunk."""
+        return (self.coords[0].value,self.coords[1].value)
+
+    def __repr__(self):
+        """Return a representation of this Chunk."""
+        return "Chunk("+str(self.coords[0])+","+str(self.coords[1])+")"
+
+
+# Chunk in Region old format
+
+class McRegionChunk(Chunk):
+
+    def __init__(self, nbt):
+        Chunk.__init__(self, nbt)
+        self.blocks = BlockArray(self.chunk_data['Blocks'].value, self.chunk_data['Data'].value)
+
+    def get_max_height (self):
+        return 127
+
+    def get_block (self, x, y, z):
+        b = AnvilBlock ()
+        b.set_id (self.blocks.get_block (x, y, z))
+        return b
 
 
 # Section in Anvil new format
