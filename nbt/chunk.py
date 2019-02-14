@@ -48,19 +48,33 @@ block_ids = {
     20: 'glass',
     21: 'lapis_ore',
     24: 'sandstone',
+    30: 'cobweb',
     31: 'grass',
     35: 'white_wool',
     37: 'dandelion',
     38: 'poppy',
+    39: 'brown_mushroom',
+    40: 'red_mushroom',
     44: 'stone_slab',
+    48: 'mossy_cobblestone',
+    49: 'obsidian',
     50: 'torch',
     51: 'fire',
+    52: 'spawner',
     53: 'oak_stairs',
+    54: 'chest',
+    56: 'diamond_ore',
     59: 'wheat',
     60: 'farmland',
+    61: 'furnace',
+    62: 'furnace',
     63: 'sign',  # will change to oak_sign in 1.14
     65: 'ladder',
+    66: 'rail',
     67: 'cobblestone_stairs',
+    72: 'oak_pressure_plate',
+    73: 'redstone_ore',
+    74: 'redstone_ore',
     78: 'snow',
     79: 'ice',
     81: 'cactus',
@@ -72,22 +86,24 @@ block_ids = {
     }
 
 
-# Block in Anvil new format
+# Generic block
 # Wrap mapping from numeric to alpha identifiers
 
-class AnvilBlock:
+class Block:
 
-    def __init__ (self, name = None):
-        if name != None and name.startswith ('minecraft:'):
-            name = name [10:]
-        self.name = name
+    def __init__ (self, name = None, bid = None):
+        if name != None:
+            if name.startswith ('minecraft:'):
+                name = name [10:]
+            self.name = name
 
-    def set_id (self, bid):
-        if bid in block_ids:
-            self.name = block_ids [bid]
-        else:
-            print("warning: unknown block id %i" % bid)
-            print("hint: add that block to the 'block_ids' map")
+        elif bid != None:
+            if bid in block_ids:
+                self.name = block_ids [bid]
+            else:
+                self.name = None
+                print("warning: unknown block id %i" % bid)
+                print("hint: add that block to the 'block_ids' map")
 
 
 # Generic Chunk
@@ -119,8 +135,7 @@ class McRegionChunk(Chunk):
         return 127
 
     def get_block (self, x, y, z):
-        b = AnvilBlock ()
-        b.set_id (self.blocks.get_block (x, y, z))
+        b = Block (bid = self.blocks.get_block (x, y, z))
         return b
 
 
@@ -128,51 +143,48 @@ class McRegionChunk(Chunk):
 
 class AnvilSection:
 
-    def __init__(self, nbt):
-        self.palette = nbt['Palette']  # list of compound
-        states = nbt['BlockStates'].value
+    def __init__ (self, nbt):
+        self.palette = nbt ['Palette']  # list of compound
+        states = nbt ['BlockStates'].value
 
         # Block states are packed into an array of longs
         # with variable number of bits per block (min: 4)
 
-        nb = (len(self.palette) - 1).bit_length()
+        nb = (len (self.palette) - 1).bit_length ()
         if nb < 4: nb = 4
-        assert nb == len(states) * 8 * 8 / 4096
-        m = pow(2, nb) - 1
+        assert nb == len (states) * 8 * 8 / 4096
+        m = pow (2, nb) - 1
 
         j = 0
         bl = 64
-        ll = states[0]
+        ll = states [0]
 
         self.indexes = []
 
         for i in range (0,4096):
             if bl == 0:
                 j = j + 1
-                if j >= len(states): break
-                ll = states[j]
+                ll = states [j]
                 bl = 64
 
             if nb <= bl:
-                self.indexes.append(ll & m)
+                self.indexes.append (ll & m)
                 ll = ll >> nb
                 bl = bl - nb
             else:
                 j = j + 1
-                if j >= len(states): break
-                lh = states[j]
+                lh = states [j]
                 bh = nb - bl
-                ml = pow(2, bl) - 1
-                mh = pow(2, bh) - 1
-                lh = (lh & mh) << bl
-                ll = (ll & ml)
-                self.indexes.append(lh + ll)
+
+                lh = (lh & (pow (2, bh) - 1)) << bl
+                ll = (ll & (pow (2, bl) - 1))
+                self.indexes.append (lh & ll)
 
                 ll = states[j]
                 ll = ll >> bh
                 bl = 64 - bh
 
-        assert len(self.indexes) == 4096
+        assert len (self.indexes) == 4096
 
 
     def get_block (self, x, y, z):
@@ -183,7 +195,7 @@ class AnvilSection:
             if p < len (self.palette):
                 b = self.palette [p]
                 name = b ['Name'].value
-                return AnvilBlock (name)
+                return Block (name = name)
 
         return None
 
@@ -198,35 +210,35 @@ class AnvilChunk(Chunk):
         # Started to work on this class with game version 1.13.2
         # Could work with earlier version, but has to be tested first
 
-        chunk_version = nbt['DataVersion'].value
+        chunk_version = nbt ['DataVersion'].value
         assert chunk_version >= 1631 and 1631 <= chunk_version
 
         # Load all sections
 
         self.sections = {}
-        for s in self.chunk_data['Sections']:
-            self.sections[s['Y'].value] = AnvilSection(s)
+        for s in self.chunk_data ['Sections']:
+            self.sections [s ['Y'].value] = AnvilSection (s)
 
 
-    def get_section(self, y):
+    def get_section (self, y):
         """Get a section from Y index."""
         if y in self.sections:
-            return self.sections[y]
+            return self.sections [y]
 
         return None
 
 
-    def get_max_height(self):
+    def get_max_height (self):
         ymax = 0
-        for y in self.sections.keys():
+        for y in self.sections.keys ():
             if y > ymax: ymax = y
-        return ymax * 16
+        return ymax * 16 + 15
 
 
-    def get_block(self, x, y, z):
+    def get_block (self, x, y, z):
         """Get a block from relative x,y,z."""
-        sy,by = divmod(y, 16)
-        section = self.get_section(sy)
+        sy,by = divmod (y, 16)
+        section = self.get_section (sy)
         if section == None:
             return None
 

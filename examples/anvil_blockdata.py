@@ -32,7 +32,7 @@ def main (world_folder, chunkx, chunkz, height):
         chunk = world.get_chunk (chunkx, chunkz)
         for z in range (0, 16):
             for x in range (0, 16):
-                b = chunk.get_block (x, height, z)  # returns an AnvilBlock
+                b = chunk.get_block (x, height, z)
                 if b != None:
                     if b.name not in blocks:
                         blocks [b.name] = 0

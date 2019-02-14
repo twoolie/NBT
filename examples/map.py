@@ -53,7 +53,7 @@ def get_heightmap_image(chunk, buffer=False, gmin=False, gmax=False):
 
 block_ignore = [
     'air',  # At least this one
-#    'air', 'cave_air', 'water', 'lava', 'snow',
+#    'cave_air', 'water', 'lava', 'snow', 'ice',
 #    'grass', 'tall_grass', 'dead_bush',
 #    'seagrass', 'tall_seagrass', 'kelp', 'kelp_plant',
 #    'dandelion', 'poppy', 'oxeye_daisy', 'white_tulip',
@@ -75,7 +75,7 @@ block_ignore = [
 
 
 # Map of block colors from names
-# Legacy block numeric identifiers are now hidden by AnvilBlock class
+# Legacy block numeric identifiers are now hidden by Block class
 # and mapped to alpha identifiers in best effort
 # TODO: move this map into a separate config file
 
@@ -118,6 +118,7 @@ block_colors = {
     'oak_leaves':         {'h':114, 's':64,  'l':22},
     'oak_log':            {'h':35,  's':93,  'l':30},
     'oak_planks':         {'h':35,  's':93,  'l':30},
+    'oak_pressure_plate': {'h':35,  's':93,  'l':30},
     'oak_stairs':         {'h':114, 's':64,  'l':22},
     'poppy':              {'h':0,   's':100, 'l':50},
     'pumpkin':            {'h':24,  's':100, 'l':45},
@@ -149,7 +150,7 @@ def get_map(chunk):
             ground_height = max_height
             tints = []
             for y in range(max_height,-1,-1):
-                block = chunk.get_block (x, y, z)  # returns an AnvilBlock
+                block = chunk.get_block (x, y, z)
                 block_id = None;
                 if block != None:
                     block_id = block.name
