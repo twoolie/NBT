@@ -150,7 +150,7 @@ def get_map(chunk):
             ground_height = max_height
             tints = []
             for y in range(max_height,-1,-1):
-                block = chunk.get_block (x, y, z)
+                block = chunk.get_block(x, y, z)
                 block_id = None;
                 if block != None:
                     block_id = block.name
@@ -177,20 +177,20 @@ def get_map(chunk):
 
             if block_id != None:
                 if block_id in block_colors:
-                    color = block_colors [block_id]
+                    color = block_colors[block_id]
                 else:
                     color = {'h':0, 's':0, 'l':100}
-                    print ("warning: unknown color for block id: %s" % block_id)
-                    print ("hint: add that block to the 'block_colors' map")
+                    print("warning: unknown color for block id: %s" % block_id)
+                    print("hint: add that block to the 'block_colors' map")
             else:
                 color = {'h':0, 's':0, 'l':0}
 
             height_shift = 0 #(ground_height-64)*0.25
-            
-            final_color = {'h':color['h'], 's':color['s'], 'l':color['l']+height_shift}
+
+            final_color = {'h':color['h'], 's':color['s'], 'l':color['l'] + height_shift}
             if final_color['l'] > 100: final_color['l'] = 100
             if final_color['l'] < 0: final_color['l'] = 0
-            
+
             # Apply tints from translucent blocks
             for tint in reversed(tints):
                 final_color = hsl_slide(final_color, tint, 0.4)
@@ -198,6 +198,7 @@ def get_map(chunk):
             rgb = hsl2rgb(final_color['h'], final_color['s'], final_color['l'])
 
             pixels += pack("BBB", rgb[0], rgb[1], rgb[2])
+
     im = Image.frombytes('RGB', (16,16), pixels)
     return im
 

@@ -19,28 +19,28 @@ except ImportError:
 import nbt
 
 
-def main (world_folder, chunkx, chunkz, height):
+def main(world_folder, chunkx, chunkz, height):
 
-    world = nbt.world.WorldFolder (world_folder)
-    if not isinstance (world, nbt.world.AnvilWorldFolder):
-        print ("%s is not an Anvil world" % (world_folder))
+    world = nbt.world.WorldFolder(world_folder)
+    if not isinstance(world, nbt.world.AnvilWorldFolder):
+        print("%s is not an Anvil world" % (world_folder))
         return 65 # EX_DATAERR
 
     blocks = {}
 
     try:
-        chunk = world.get_chunk (chunkx, chunkz)
-        for z in range (0, 16):
-            for x in range (0, 16):
-                b = chunk.get_block (x, height, z)
+        chunk = world.get_chunk(chunkx, chunkz)
+        for z in range(0, 16):
+            for x in range(0, 16):
+                b = chunk.get_block(x, height, z)
                 if b != None:
                     if b.name not in blocks:
-                        blocks [b.name] = 0
-                    blocks [b.name] = blocks [b.name] + 1
+                        blocks[b.name] = 0
+                    blocks[b.name] = blocks[b.name] + 1
 
-        print ("Chunk (%i,%i) Height %i" % (chunkx, chunkz, height))
-        for n in blocks.keys ():
-            print ("%s: %i" % (n, blocks [n]))
+        print("Chunk (%i,%i) Height %i" % (chunkx, chunkz, height))
+        for n in blocks.keys():
+            print("%s: %i" % (n, blocks[n]))
 
     except nbt.region.InconceivedChunk:
         print("Inconceived chunk")
