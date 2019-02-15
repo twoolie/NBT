@@ -34,9 +34,9 @@ def main(world_folder, chunkx, chunkz, height):
             for x in range(0, 16):
                 b = chunk.get_block(x, height, z)
                 if b != None:
-                    if b.name not in blocks:
-                        blocks[b.name] = 0
-                    blocks[b.name] = blocks[b.name] + 1
+                    if b not in blocks:
+                        blocks[b] = 0
+                    blocks[b] = blocks[b] + 1
 
         print("Chunk (%i,%i) Height %i" % (chunkx, chunkz, height))
         for n in blocks.keys():

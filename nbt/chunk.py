@@ -86,24 +86,14 @@ block_ids = {
     }
 
 
-# Generic block
-# Wrap mapping from numeric to alpha identifiers
-
-class Block(object):
-
-    def __init__(self, name = None, bid = None):
-        if name != None:
-            if name.startswith('minecraft:'):
-                name = name[10:]
-            self.name = name
-
-        elif bid != None:
-            if bid in block_ids:
-                self.name = block_ids[bid]
-            else:
-                self.name = None
-                print("warning: unknown block id %i" % bid)
-                print("hint: add that block to the 'block_ids' map")
+def block_id_to_name(bid):
+    try:
+        name = block_ids[bid]
+    except KeyError:
+        name = None
+        print("warning: unknown block id %i" % bid)
+        print("hint: add that block to the 'block_ids' map")
+    return name
 
 
 # Generic Chunk
@@ -135,8 +125,8 @@ class McRegionChunk(Chunk):
         return 127
 
     def get_block(self, x, y, z):
-        b = Block(bid = self.blocks.get_block(x, y, z))
-        return b
+        name = block_id_to_name(self.blocks.get_block(x, y, z))
+        return name
 
 
 # Section in Anvil new format
@@ -144,13 +134,21 @@ class McRegionChunk(Chunk):
 class AnvilSection(object):
 
     def __init__(self, nbt):
-        self.palette = nbt['Palette']  # list of compound
+
+        self.names = []
+
+        for p in nbt['Palette']:
+            name = p['Name'].value
+            if name.startswith('minecraft:'):
+                name = name[10:]
+            self.names.append(name)
+
         states = nbt['BlockStates'].value
 
         # Block states are packed into an array of longs
         # with variable number of bits per block (min: 4)
 
-        nb = (len(self.palette) - 1).bit_length()
+        nb = (len(self.names) - 1).bit_length()
         if nb < 4: nb = 4
         assert nb == len(states) * 8 * 8 / 4096
         m = pow(2, nb) - 1
@@ -190,14 +188,8 @@ class AnvilSection(object):
     def get_block(self, x, y, z):
         # Blocks are stored in YZX order
         i = y * 256 + z * 16 + x
-        if i < len(self.indexes):
-            p = self.indexes[i]
-            if p < len(self.palette):
-                b = self.palette[p]
-                name = b['Name'].value
-                return Block(name = name)
-
-        return None
+        p = self.indexes[i]
+        return self.names[p]
 
 
 # Chunck in Anvil new format
