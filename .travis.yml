@@ -4,7 +4,8 @@ python:
   - "2.7"
   - "3.5"
   - "3.6"
-  - "3.7"
+  # not supported yet by Travis
+  #- "3.7"
   - "pypy"
   - "pypy3"
 sudo: false
