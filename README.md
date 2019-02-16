@@ -1,4 +1,8 @@
-This is a "Named Binary Tag" parser & writer, suited for inspecting & editing
+# The NBT library for Python
+
+## Forewords
+
+This is a `Named Binary Tag` parser & writer, suited for inspecting & editing
 the Minecraft data files.
 
 From the initial specification by Markus Persson:
@@ -10,10 +14,23 @@ An NBT file consists of a single GZIPped Named Tag of type TAG_Compound.
 
 Read the current specification on the official [Minecraft Wiki](https://minecraft.gamepedia.com/NBT_format).
 
+
+## Status
+
 [![Build Status](https://secure.travis-ci.org/twoolie/NBT.png?branch=master)](http://travis-ci.org/#!/twoolie/NBT)
 [![Test Coverage Status](https://coveralls.io/repos/twoolie/NBT/badge.svg)](https://coveralls.io/r/twoolie/NBT)
 
-Usage:
+
+## Dependencies
+
+The library, the tests and the examples are only using the Python core library, except `curl` for downloading
+some test reference data and `PIL` (Python Imaging Library) for the `map` example.
+
+Supported Python releases: 2.7, 3.5, 3.6 and 3.7.
+
+
+## Usage
+
  1) Reading files.
 
  The easiest way to read an nbt file is to instantiate an NBTFile object e.g.
