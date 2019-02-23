@@ -1,4 +1,8 @@
-This is a "Named Binary Tag" parser & writer, suited for inspecting & editing
+# The NBT library for Python
+
+## Forewords
+
+This is a `Named Binary Tag` parser & writer, suited for inspecting & editing
 the Minecraft data files.
 
 From the initial specification by Markus Persson:
@@ -10,11 +14,24 @@ An NBT file consists of a single GZIPped Named Tag of type TAG_Compound.
 
 Read the current specification on the official [Minecraft Wiki](https://minecraft.gamepedia.com/NBT_format).
 
+
+## Status
+
 [![Build Status](https://secure.travis-ci.org/twoolie/NBT.png?branch=master)](http://travis-ci.org/#!/twoolie/NBT)
 [![Test Coverage Status](https://coveralls.io/repos/twoolie/NBT/badge.svg)](https://coveralls.io/r/twoolie/NBT)
 
-Usage:
- 1) Reading files.
+
+## Dependencies
+
+The library, the tests and the examples are only using the Python core library, except `curl` for downloading
+some test reference data and `PIL` (Python Imaging Library) for the `map` example.
+
+Supported Python releases: 2.7, 3.5 and 3.6 (*3.7 not supported yet by Travis*)
+
+
+## Usage
+
+### Reading files
 
  The easiest way to read an nbt file is to instantiate an NBTFile object e.g.
 
@@ -41,7 +58,8 @@ Usage:
     # or....
     >>> nbtfile = NBTFile(buffer=net_socket.makefile())
 
- 2) Writing files.
+
+### Writing files
 
  Writing files is easy too! if you have a NBTFile object, simply call it's
  write_file() method. If the NBTFile was instantiated with a filename, then
@@ -59,7 +77,8 @@ Usage:
     >>> nbtfile.write_file(fileobj = my_file) #compressed
     >>> nbtfile.write_file(buffer = sock.makefile()) #uncompressed
 
- 3) Creating files
+
+### Creating files
 
  Creating files is trickier but ultimately should give you no issue, as long as
  you have read the NBT spec (hint.. it's very short). Also be sure to note that

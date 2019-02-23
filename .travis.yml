@@ -2,10 +2,10 @@
 language: python
 python:
   - "2.7"
-  - "3.3"
-  - "3.4"
   - "3.5"
   - "3.6"
+  # not supported yet by Travis
+  #- "3.7"
   - "pypy"
   - "pypy3"
 sudo: false
@@ -13,8 +13,6 @@ addons:
   apt:
     packages:
     - curl
-    - zlib1g
-    - zlib1g-dev
 install:
  # Install python-coveralls
  - pip install coveralls
