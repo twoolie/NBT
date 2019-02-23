@@ -4,7 +4,7 @@ Finds the contents of the different blocks in a level, taking different data val
 """
 
 import locale, os, sys
-import glob
+
 # local module
 try:
     import nbt
@@ -14,15 +14,23 @@ except ImportError:
     if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
         raise
     sys.path.append(extrasearchpath)
-from nbt.region import RegionFile
-from nbt.chunk import McRegionChunk
+from nbt.world import WorldFolder
 
-def stats_per_chunk(chunk, block_data_totals):
+
+block_counts = {}
+
+
+def stats_per_chunk(chunk):
     """Given a chunk, increment the block types with the number of blocks found"""
-    for block_id, data_id in chunk.blocks.get_all_blocks_and_data():
-        block_data_totals[block_id][data_id] += 1
 
-def bounded_stats_per_chunk(chunk, block_data_totals, start, stop):
+    for block_id in chunk.iter_block():
+        try:
+            block_counts[block_id] += 1
+        except KeyError:
+            block_counts[block_id] = 1
+
+
+def bounded_stats_per_chunk(chunk, block_counts, start, stop):
     """Given a chunk, return the number of blocks types within the specified selection"""
     chunk_z, chunk_x = chunk.get_coords()
     for z in range(16):
@@ -37,118 +45,86 @@ def bounded_stats_per_chunk(chunk, block_data_totals, start, stop):
                 # Outside the bounding box; skip to next iteration
                 #print("X break: %d,%d,%d" % (world_x,start[0],stop[0]))
                 break
-            for y in range(128):
+            for y in range(chunk.get_max_height() + 1):
                 if ( (start != None and y < int(start[1])) or (stop != None and y > int(stop[1])) ):
                     # Outside the bounding box; skip to next iteration
                     #print("Y break: %d,%d,%d" % (y,start[1],stop[1]))
                     break
                 
                 #print("Chunk: %d,%d Coord: %d,%d,%d" % (c['x'], c['z'],x,y,z))
-                block_id,block_data = chunk.blocks.get_block_and_data(x,y,z)
-                block_data_totals[block_id][block_data] += 1
+                block_id = chunk.get_block(x,y,z)
+                if block_id != None:
+                    try:
+                        block_counts[block_id] += 1
+                    except KeyError:
+                        block_counts[block_id] = 1
 
-def process_region_file(filename, start, stop):
-    """Given a region filename, return the number of blocks of each ID in that file"""
-    pieces = filename.split('.')
-    rx = int(pieces[-3])
-    rz = int(pieces[-2])
-    
-    block_data_totals = [[0]*16 for i in range(256)] # up to 16 data numbers in 256 block IDs
-    
+
+def process_region_file(region, start, stop):
+    """Given a region, return the number of blocks of each ID in that region"""
+    rx = region.loc.x
+    rz = region.loc.z
+
     # Does the region overlap the bounding box at all?
     if (start != None):
         if ( (rx+1)*512-1 < int(start[0]) or (rz+1)*512-1 < int(start[2]) ):
-            return block_data_totals
+            return
     elif (stop != None):
         if ( rx*512-1 > int(stop[0]) or rz*512-1 > int(stop[2]) ):
-            return block_data_totals
-    
-    file = RegionFile(filename)
-    
+            return
+
     # Get all chunks
-    chunks = file.get_chunks()
-    print("Parsing %s... %d chunks" % (os.path.basename(filename),len(chunks)))
-    for c in chunks:
+    print("Parsing region %s..." % os.path.basename(region.filename))
+    for c in region.iter_chunks_class():
+        cx, cz = c.get_coords();
         # Does the chunk overlap the bounding box at all?
         if (start != None):
-            if ( (c['x']+1)*16 + rx*512 - 1 < int(start[0]) or (c['z']+1)*16 + rz*512 - 1 < int(start[2]) ):
+            if ( (cx+1)*16 + rx*512 - 1 < int(start[0]) or (cz+1)*16 + rz*512 - 1 < int(start[2]) ):
                 continue
         elif (stop != None):
-            if ( c['x']*16 + rx*512 - 1 > int(stop[0]) or c['z']*16 + rz*512 - 1 > int(stop[2]) ):
+            if ( cx*16 + rx*512 - 1 > int(stop[0]) or cz*16 + rz*512 - 1 > int(stop[2]) ):
                 continue
-        
-        chunk = McRegionChunk(file.get_chunk(c['x'], c['z']))
-        assert chunk.get_coords() == (c['x'] + rx*32, c['z'] + rz*32)
-        #print("Parsing chunk ("+str(c['x'])+", "+str(c['z'])+")")
-        # Parse the blocks
+
+        #print("Parsing chunk (" + str(cx) + ", " + str(cz) + ")...")
 
         # Fast code if no start or stop coordinates are specified
         # TODO: also use this code if start/stop is specified, but the complete chunk is included
         if (start == None and stop == None):
-            stats_per_chunk(chunk, block_data_totals)
+            stats_per_chunk(c)
         else:
             # Slow code that iterates through each coordinate
-            bounded_stats_per_chunk(chunk, block_data_totals, start, stop)
-    
-    return block_data_totals
+            bounded_stats_per_chunk(c, start, stop)
 
 
-def print_results(block_data_totals):
+def print_results():
     locale.setlocale(locale.LC_ALL, '')
     
     # Analyze blocks
-    for block_id,data in enumerate(block_data_totals):
-        if sum(data) > 0:
-            datastr = ", ".join([locale.format_string("%d: %d", (i,c), grouping=True) for (i,c) in enumerate(data) if c > 0])
-            print(locale.format_string("block id %3d: %12d (data id %s)", (block_id,sum(data),datastr), grouping=True))
-    block_totals = [sum(data_totals) for data_totals in block_data_totals]
     
-    total_blocks = sum(block_totals)
-    solid_blocks = total_blocks - block_totals[0]
-    solid_ratio = (solid_blocks+0.0)/total_blocks if (total_blocks > 0) else 0
-    print(locale.format_string("%d total blocks in region, %d are non-air (%0.4f", (total_blocks, solid_blocks, 100.0*solid_ratio), grouping=True)+"%)")
+    block_total = 0
     
-    # Find valuable blocks
-    print(locale.format_string("Diamond Ore:      %8d", block_totals[56], grouping=True))
-    print(locale.format_string("Gold Ore:         %8d", block_totals[14], grouping=True))
-    print(locale.format_string("Redstone Ore:     %8d", block_totals[73], grouping=True))
-    print(locale.format_string("Iron Ore:         %8d", block_totals[15], grouping=True))
-    print(locale.format_string("Coal Ore:         %8d", block_totals[16], grouping=True))
-    print(locale.format_string("Lapis Lazuli Ore: %8d", block_totals[21], grouping=True))
-    print(locale.format_string("Dungeons:         %8d", block_totals[52], grouping=True))
+    for block_id,block_count in block_counts.items():
+        print(locale.format_string("%20s: %12d", (block_id, block_count)))
+        block_total += block_count
     
-    print(locale.format_string("Clay:             %8d", block_totals[82], grouping=True))
-    print(locale.format_string("Sugar Cane:       %8d", block_totals[83], grouping=True))
-    print(locale.format_string("Cacti:            %8d", block_totals[81], grouping=True))
-    print(locale.format_string("Pumpkin:          %8d", block_totals[86], grouping=True))
-    print(locale.format_string("Dandelion:        %8d", block_totals[37], grouping=True))
-    print(locale.format_string("Rose:             %8d", block_totals[38], grouping=True))
-    print(locale.format_string("Brown Mushroom:   %8d", block_totals[39], grouping=True))
-    print(locale.format_string("Red Mushroom:     %8d", block_totals[40], grouping=True))
-    print(locale.format_string("Lava Springs:     %8d", block_totals[11], grouping=True))
-    
+    solid_blocks = block_total - block_counts ['air']
+    solid_ratio = (solid_blocks+0.0)/block_total
+    print(locale.format_string("%d total blocks in world, %d are non-air (%0.4f", (block_total, solid_blocks, 100.0*solid_ratio))+"%)")
 
 
 def main(world_folder, start=None, stop=None):
-    if (not os.path.exists(world_folder)):
-        print("No such folder as "+world_folder)
-        return 2 # ENOENT
-    
-    regions = glob.glob(os.path.join(world_folder,'region','*.mcr'))
-    
-    block_data_totals = [[0]*16 for i in range(256)] # up to 16 data numbers in 256 block IDs
+    world = WorldFolder(world_folder)
+
     try:
-        for filename in regions:
-            region_totals = process_region_file(filename, start, stop)
-            for i, data in enumerate(region_totals):
-                for j, total in enumerate(data):
-                    block_data_totals[i][j] += total
-    
+        for region in world.iter_regions():
+            process_region_file(region, start, stop)
+
     except KeyboardInterrupt:
-        print_results(block_data_totals)
+        print('Keyboard interrupt!')
+        print_results(block_counts)
         return 75 # EX_TEMPFAIL
-    
-    print_results(block_data_totals)
+
+    print_results()
     return 0 # EX_OK
 
 

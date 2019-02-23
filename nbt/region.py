@@ -190,7 +190,7 @@ class RegionFile(object):
     """Constant indicating an normal status: the chunk does not exist.
     Deprecated. Use :const:`nbt.region.STATUS_CHUNK_NOT_CREATED` instead."""
     
-    def __init__(self, filename=None, fileobj=None):
+    def __init__(self, filename=None, fileobj=None, chunkclass = None):
         """
         Read a region file by filename or file object. 
         If a fileobj is specified, it is not closed after use; it is the callers responibility to close it.
@@ -198,6 +198,7 @@ class RegionFile(object):
         self.file = None
         self.filename = None
         self._closefile = False
+        self.chunkclass = chunkclass
         if filename:
             self.filename = filename
             self.file = open(filename, 'r+b') # open for read and write in binary mode
@@ -477,7 +478,23 @@ class RegionFile(object):
                 yield self.get_chunk(m.x, m.z)
             except RegionFileFormatError:
                 pass
-    
+
+    # The following method will replace 'iter_chunks'
+    # but the previous is kept for the moment
+    # until the users update their code
+
+    def iter_chunks_class(self):
+        """
+        Yield each readable chunk present in the region.
+        Chunks that can not be read for whatever reason are silently skipped.
+        This function returns a :class:`nbt.chunk.Chunk` instance.
+        """
+        for m in self.get_metadata():
+            try:
+                yield self.chunkclass(self.get_chunk(m.x, m.z))
+            except RegionFileFormatError:
+                pass
+
     def __iter__(self):
         return self.iter_chunks()
 

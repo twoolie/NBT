@@ -106,36 +106,17 @@ class BiomeAnalysisScriptTest(ScriptTestCase):
     #   output = self.runScript('biome_analysis.py', [self.anvilfolder])
 
 class BlockAnalysisScriptTest(ScriptTestCase):
-    expected = [
-        "DiamondOre:1743",
-        "GoldOre:4838",
-        "RedstoneOre:14487",
-        "IronOre:52906",
-        "CoalOre:97597",
-        "LapisLazuliOre:2051",
-        "Dungeons:26",
-        "Clay:897",
-        "SugarCane:22",
-        "Cacti:0",
-        "Pumpkin:6",
-        "Dandelion:513",
-        "Rose:131",
-        "BrownMushroom:40",
-        "RedMushroom:31",
-        "LavaSprings:47665",
-    ]
+
     def testMcRegionWorld(self):
         output = self.runScript('block_analysis.py', [self.mcregionfolder])
-        self.assertTrue(len(output) >= 73, "Expected output of at least 73 lines long")
-        output = [_deletechars(l, " ,.") for l in output[-16:]]
-        self.assertEqualOutput(output, self.expected)
-    # TODO: Anvil does not yet work.
-    # def testAnvilWorld(self):
-    #   output = self.runScript('block_analysis.py', [self.anvilfolder])
-    #   print repr(output)
-    #   self.assertTrue(len(output) >= 73, "Expected output of at least 73 lines long")
-    #   output = [_deletechars(l, " ,.") for l in output[-16:]]
-    #   self.assertEqualOutput(output, self.expected)
+        self.assertTrue(len(output) == 60, "Expected output of 60 lines long")
+        self.assertEqualString(output[-1], '21397504 total blocks in world, 11181987 are non-air (52.2584%)')
+
+    def testAnvilWorld(self):
+        output = self.runScript('block_analysis.py', [self.anvilfolder])
+        self.assertTrue(len(output) == 60, "Expected output of 60 lines long")
+        self.assertEqualString(output[-1], '13819904 total blocks in world, 11181987 are non-air (80.9122%)')
+
 
 class ChestAnalysisScriptTest(ScriptTestCase):
     def testMcRegionWorld(self):
@@ -149,12 +130,14 @@ class ChestAnalysisScriptTest(ScriptTestCase):
         count = len(list(filter(lambda l: l.startswith('Chest at '), output)))
         self.assertEqual(count, 38)
 
+
 def has_PIL():
     try:
         from PIL import Image
         return True
     except ImportError:
         return False
+
 
 class MapScriptTest(ScriptTestCase):
     @unittest.skipIf(not has_PIL(), "PIL library not available")
@@ -164,10 +147,12 @@ class MapScriptTest(ScriptTestCase):
     # TODO: this currently writes the map to tests/nbtmcregion*.png files. 
     # The locations should be a tempfile, and the file should be deleted afterwards.
     
-    # @skipIf(not has_PIL(), "PIL library not available")
-    # def testAnvilWorld(self):
-    #   output = self.runScript('map.py', ['--noshow', self.anvilfolder])
-    #   self.assertEqualString(output[-1], "Saved map as Sample World.png")
+    @unittest.skipIf(not has_PIL(), "PIL library not available")
+    def testAnvilWorld(self):
+        output = self.runScript('map.py', ['--noshow', self.anvilfolder])
+        self.assertTrue(output[-1].startswith("Saved map as "))
+    # TODO: same as above
+
 
 class MobAnalysisScriptTest(ScriptTestCase):
     def testMcRegionWorld(self):
