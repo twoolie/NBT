@@ -14,14 +14,95 @@ https://minecraft.gamepedia.com/Chunk_format
 """
 
 from io import BytesIO
-from struct import pack, unpack
-import array, math
+from struct import pack
+import array
+import nbt
+
+
+# Legacy numeric block identifiers
+# mapped to alpha identifiers in best effort
+# See https://minecraft.gamepedia.com/Java_Edition_data_values/Pre-flattening
+# TODO: move this map into a separate file
+
+block_ids = {
+     0: 'air',
+     1: 'stone',
+     2: 'grass_block',
+     3: 'dirt',
+     4: 'cobblestone',
+     5: 'oak_planks',
+     6: 'sapling',
+     7: 'bedrock',
+     8: 'flowing_water',
+     9: 'water',
+    10: 'flowing_lava',
+    11: 'lava',
+    12: 'sand',
+    13: 'gravel',
+    14: 'gold_ore',
+    15: 'iron_ore',
+    16: 'coal_ore',
+    17: 'oak_log',
+    18: 'oak_leaves',
+    19: 'sponge',
+    20: 'glass',
+    21: 'lapis_ore',
+    24: 'sandstone',
+    30: 'cobweb',
+    31: 'grass',
+    35: 'white_wool',
+    37: 'dandelion',
+    38: 'poppy',
+    39: 'brown_mushroom',
+    40: 'red_mushroom',
+    44: 'stone_slab',
+    48: 'mossy_cobblestone',
+    49: 'obsidian',
+    50: 'torch',
+    51: 'fire',
+    52: 'spawner',
+    53: 'oak_stairs',
+    54: 'chest',
+    56: 'diamond_ore',
+    59: 'wheat',
+    60: 'farmland',
+    61: 'furnace',
+    62: 'furnace',
+    63: 'sign',  # will change to oak_sign in 1.14
+    65: 'ladder',
+    66: 'rail',
+    67: 'cobblestone_stairs',
+    72: 'oak_pressure_plate',
+    73: 'redstone_ore',
+    74: 'redstone_ore',
+    78: 'snow',
+    79: 'ice',
+    81: 'cactus',
+    82: 'clay',
+    83: 'sugar_cane',
+    85: 'oak_fence',
+    86: 'pumpkin',
+    91: 'lit_pumpkin',
+    }
+
+
+def block_id_to_name(bid):
+    try:
+        name = block_ids[bid]
+    except KeyError:
+        name = None
+        print("warning: unknown block id %i" % bid)
+        print("hint: add that block to the 'block_ids' map")
+    return name
+
+
+# Generic Chunk
 
 class Chunk(object):
     """Class for representing a single chunk."""
     def __init__(self, nbt):
-        chunk_data = nbt['Level']
-        self.coords = chunk_data['xPos'],chunk_data['zPos']
+        self.chunk_data = nbt['Level']
+        self.coords = self.chunk_data['xPos'],self.chunk_data['zPos']
 
     def get_coords(self):
         """Return the coordinates of this chunk."""
@@ -32,12 +113,130 @@ class Chunk(object):
         return "Chunk("+str(self.coords[0])+","+str(self.coords[1])+")"
 
 
+# Chunk in Region old format
+
 class McRegionChunk(Chunk):
+
     def __init__(self, nbt):
         Chunk.__init__(self, nbt)
-        self.blocks = BlockArray(nbt['Level']['Blocks'].value, nbt['Level']['Data'].value)
+        self.blocks = BlockArray(self.chunk_data['Blocks'].value, self.chunk_data['Data'].value)
 
-# TODO: Add class AnvilChunk(Chunk)
+    def get_max_height(self):
+        return 127
+
+    def get_block(self, x, y, z):
+        name = block_id_to_name(self.blocks.get_block(x, y, z))
+        return name
+
+
+# Section in Anvil new format
+
+class AnvilSection(object):
+
+    def __init__(self, nbt):
+
+        self.names = []
+
+        for p in nbt['Palette']:
+            name = p['Name'].value
+            if name.startswith('minecraft:'):
+                name = name[10:]
+            self.names.append(name)
+
+        states = nbt['BlockStates'].value
+
+        # Block states are packed into an array of longs
+        # with variable number of bits per block (min: 4)
+
+        nb = (len(self.names) - 1).bit_length()
+        if nb < 4: nb = 4
+        assert nb == len(states) * 8 * 8 / 4096
+        m = pow(2, nb) - 1
+
+        j = 0
+        bl = 64
+        ll = states[0]
+
+        self.indexes = []
+
+        for i in range(0,4096):
+            if bl == 0:
+                j = j + 1
+                ll = states[j]
+                bl = 64
+
+            if nb <= bl:
+                self.indexes.append(ll & m)
+                ll = ll >> nb
+                bl = bl - nb
+            else:
+                j = j + 1
+                lh = states[j]
+                bh = nb - bl
+
+                lh = (lh & (pow(2, bh) - 1)) << bl
+                ll = (ll & (pow(2, bl) - 1))
+                self.indexes.append(lh & ll)
+
+                ll = states[j]
+                ll = ll >> bh
+                bl = 64 - bh
+
+        assert len(self.indexes) == 4096
+
+
+    def get_block(self, x, y, z):
+        # Blocks are stored in YZX order
+        i = y * 256 + z * 16 + x
+        p = self.indexes[i]
+        return self.names[p]
+
+
+# Chunck in Anvil new format
+
+class AnvilChunk(Chunk):
+
+    def __init__(self, nbt):
+        Chunk.__init__(self, nbt)
+
+        # Started to work on this class with game version 1.13.2
+        # Could work with earlier version, but has to be tested first
+
+        chunk_version = nbt['DataVersion'].value
+        assert chunk_version >= 1631 and 1631 <= chunk_version
+
+        # Load all sections
+
+        self.sections = {}
+        for s in self.chunk_data['Sections']:
+            self.sections[s['Y'].value] = AnvilSection(s)
+
+
+    def get_section(self, y):
+        """Get a section from Y index."""
+        if y in self.sections:
+            return self.sections[y]
+
+        return None
+
+
+    def get_max_height(self):
+        ymax = 0
+        for y in self.sections.keys():
+            if y > ymax: ymax = y
+        return ymax * 16 + 15
+
+
+    def get_block(self, x, y, z):
+        """Get a block from relative x,y,z."""
+        sy,by = divmod(y, 16)
+        section = self.get_section(sy)
+        if section == None:
+            return None
+
+        return section.get_block(x,by,z)
+
+
 
 class BlockArray(object):
     """Convenience class for dealing with a Block/data byte array."""
@@ -212,4 +411,3 @@ class BlockArray(object):
     def get_block_and_data(self, x,y,z, coord=False):
         """Return the tuple of (id, data) for the block at x, y, z"""
         return (self.get_block(x,y,z,coord),self.get_data(x,y,z,coord))
-

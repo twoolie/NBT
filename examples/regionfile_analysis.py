@@ -251,7 +251,7 @@ def analyse_regionfile(filename, warnings=True):
     e = sectors.count(None)
     if e > 0:
         if warnings:
-            errors.append("Fragementation: %d of %d sectors are unused" % (e, sectorsize))
+            errors.append("Fragmentation: %d of %d sectors are unused" % (e, sectorsize))
         for sector, content in enumerate(sectors):
             if content == None:
                 sectors[sector] = "empty"
