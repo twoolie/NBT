@@ -1,14 +1,6 @@
 """
 Handles a single chunk of data (16x16x128 blocks) from a Minecraft save.
 
-WARNING: Chunk is currently McRegion only.
-You likely should not use chunk, but instead just get the NBT datastructure,
-and do the appropriate lookups and block conversions yourself.
-
-The authors decided to focus on NBT datastructure and Region files, 
-and are not actively working on chunk.py.
-Code contributions to chunk.py are welcomed!
-
 For more information about the chunck format:
 https://minecraft.gamepedia.com/Chunk_format
 """
@@ -25,64 +17,71 @@ import nbt
 # TODO: move this map into a separate file
 
 block_ids = {
-     0: 'air',
-     1: 'stone',
-     2: 'grass_block',
-     3: 'dirt',
-     4: 'cobblestone',
-     5: 'oak_planks',
-     6: 'sapling',
-     7: 'bedrock',
-     8: 'flowing_water',
-     9: 'water',
-    10: 'flowing_lava',
-    11: 'lava',
-    12: 'sand',
-    13: 'gravel',
-    14: 'gold_ore',
-    15: 'iron_ore',
-    16: 'coal_ore',
-    17: 'oak_log',
-    18: 'oak_leaves',
-    19: 'sponge',
-    20: 'glass',
-    21: 'lapis_ore',
-    24: 'sandstone',
-    30: 'cobweb',
-    31: 'grass',
-    35: 'white_wool',
-    37: 'dandelion',
-    38: 'poppy',
-    39: 'brown_mushroom',
-    40: 'red_mushroom',
-    44: 'stone_slab',
-    48: 'mossy_cobblestone',
-    49: 'obsidian',
-    50: 'torch',
-    51: 'fire',
-    52: 'spawner',
-    53: 'oak_stairs',
-    54: 'chest',
-    56: 'diamond_ore',
-    59: 'wheat',
-    60: 'farmland',
-    61: 'furnace',
-    62: 'furnace',
-    63: 'sign',  # will change to oak_sign in 1.14
-    65: 'ladder',
-    66: 'rail',
-    67: 'cobblestone_stairs',
-    72: 'oak_pressure_plate',
-    73: 'redstone_ore',
-    74: 'redstone_ore',
-    78: 'snow',
-    79: 'ice',
-    81: 'cactus',
-    82: 'clay',
-    83: 'sugar_cane',
-    85: 'oak_fence',
-    86: 'pumpkin',
-    91: 'lit_pumpkin',
+      0: 'air',
+      1: 'stone',
+      2: 'grass_block',
+      3: 'dirt',
+      4: 'cobblestone',
+      5: 'oak_planks',
+      6: 'sapling',
+      7: 'bedrock',
+      8: 'flowing_water',
+      9: 'water',
+     10: 'flowing_lava',
+     11: 'lava',
+     12: 'sand',
+     13: 'gravel',
+     14: 'gold_ore',
+     15: 'iron_ore',
+     16: 'coal_ore',
+     17: 'oak_log',
+     18: 'oak_leaves',
+     19: 'sponge',
+     20: 'glass',
+     21: 'lapis_ore',
+     24: 'sandstone',
+     30: 'cobweb',
+     31: 'grass',
+     32: 'dead_bush',
+     35: 'white_wool',
+     37: 'dandelion',
+     38: 'poppy',
+     39: 'brown_mushroom',
+     40: 'red_mushroom',
+     43: 'stone_slab',
+     44: 'stone_slab',
+     47: 'bookshelf',
+     48: 'mossy_cobblestone',
+     49: 'obsidian',
+     50: 'torch',
+     51: 'fire',
+     52: 'spawner',
+     53: 'oak_stairs',
+     54: 'chest',
+     56: 'diamond_ore',
+     58: 'crafting_table',
+     59: 'wheat',
+     60: 'farmland',
+     61: 'furnace',
+     62: 'furnace',
+     63: 'sign',  # will change to oak_sign in 1.14
+     64: 'oak_door',
+     65: 'ladder',
+     66: 'rail',
+     67: 'cobblestone_stairs',
+     72: 'oak_pressure_plate',
+     73: 'redstone_ore',
+     74: 'redstone_ore',
+     78: 'snow',
+     79: 'ice',
+     81: 'cactus',
+     82: 'clay',
+     83: 'sugar_cane',
+     85: 'oak_fence',
+     86: 'pumpkin',
+     91: 'lit_pumpkin',
+    101: 'iron_bars',
+    102: 'glass_pane',
     }
 
 
@@ -128,14 +127,58 @@ class McRegionChunk(Chunk):
         name = block_id_to_name(self.blocks.get_block(x, y, z))
         return name
 
+    def iter_block(self):
+        for y in range(0, 128):
+            for z in range(0, 16):
+                for x in range(0, 16):
+                    yield self.get_block(x, y, z)
+
 
 # Section in Anvil new format
 
 class AnvilSection(object):
 
-    def __init__(self, nbt):
-
+    def __init__(self, nbt, version):
         self.names = []
+        self.indexes = []
+
+        # Is the section flattened ?
+        # See https://minecraft.gamepedia.com/1.13/Flattening
+
+        if version == 0:
+            self._init_array(nbt)
+        elif version == 1631:  # MC 1.13
+            self._init_index(nbt)
+        else:
+            raise NotImplemented
+
+        # Section contains 4096 blocks whatever data version
+
+        assert len(self.indexes) == 4096
+
+
+    # Decode legacy section
+    # Contains an array of block numeric identifiers
+
+    def _init_array(self, nbt):
+        bids = []
+        for bid in nbt['Blocks'].value:
+            try:
+                i = bids.index(bid)
+            except ValueError:
+                bids.append(bid)
+                i = len(bids) - 1
+            self.indexes.append(i)
+
+        for bid in bids:
+            bname = block_id_to_name(bid)
+            self.names.append(bname)
+
+
+    # Decode modern section
+    # Contains palette of block names and indexes
+
+    def _init_index(self, nbt):
 
         for p in nbt['Palette']:
             name = p['Name'].value
@@ -156,8 +199,6 @@ class AnvilSection(object):
         j = 0
         bl = 64
         ll = states[0]
-
-        self.indexes = []
 
         for i in range(0,4096):
             if bl == 0:
@@ -182,14 +223,18 @@ class AnvilSection(object):
                 ll = ll >> bh
                 bl = 64 - bh
 
-        assert len(self.indexes) == 4096
-
 
     def get_block(self, x, y, z):
         # Blocks are stored in YZX order
         i = y * 256 + z * 16 + x
         p = self.indexes[i]
         return self.names[p]
+
+
+    def iter_block(self):
+        for i in range(0, 4096):
+            p = self.indexes[i]
+            yield self.names[p]
 
 
 # Chunck in Anvil new format
@@ -199,17 +244,23 @@ class AnvilChunk(Chunk):
     def __init__(self, nbt):
         Chunk.__init__(self, nbt)
 
-        # Started to work on this class with game version 1.13.2
-        # Could work with earlier version, but has to be tested first
+        # Started to work on this class with MC version 1.13.2
+        # so with the chunk data version 1631
+        # Backported to first Anvil version (= 0) from examples
+        # Could work with other versions, but has to be tested first
 
-        chunk_version = nbt['DataVersion'].value
-        assert chunk_version >= 1631 and 1631 <= chunk_version
+        try:
+            version = nbt['DataVersion'].value
+            if version < 1631 or version > 1631:
+                raise NotImplemented
+        except KeyError:
+            version = 0
 
         # Load all sections
 
         self.sections = {}
         for s in self.chunk_data['Sections']:
-            self.sections[s['Y'].value] = AnvilSection(s)
+            self.sections[s['Y'].value] = AnvilSection(s, version)
 
 
     def get_section(self, y):
@@ -234,8 +285,13 @@ class AnvilChunk(Chunk):
         if section == None:
             return None
 
-        return section.get_block(x,by,z)
+        return section.get_block(x, by, z)
 
+
+    def iter_block(self):
+        for s in self.sections.values():
+            for b in s.iter_block():
+                yield b
 
 
 class BlockArray(object):
@@ -251,28 +307,6 @@ class BlockArray(object):
             self.dataList = list(dataBytes)
         else:
             self.dataList = [0]*16384 # Create an empty data list (32768 4-bit entries of zero make 16384 byte entries)
-
-    # Get all block entries
-    def get_all_blocks(self):
-        """Return the blocks that are in this BlockArray."""
-        return self.blocksList
-
-    # Get all data entries
-    def get_all_data(self):
-        """Return the data of all the blocks in this BlockArray."""
-        bits = []
-        for b in self.dataList:
-            # The first byte of the Blocks arrays correspond
-            # to the LEAST significant bits of the first byte of the Data.
-            # NOT to the MOST significant bits, as you might expected.
-            bits.append(b & 15) # Little end of the byte
-            bits.append((b >> 4) & 15) # Big end of the byte
-        return bits
-
-    # Get all block entries and data entries as tuples
-    def get_all_blocks_and_data(self):
-        """Return both blocks and data, packed together as tuples."""
-        return list(zip(self.get_all_blocks(), self.get_all_data()))
 
     def get_blocks_struct(self):
         """Return a dictionary with block ids keyed to (x, y, z)."""
@@ -389,25 +423,3 @@ class BlockArray(object):
 
         offset = y + z*128 + x*128*16 if (coord == False) else coord[1] + coord[2]*128 + coord[0]*128*16
         return self.blocksList[offset]
-
-    # Get a given X,Y,Z or a tuple of three coordinates
-    def get_data(self, x,y,z, coord=False):
-        """Return the data of the block at x, y, z."""
-        offset = y + z*128 + x*128*16 if (coord == False) else coord[1] + coord[2]*128 + coord[0]*128*16
-        # The first byte of the Blocks arrays correspond
-        # to the LEAST significant bits of the first byte of the Data.
-        # NOT to the MOST significant bits, as you might expected.
-        if (offset % 2 == 1):
-            # offset is odd
-            index = (offset-1)//2
-            b = self.dataList[index]
-            return b & 15 # Get little (last 4 bits) end of byte
-        else:
-            # offset is even
-            index = offset//2
-            b = self.dataList[index]
-            return (b >> 4) & 15 # Get big end (first 4 bits) of byte
-
-    def get_block_and_data(self, x,y,z, coord=False):
-        """Return the tuple of (id, data) for the block at x, y, z"""
-        return (self.get_block(x,y,z,coord),self.get_data(x,y,z,coord))

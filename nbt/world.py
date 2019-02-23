@@ -103,7 +103,7 @@ class _BaseWorldFolder(object):
             else:
                 # It is not yet cached.
                 # Get file, but do not cache later.
-                regionfile = region.RegionFile(self.regionfiles[(x,z)])
+                regionfile = region.RegionFile(self.regionfiles[(x,z)], chunkclass = self.chunkclass)
                 regionfile.loc = Location(x=x,z=z)
                 close_after_use = True
             try:
