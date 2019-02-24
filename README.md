@@ -76,7 +76,7 @@ Tags) which can be accomplished thusly:
 >>> nbtfile = NBTFile(fileobj=previously_opened_file)
 # or....
 >>> nbtfile = NBTFile(buffer=net_socket.makefile())
-
+```
 
 ### Writing files
 
@@ -109,7 +109,7 @@ you can use all the standard tag features
 >>> nbtfile = NBTFile()
 ```
 
-first, don't forget to name the top level tag
+First, don't forget to name the top level tag
 ```
 >>> nbtfile.name = "My Top Level Tag"
 >>> nbtfile.tags.append(TAG_Float(name="My Float Name", value=3.152987593947))
