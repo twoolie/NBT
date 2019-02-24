@@ -39,5 +39,5 @@ if __name__ == '__main__':
     if (not os.path.exists(world_folder)):
         print("No such folder as "+world_folder)
         sys.exit(72) # EX_IOERR
-    
+
     sys.exit(main(world_folder, show))
