@@ -11,7 +11,7 @@ except ImportError:
     # Python 2.6 has an older unittest API. The backported package is available from pypi.
     import unittest2 as unittest
 
-testmodules = ['examplestests', 'nbttests', 'regiontests']
+testmodules = ['examplestests', 'nbttests', 'regiontests', 'scoreboardtests']
 """Files to check for test cases. Do not include the .py extension."""
 
 
