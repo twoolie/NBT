@@ -1,13 +1,15 @@
 # Configuration file for travis-ci.org. Travis is a /continuous integration/ tool that runs tests.
 language: python
-python:
-  - "2.7"
-  - "3.5"
-  - "3.6"
-  # not supported yet by Travis
-  #- "3.7"
-  - "pypy"
-  - "pypy3"
+matrix:
+  include:
+  - python: "2.7"
+  - python: "3.4"
+  - python: "3.5"
+  - python: "3.6"
+  - python: "3.7"
+    # Python 3.7 requires Ubuntu Xenial
+    dist: xenial
+  - python: "pypy3.5"
 sudo: false
 addons:
   apt:
