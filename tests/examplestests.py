@@ -205,6 +205,37 @@ class GenerateLevelDatScriptTest(ScriptTestCase):
         self.assertEqualString(output[11], self.expected[11])
         self.assertEqualString(output[13], self.expected[13])
 
+
+class ScoreboardScriptTest(ScriptTestCase):
+    """Scoreboard unit test"""
+
+    expected = [
+        'soulthps: 0 Diamond',
+        'soulthps: 1 Deaths',
+        'soulthps: 19238 Time',
+        'fwaggle: 77 Diamond',
+        'fwaggle: 9 Deaths',
+        'fwaggle: 26 Level',
+        'fwaggle: 2471784 Time',
+        'fwaggle: 1035 Kills',
+        'Sabriena: 60 Diamond',
+        'Sabriena: 2 Deaths',
+        'Sabriena: 4 Level',
+        'Sabriena: 1029806 Time',
+        'Sabriena: 187 Kills',
+        'DuncanDonutz: 22 Diamond',
+        'DuncanDonutz: 7 Deaths',
+        'DuncanDonutz: 15 Level',
+        'DuncanDonutz: 1313860 Time',
+        'DuncanDonutz: 30 Kills',
+        ]
+
+    def testScoreboard(self):
+        output = self.runScript('scoreboard.py', ['tests/world_test',])
+        self.assertTrue(len(output) == 18, "Expected output of 18 lines long")
+        self.assertEqualOutput(output, self.expected)
+
+
 # Load resources once.
 # Implement as setUpModule/tearDownModule, since it only needs to be called 
 # once for the ScriptTestCase class. By default, a setUpClass/tearDownClass 
