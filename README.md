@@ -44,7 +44,7 @@ The library, the tests and the examples are only using the Python core library,
 except `curl` for downloading some test reference data and `PIL` (Python
 Imaging Library) for the `map` example.
 
-Supported Python releases: 2.7, 3.5 and 3.6 (*3.7 not supported yet by Travis*)
+Supported Python releases: 2.7, 3.4 to 3.7
 
 
 ## Usage
