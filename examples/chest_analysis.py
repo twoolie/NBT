@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """
-Finds and prints the contents of chests (including minecart chests)
+Find chests and prints contents (including minecart chests).
 """
+
 import locale, os, sys
 
 # local module
@@ -27,34 +28,57 @@ class Chest(object):
         self.pos   = Position(*pos)
         self.items = items
 
+
 def items_from_nbt(nbtlist):
     items = {}  # block_id -> count
     for item in nbtlist:
-        id = item['id'].value
+        iid = item['id'].value
+
+        # Integer before the "flattening"
+        # Prefixed string after the "flattening"
+
+        if type(iid) == str and iid.startswith('minecraft:'):
+            iid = iid[10:]
         count = item['Count'].value
-        if id not in items:
-            items[id] = 0
-        items[id] += count
+        if iid not in items:
+            items[iid] = 0
+        items[iid] += count
     return items
 
-def chests_per_chunk(chunk):
-    """Given a chunk, increment the block types with the number of blocks found"""
-    # if (len(chunk['Entities']) > 0) or (len(chunk['TileEntities']) > 0):
-    #   print("Chunk %d,%d" % (chunk["xPos"],chunk["zPos"]))
-    entities = []
-    for entity in chunk['Entities']:
-        if entity["id"].value == "Minecart" and entity["type"].value == 1:
-            x,y,z = entity["Pos"]
-            x,y,z = x.value,y,value,z.value
-            items = items_from_nbt(entity["Items"])
-            entities.append(Chest("Minecart with chest",(x,y,z),items))
-    for entity in chunk['TileEntities']:
-        if entity["id"].value == "Chest":
-            x,y,z = entity["x"].value,entity["y"].value,entity["z"].value
-            items = items_from_nbt(entity["Items"])
-            entities.append(Chest("Chest",(x,y,z),items))
-    return entities
 
+def chests_per_chunk(chunk):
+    """Find chests and get contents in a given chunk."""
+
+    chests = []
+
+    for entity in chunk['Entities']:
+        eid = entity["id"].value
+        if eid == "Minecart" and entity["type"].value == 1 or eid == "minecraft:chest_minecart":
+            x,y,z = entity["Pos"]
+            x,y,z = x.value,y.value,z.value
+
+            # Treasures are empty upon first opening
+
+            try:
+                items = items_from_nbt(entity["Items"])
+            except KeyError:
+                items = {}
+            chests.append(Chest("Minecart with chest",(x,y,z),items))
+
+    for entity in chunk['TileEntities']:
+        eid = entity["id"].value
+        if eid == "Chest" or eid == "minecraft:chest":
+            x,y,z = entity["x"].value,entity["y"].value,entity["z"].value
+
+            # Treasures are empty upon first opening
+
+            try:
+                items = items_from_nbt(entity["Items"])
+            except KeyError:
+                items = {}
+            chests.append(Chest("Chest",(x,y,z),items))
+
+    return chests
 
 
 def print_results(chests):
@@ -68,7 +92,10 @@ def print_results(chests):
             locale.format("%0.1f",chest.pos.z,grouping=True),\
             itemcount))
         for blockid,count in chest.items.items():
-            print("   %3dx Item %d" % (count, blockid))
+            if type(blockid) == int:
+                print("   %3dx Item %d" % (count, blockid))
+            else:
+                print("   %3d x %s" % (count, blockid))
 
 
 def main(world_folder):
