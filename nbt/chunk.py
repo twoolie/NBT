@@ -217,7 +217,7 @@ class AnvilSection(object):
 
                 lh = (lh & (pow(2, bh) - 1)) << bl
                 ll = (ll & (pow(2, bl) - 1))
-                self.indexes.append(lh & ll)
+                self.indexes.append(lh | ll)
 
                 ll = states[j]
                 ll = ll >> bh
