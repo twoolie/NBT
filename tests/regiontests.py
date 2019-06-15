@@ -1105,6 +1105,18 @@ class RegionFileInitTest(unittest.TestCase):
         fileobj.close()
         self.assertEqual(openfiles_before, openfiles_after)
 
+    def testClosedStatus(self):
+        """upon creation a region file shouldn't be closed.
+        Calling `close()` should set the closed flag to true."""
+        tempdir = tempfile.mkdtemp()
+        filename = os.path.join(tempdir, 'regiontest.mca')
+        shutil.copy(REGIONTESTFILE, filename)
+
+        region = RegionFile(filename = filename)
+        self.assertFalse(region.closed)
+        region.close()
+        self.assertTrue(region.closed)
+
 
 # TODO: write tests
 # class PartialHeaderFileTest(EmptyFileTest):

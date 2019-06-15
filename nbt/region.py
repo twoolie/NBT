@@ -198,6 +198,8 @@ class RegionFile(object):
         self.file = None
         self.filename = None
         self._closefile = False
+        self.closed = False
+        """Set to true if `close()` was successfully called on that region"""
         self.chunkclass = chunkclass
         if filename:
             self.filename = filename
@@ -287,6 +289,7 @@ class RegionFile(object):
         if self._closefile:
             try:
                 self.file.close()
+                self.closed = True
             except IOError:
                 pass
 
