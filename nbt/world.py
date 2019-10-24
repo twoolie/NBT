@@ -125,7 +125,7 @@ class _BaseWorldFolder(object):
         See [What can be pickled and unpickled?](https://docs.python.org/library/pickle.html#what-can-be-pickled-and-unpickled) in the Python documentation
         for limitation on the output of `callback_function()`.
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_nbt(self,x,z):
         """
@@ -146,7 +146,7 @@ class _BaseWorldFolder(object):
         adds it to the Regionfile. May create a new Regionfile if that did not exist yet.
         nbt must be a nbt.NBTFile instance, not a Chunk or regular TAG_Compound object.
         """
-        raise NotImplemented()
+        raise NotImplementedError()
         # TODO: implement
 
     def iter_nbt(self):
@@ -173,7 +173,7 @@ class _BaseWorldFolder(object):
         See [What can be pickled and unpickled?](https://docs.python.org/library/pickle.html#what-can-be-pickled-and-unpickled) in the Python documentation
         for limitation on the output of `callback_function()`.
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_chunk(self,x,z):
         """
