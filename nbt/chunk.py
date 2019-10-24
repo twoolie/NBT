@@ -89,7 +89,7 @@ def block_id_to_name(bid):
     try:
         name = block_ids[bid]
     except KeyError:
-        name = None
+        name = 'unknown_%d' % (bid,)
         print("warning: unknown block id %i" % bid)
         print("hint: add that block to the 'block_ids' map")
     return name
@@ -145,12 +145,12 @@ class AnvilSection(object):
         # Is the section flattened ?
         # See https://minecraft.gamepedia.com/1.13/Flattening
 
-        if version == 0:
+        if version == 0 or version == 1343:  # 1343 = MC 1.12.2
             self._init_array(nbt)
         elif version == 1631:  # MC 1.13
             self._init_index(nbt)
         else:
-            raise NotImplemented
+            raise NotImplementedError()
 
         # Section contains 4096 blocks whatever data version
 
@@ -251,16 +251,17 @@ class AnvilChunk(Chunk):
 
         try:
             version = nbt['DataVersion'].value
-            if version < 1631 or version > 1631:
-                raise NotImplemented
+            if version != 1343 and version != 1631:
+                raise NotImplementedError('DataVersion %d not implemented' % (version,))
         except KeyError:
             version = 0
 
         # Load all sections
 
         self.sections = {}
-        for s in self.chunk_data['Sections']:
-            self.sections[s['Y'].value] = AnvilSection(s, version)
+        if 'Sections' in self.chunk_data:
+            for s in self.chunk_data['Sections']:
+                self.sections[s['Y'].value] = AnvilSection(s, version)
 
 
     def get_section(self, y):
