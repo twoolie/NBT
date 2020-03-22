@@ -7,7 +7,13 @@ https://minecraft.gamepedia.com/NBT_format
 
 from struct import Struct, error as StructError
 from gzip import GzipFile
-from collections import MutableMapping, MutableSequence, Sequence
+import collections
+
+try:
+    from collections.abc import MutableMapping, MutableSequence, Sequence
+except ImportError:
+    from collections import MutableMapping, MutableSequence, Sequence
+
 import sys
 
 _PY3 = sys.version_info >= (3,)
@@ -473,10 +479,14 @@ class TAG_Compound(TAG, MutableMapping):
     def __init__(self, buffer=None, name=None):
         # TODO: add a value parameter as well
         super(TAG_Compound, self).__init__()
-        self.tags = []
+        self._tags = collections.OrderedDict()
         self.name = ""
         if buffer:
             self._parse_buffer(buffer)
+
+    @property
+    def tags(self):
+        return tuple(self._tags.values())
 
     # Parsers and Generators
     def _parse_buffer(self, buffer):
@@ -492,7 +502,7 @@ class TAG_Compound(TAG, MutableMapping):
                 except KeyError:
                     raise ValueError("Unrecognised tag type %d" % type.value)
                 tag.name = name
-                self.tags.append(tag)
+                self._tags[name] = tag
                 tag._parse_buffer(buffer)
 
     def _render_buffer(self, buffer):
@@ -504,33 +514,33 @@ class TAG_Compound(TAG, MutableMapping):
 
     # Mixin methods
     def __len__(self):
-        return len(self.tags)
+        return len(self._tags)
 
     def __iter__(self):
-        for key in self.tags:
+        for key in self._tags.values():
             yield key.name
 
     def __contains__(self, key):
         if isinstance(key, int):
-            return key <= len(self.tags)
+            return key <= len(self._tags)
         elif isinstance(key, basestring):
-            for tag in self.tags:
-                if tag.name == key:
-                    return True
-            return False
+            return key in self._tags
         elif isinstance(key, TAG):
             return key in self.tags
         return False
 
     def __getitem__(self, key):
         if isinstance(key, int):
-            return self.tags[key]
+            ordered_keys = tuple(self._tags)
+            true_key = ordered_keys[key]
+
+            return self._tags[true_key]
+
         elif isinstance(key, basestring):
-            for tag in self.tags:
-                if tag.name == key:
-                    return tag
-            else:
-                raise KeyError("Tag %s does not exist" % key)
+            try:
+                return self._tags[key]
+            except KeyError as error:
+                raise KeyError("Tag %s does not exist" % key) from error
         else:
             raise TypeError(
                 "key needs to be either name of tag, or index of tag, "
@@ -539,21 +549,30 @@ class TAG_Compound(TAG, MutableMapping):
     def __setitem__(self, key, value):
         assert isinstance(value, TAG), "value must be an nbt.TAG"
         if isinstance(key, int):
-            # Just try it. The proper error will be raised if it doesn't work.
-            self.tags[key] = value
+            ordered_keys = tuple(self._tags)
+            try:
+                true_key = ordered_keys[key]
+            except KeyError as error:
+                # Return the old style of error that would occur
+                raise IndexError from error
+            self._tags[true_key] = value
         elif isinstance(key, basestring):
-            value.name = key
-            for i, tag in enumerate(self.tags):
-                if tag.name == key:
-                    self.tags[i] = value
-                    return
-            self.tags.append(value)
+            # If a new entry overwrites an existing entry,
+            # the original insertion position is left unchanged
+            # A new key is added to the end
+            self._tags[key] = value
 
     def __delitem__(self, key):
         if isinstance(key, int):
-            del (self.tags[key])
+            ordered_keys = tuple(self._tags)
+            try:
+                true_key = ordered_keys[key]
+            except KeyError as error:
+                raise IndexError from error
+            del self._tags[true_key]
+
         elif isinstance(key, basestring):
-            self.tags.remove(self.__getitem__(key))
+            del self._tags[key]
         else:
             raise ValueError(
                 "key needs to be either name of tag, or index of tag")
@@ -562,8 +581,7 @@ class TAG_Compound(TAG, MutableMapping):
         return [tag.name for tag in self.tags]
 
     def iteritems(self):
-        for tag in self.tags:
-            yield (tag.name, tag)
+        return self._tags.items()
 
     # Printing and Formatting of tree
     def __unicode__(self):

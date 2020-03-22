@@ -41,7 +41,8 @@ def generate_level(bytesize = 4):
         # level.append(byte_array)
         byte_array = TAG_Byte_Array(name=name)
         byte_array.value = bytearray([random.randrange(256) for i in range(bytesize)])
-        level.tags.append(byte_array)
+        level[name] = byte_array
+
     random.seed(123456789) # fixed seed to give predictable results.
     if bytesize < 13:
         raise ValueError("NBT file size is at least 13 bytes")
@@ -989,27 +990,27 @@ class EmptyFileTest(unittest.TestCase):
     def generate_level():
         level = NBTFile() # Blank NBT
         level.name = "Data"
-        level.tags.extend([
-            TAG_Long(name="Time", value=1),
-            TAG_Long(name="LastPlayed", value=1376031942),
-            TAG_Int(name="SpawnX", value=0),
-            TAG_Int(name="SpawnY", value=2),
-            TAG_Int(name="SpawnZ", value=0),
-            TAG_Long(name="SizeOnDisk", value=0),
-            TAG_Long(name="RandomSeed", value=123456789),
-            TAG_Int(name="version", value=19132),
-            TAG_String(name="LevelName", value="Testing")
-        ])
+        level['Time'] = TAG_Long(name="Time", value=1)
+        level['LastPlayed'] = TAG_Long(name="LastPlayed", value=1376031942)
+        level['SpawnX'] = TAG_Int(name="SpawnX", value=0)
+        level['SpawnY'] = TAG_Int(name="SpawnY", value=2)
+        level['SpawnZ'] = TAG_Int(name="SpawnZ", value=0)
+        level['SizeOnDisk'] = TAG_Long(name="SizeOnDisk", value=0)
+        level['RandomSeed'] = TAG_Long(name="RandomSeed", value=123456789)
+        level['version'] = TAG_Int(name="version", value=19132)
+        level['LevelName'] = TAG_String(name="LevelName", value="Testing")
+
         player = TAG_Compound()
         player.name = "Player"
-        player.tags.extend([
-            TAG_Int(name="Score", value=0),
-            TAG_Int(name="Dimension", value=0)
-        ])
+        player['Score'] = TAG_Int(name="Score", value=0)
+        player['Dimension'] = TAG_Int(name="Dimension", value=0)
+
         inventory = TAG_Compound()
         inventory.name = "Inventory"
-        player.tags.append(inventory)
-        level.tags.append(player)
+
+        player['Inventory'] = inventory
+        level['Inventory'] = inventory
+
         return level
 
     def setUp(self):
