@@ -53,7 +53,7 @@ Supported Python releases: 2.7, 3.4 to 3.7
 
 The easiest way to read an nbt file is to instantiate an NBTFile object e.g.
 ```
->>> import nbt
+>>> from nbt import nbt
 >>> nbtfile = nbt.NBTFile("bigtest.nbt",'rb')
 >>> nbtfile.name
 u'Level'
@@ -72,7 +72,7 @@ Files can also be read from a fileobj (file-like object that contains a compress
 stream) or a buffer (file-like object that contains an uncompressed stream of NBT
 Tags) which can be accomplished thusly:
 ```
->>> import nbt
+>>> from nbt.nbt import NBTFile
 >>> nbtfile = NBTFile(fileobj=previously_opened_file)
 # or....
 >>> nbtfile = NBTFile(buffer=net_socket.makefile())
@@ -86,7 +86,7 @@ write_file needs no extra arguments. It just works. If however you created a new
 file object from scratch (or even if you just want to save it somewhere else)
 call write_file('path\to\new\file.nbt')
 ```
->>> import nbt
+>>> from nbt import nbt
 >>> nbtfile = nbt.NBTFile("bigtest.nbt",'rb')
 >>> nbtfile["listTest (compound)"].tags[0]["name"].value = "Different name"
 >>> nbtfile.write_file("newnbtfile.nbt")
@@ -105,7 +105,7 @@ you have read the NBT spec (hint.. it's very short). Also be sure to note that
 the NBTFile object is actually a TAG_Compound with some wrapper features, so
 you can use all the standard tag features
 ```
->>> from nbt import *
+>>> from nbt.nbt import *
 >>> nbtfile = NBTFile()
 ```
 
