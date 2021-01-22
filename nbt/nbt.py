@@ -64,6 +64,10 @@ class TAG(object):
         returns a summary."""
         return unicode(self.value)
 
+    def namestr(self):
+        """Return Unicode string of tag name."""
+        return unicode(self.name)
+
     def pretty_tree(self, indent=0):
         """Return formated Unicode string of self, where iterable items are
         recursively listed in detail."""
