@@ -72,7 +72,7 @@ class ReadWriteTest(unittest.TestCase):
         """
         #open the file
         mynbt = NBTFile(self.filename)
-        mynbt['test'] = TAG_Int(123)
+        mynbt['test'] = TAG_Int(name='test', value=123)
         mynbt.write_file()
         if hasattr(mynbt.file, "closed"):
             self.assertTrue(mynbt.file.closed)
