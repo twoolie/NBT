@@ -478,7 +478,10 @@ class TAG_Compound(TAG, MutableMapping):
         # TODO: add a value parameter as well
         super(TAG_Compound, self).__init__()
         self.tags = []
-        self.name = ""
+        if name:
+            self.name = name
+        else:
+            self.name = ""
         if buffer:
             self._parse_buffer(buffer)
 
