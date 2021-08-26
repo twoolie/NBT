@@ -7,8 +7,8 @@ https://minecraft.gamepedia.com/Chunk_format
 
 from io import BytesIO
 from struct import pack
+from math import ceil
 import array
-import nbt
 
 
 # Legacy numeric block identifiers
@@ -147,8 +147,10 @@ class AnvilSection(object):
 
         if version == 0 or version == 1343:  # 1343 = MC 1.12.2
             self._init_array(nbt)
-        elif version == 1631:  # MC 1.13
-            self._init_index(nbt)
+        elif version >= 1631 and version <= 2230:  # MC 1.13 to MC 1.15.2
+            self._init_index_unpadded(nbt)
+        elif version >= 2566 and version <= 2730: # MC 1.16.0 to MC 1.17.2 (latest tested version)
+            self._init_index_padded(nbt)
         else:
             raise NotImplementedError()
 
@@ -176,14 +178,12 @@ class AnvilSection(object):
 
 
     # Decode modern section
-    # Contains palette of block names and indexes
+    # Contains palette of block names and indexes packed with run-on between elements (pre 1.16 format)
 
-    def _init_index(self, nbt):
+    def _init_index_unpadded(self, nbt):
 
         for p in nbt['Palette']:
             name = p['Name'].value
-            if name.startswith('minecraft:'):
-                name = name[10:]
             self.names.append(name)
 
         states = nbt['BlockStates'].value
@@ -191,37 +191,72 @@ class AnvilSection(object):
         # Block states are packed into an array of longs
         # with variable number of bits per block (min: 4)
 
-        nb = (len(self.names) - 1).bit_length()
-        if nb < 4: nb = 4
-        assert nb == len(states) * 8 * 8 / 4096
-        m = pow(2, nb) - 1
+        num_bits = (len(self.names) - 1).bit_length()
+        if num_bits < 4: num_bits = 4
+        assert num_bits == len(states) * 64 / 4096
+        mask = pow(2, num_bits) - 1
 
-        j = 0
-        bl = 64
-        ll = states[0]
+        i = 0
+        bits_left = 64
+        curr_long = states[0]
 
-        for i in range(0,4096):
-            if bl == 0:
-                j = j + 1
-                ll = states[j]
-                bl = 64
+        for _ in range(0,4096):
+            if bits_left == 0:
+                i = i + 1
+                curr_long = states[i]
+                bits_left = 64
 
-            if nb <= bl:
-                self.indexes.append(ll & m)
-                ll = ll >> nb
-                bl = bl - nb
+            if num_bits <= bits_left:
+                self.indexes.append(curr_long & mask)
+                curr_long = curr_long >> num_bits
+                bits_left = bits_left - num_bits
             else:
-                j = j + 1
-                lh = states[j]
-                bh = nb - bl
+                i = i + 1
+                next_long = states[i]
+                remaining_bits = num_bits - bits_left
 
-                lh = (lh & (pow(2, bh) - 1)) << bl
-                ll = (ll & (pow(2, bl) - 1))
-                self.indexes.append(lh | ll)
+                next_long = (next_long & (pow(2, remaining_bits) - 1)) << bits_left
+                curr_long = (curr_long & (pow(2, bits_left) - 1))
+                self.indexes.append(next_long | curr_long)
 
-                ll = states[j]
-                ll = ll >> bh
-                bl = 64 - bh
+                curr_long = states[i]
+                curr_long = curr_long >> remaining_bits
+                bits_left = 64 - remaining_bits
+
+
+    # Decode modern section
+    # Contains palette of block names and indexes packed with padding if elements don't fit (post 1.16 format)
+
+    def _init_index_padded(self, nbt):
+
+        for p in nbt['Palette']:
+            name = p['Name'].value
+            self.names.append(name)
+
+        states = nbt['BlockStates'].value
+        num_bits = (len(self.names) - 1).bit_length()
+        if num_bits < 4: num_bits = 4
+        mask = 2**num_bits - 1
+        
+        indexes_per_element = 64 // num_bits
+        last_state_elements = 4096 % indexes_per_element
+        if last_state_elements == 0: last_state_elements = indexes_per_element
+        
+        assert len(states) == ceil(4096 / indexes_per_element)
+
+        for i in range(len(states)-1):
+            long = states[i]
+            
+            for _ in range(indexes_per_element):
+                self.indexes.append(long & mask)
+                long = long >> num_bits
+
+        
+        long = states[-1]
+        for _ in range(last_state_elements):
+            self.indexes.append(long & mask)
+            long = long >> num_bits
+        
 
 
     def get_block(self, x, y, z):
@@ -238,7 +273,7 @@ class AnvilSection(object):
 
 
 # Chunck in Anvil new format
-
+ 
 class AnvilChunk(Chunk):
 
     def __init__(self, nbt):
@@ -251,7 +286,7 @@ class AnvilChunk(Chunk):
 
         try:
             version = nbt['DataVersion'].value
-            if version != 1343 and version != 1631:
+            if version != 1343 and not (version >= 1631 or version <= 2730):
                 raise NotImplementedError('DataVersion %d not implemented' % (version,))
         except KeyError:
             version = 0
@@ -261,7 +296,8 @@ class AnvilChunk(Chunk):
         self.sections = {}
         if 'Sections' in self.chunk_data:
             for s in self.chunk_data['Sections']:
-                self.sections[s['Y'].value] = AnvilSection(s, version)
+                if "BlockStates" in s.keys(): # sections may only contain lighting information
+                    self.sections[s['Y'].value] = AnvilSection(s, version)
 
 
     def get_section(self, y):
