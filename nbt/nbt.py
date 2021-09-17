@@ -647,12 +647,14 @@ class NBTFile(TAG_Compound):
 
     def parse_file(self, filename=None, buffer=None, fileobj=None):
         """Completely parse a file, extracting all tags."""
+        closefile = True
         if filename:
             self.file = GzipFile(filename, 'rb')
         elif buffer:
             if hasattr(buffer, 'name'):
                 self.filename = buffer.name
             self.file = buffer
+            closefile = False
         elif fileobj:
             if hasattr(fileobj, 'name'):
                 self.filename = fileobj.name
@@ -664,7 +666,8 @@ class NBTFile(TAG_Compound):
                     name = TAG_String(buffer=self.file).value
                     self._parse_buffer(self.file)
                     self.name = name
-                    self.file.close()
+                    if closefile:
+                        self.file.close()
                 else:
                     raise MalformedFileError(
                         "First record is not a Compound Tag")
