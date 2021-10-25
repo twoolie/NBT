@@ -7,7 +7,7 @@ https://minecraft.gamepedia.com/Region_file_format
 
 from .nbt import NBTFile, MalformedFileError
 from struct import pack, unpack
-from collections import Mapping
+from typing import Mapping
 import zlib
 import gzip
 from io import BytesIO
