@@ -9,7 +9,7 @@ NBT Trunk
 ---------
 Git trunk can be found at https://github.com/twoolie/NBT/tree/master
 
-Bug Fixes since 1.5.0
+Bug Fixes since 1.5.1
 ~~~~~~~~~~~~~~~~~~~~~
 * None
 
@@ -25,6 +25,30 @@ See https://github.com/twoolie/NBT/issues
 * The name of a variable generally only supports 2-byte Unicode characters (the
   Basic Multilingual Plane). For Full Unicode support, use Python 3.3 or higher,
   or compile Python --with-wide-unicode.
+
+
+NBT 1.5.1 (22 December 2021)
+---------------------------
+
+New Features since 1.5.0
+~~~~~~~~~~~~~~~~~~~~~~~~
+* Generic block class in chunck.py (courtesy mfld-fr).
+* chunk.py supports data version 1343 (Minecraft 1.12) (courtesy Steffen Kieß).
+* chunk.py supports data version 1631 (Minecraft 1.16) (courtesy Steffen Kieß).
+* chunk.py supports data version 2566 (Minecraft 1.16) (courtesy Marius Steffens).
+
+
+Bug Fixes since 1.5.0
+~~~~~~~~~~~~~~~~~~~~~~~~
+* Support for Python version 3.10 (courtesy einekratzekatze).
+* Bug fix in getting BlockStates in old Anvil format (courtesy mkuw).
+* Bug fix in reloading closed region files (courtesy Sylvain Leroux).
+* Allow naming of Compund TAGs (courtesy Sylvain Leroux).
+
+Changes in Auxiliary Scripts since 1.5.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Add examples/scoreboard.py script (courtesy mfld-fr).
+* Add examples/block_finder.py script (courtesy jlsajfj).
 
 
 NBT 1.5.0 (14 May 2018)
