@@ -52,7 +52,7 @@ Supported Python releases: 2.7, 3.4 to 3.7
 ### Reading files
 
 The easiest way to read an nbt file is to instantiate an NBTFile object e.g.
-```
+```python
 >>> from nbt import nbt
 >>> nbtfile = nbt.NBTFile("bigtest.nbt",'rb')
 >>> nbtfile.name
@@ -71,7 +71,7 @@ TAG_Float("value"): 0.75
 Files can also be read from a fileobj (file-like object that contains a compressed
 stream) or a buffer (file-like object that contains an uncompressed stream of NBT
 Tags) which can be accomplished thusly:
-```
+```python
 >>> from nbt.nbt import NBTFile
 >>> nbtfile = NBTFile(fileobj=previously_opened_file)
 # or....
@@ -85,7 +85,7 @@ write_file() method. If the NBTFile was instantiated with a filename, then
 write_file needs no extra arguments. It just works. If however you created a new
 file object from scratch (or even if you just want to save it somewhere else)
 call write_file('path\to\new\file.nbt')
-```
+```python
 >>> from nbt import nbt
 >>> nbtfile = nbt.NBTFile("bigtest.nbt",'rb')
 >>> nbtfile["listTest (compound)"].tags[0]["name"].value = "Different name"
@@ -93,7 +93,7 @@ call write_file('path\to\new\file.nbt')
 ```
 
 It is also possible to write to a buffer or fileobj using the same keyword args.
-```
+```python
 >>> nbtfile.write_file(fileobj = my_file) #compressed
 >>> nbtfile.write_file(buffer = sock.makefile()) #uncompressed
 ```
@@ -104,13 +104,13 @@ Creating files is trickier but ultimately should give you no issue, as long as
 you have read the NBT spec (hint.. it's very short). Also be sure to note that
 the NBTFile object is actually a TAG_Compound with some wrapper features, so
 you can use all the standard tag features
-```
+```python
 >>> from nbt.nbt import *
 >>> nbtfile = NBTFile()
 ```
 
 First, don't forget to name the top level tag
-```
+```python
 >>> nbtfile.name = "My Top Level Tag"
 >>> nbtfile.tags.append(TAG_Float(name="My Float Name", value=3.152987593947))
 >>> mylist = TAG_List(name="TestList", type=TAG_Long) #type needs to be pre-declared!
