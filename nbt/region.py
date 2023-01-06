@@ -600,9 +600,9 @@ class RegionFile(object):
         try:
             nbt = NBTFile(buffer=data)
             if self.loc.x != None:
-                x += self.loc.x*32
+                x += (self.loc.x << 5)
             if self.loc.z != None:
-                z += self.loc.z*32
+                z += (self.loc.z << 5)
             nbt.loc = Location(x=x, z=z)
             return nbt
             # this may raise a MalformedFileError. Convert to ChunkDataError.
@@ -674,11 +674,11 @@ class RegionFile(object):
         self.file.write(remaining_length * b"\x00")
 
         #seek to header record and write offset and length records
-        self.file.seek(4 * (x + 32*z))
+        self.file.seek((x + (z << 5)) << 2)
         self.file.write(pack(">IB", sector, nsectors)[1:])
 
         #write timestamp
-        self.file.seek(SECTOR_LENGTH + 4 * (x + 32*z))
+        self.file.seek(SECTOR_LENGTH + ((x + (z << 5)) << 2))
         timestamp = int(time.time())
         self.file.write(pack(">I", timestamp))
 
@@ -733,9 +733,9 @@ class RegionFile(object):
             return
 
         # zero the region header for the chunk (offset length and time)
-        self.file.seek(4 * (x + 32*z))
+        self.file.seek((x + (z << 5)) << 2)
         self.file.write(pack(">IB", 0, 0)[1:])
-        self.file.seek(SECTOR_LENGTH + 4 * (x + 32*z))
+        self.file.seek(SECTOR_LENGTH + ((x + (z << 5)) << 2))
         self.file.write(pack(">I", 0))
 
         # Check if file should be truncated:

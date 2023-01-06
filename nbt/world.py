@@ -221,7 +221,7 @@ class _BaseWorldFolder(object):
         b = BoundingBox()
         for rx,rz in self.regionfiles.keys():
             region = self.get_region(rx,rz)
-            rx,rz = 32*rx,32*rz
+            rx,rz = rx << 5,rz << 5
             for cc in region.get_chunk_coords():
                 x,z = (rx+cc['x'],rz+cc['z'])
                 b.expand(x,None,z)
