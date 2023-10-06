@@ -2,7 +2,7 @@
 """
 Create a file that can be used as a basic level.dat file with all required fields
 """
-# http://www.minecraftwiki.net/wiki/Alpha_Level_Format#level.dat_Format
+# https://minecraft.wiki/w/Java_Edition_Alpha_level_format
 
 import os,sys
 import time
