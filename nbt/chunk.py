@@ -296,7 +296,7 @@ class AnvilChunk(Chunk):
         self.sections = {}
         if 'Sections' in self.chunk_data:
             for s in self.chunk_data['Sections']:
-                if "BlockStates" in s.keys(): # sections may only contain lighting information
+                if "BlockStates" in s.keys() or "Blocks" in s.keys(): # sections may only contain lighting information
                     self.sections[s['Y'].value] = AnvilSection(s, version)
 
 
