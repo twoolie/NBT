@@ -20,7 +20,7 @@ import tempfile
 import shutil
 
 
-URL = "https://github.com/downloads/twoolie/NBT/Sample_World.tar.gz"
+URL = "https://github.com/twoolie/NBT/files/13199373/Sample_World.tar.gz"
 """URL to retrieve"""
 workdir = os.path.dirname(__file__)
 """Directory for download and extracting the sample files"""
