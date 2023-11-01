@@ -28,7 +28,6 @@ Developing Minecraft tools is out of the scope of this project.*
 
 ## Status
 
-[![Build Status](https://secure.travis-ci.org/twoolie/NBT.png?branch=master)](http://travis-ci.org/#!/twoolie/NBT)
 [![Test Coverage Status](https://coveralls.io/repos/twoolie/NBT/badge.svg)](https://coveralls.io/r/twoolie/NBT)
 
 The library supports all the currently known tag types (including the arrays
