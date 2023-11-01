@@ -5,8 +5,6 @@ Unit tests
 
 The NBT library comes with a number of unit tests, although they have been
 added later and do not cover all possible methods and options available.
-These teste are automatically executed by the `Travis continuous integration
-service <https://travis-ci.org/>`_.
 
 Requirements
 ------------
