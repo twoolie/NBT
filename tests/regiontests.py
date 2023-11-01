@@ -15,7 +15,7 @@ except ImportError:
     import unittest2 as unittest
 
 # local modules
-from utils import open_files
+from .utils import open_files
 
 # Search parent directory first, to make sure we test the local nbt module, 
 # not an installed nbt module.

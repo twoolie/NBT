@@ -20,7 +20,7 @@ except ImportError:
     import unittest2 as unittest
 
 # local modules
-import downloadsample
+from . import downloadsample
 
 if sys.version_info[0] < 3:
     def _deletechars(text, deletechars):
