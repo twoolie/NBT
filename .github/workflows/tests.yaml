@@ -14,6 +14,8 @@ jobs:
         ]
 
     steps:
+      - name: Select java runtime version
+        run: sudo update-java-alternatives --set $JAVA_HOME_21_X64
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
