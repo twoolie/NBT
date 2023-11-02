@@ -13,6 +13,8 @@ except ImportError:  # for Python 2.7
     from collections import MutableMapping, MutableSequence, Sequence
 import sys
 
+import mutf8
+
 _PY3 = sys.version_info >= (3,)
 if _PY3:
     unicode = str
@@ -360,10 +362,10 @@ class TAG_String(TAG, Sequence):
         read = buffer.read(length.value)
         if len(read) != length.value:
             raise StructError()
-        self.value = read.decode("utf-8")
+        self.value = mutf8.decode_modified_utf8(read)
 
     def _render_buffer(self, buffer):
-        save_val = self.value.encode("utf-8")
+        save_val = mutf8.encode_modified_utf8(self.value)
         length = TAG_Short(len(save_val))
         length._render_buffer(buffer)
         buffer.write(save_val)
