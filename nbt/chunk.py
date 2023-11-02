@@ -193,8 +193,8 @@ class AnvilSection(object):
 
         num_bits = (len(self.names) - 1).bit_length()
         if num_bits < 4: num_bits = 4
-        assert num_bits == len(states) * 64 / 4096
-        mask = pow(2, num_bits) - 1
+        assert num_bits == len(states) / 64
+        mask = (1 << num_bits) - 1
 
         i = 0
         bits_left = 64
@@ -215,8 +215,8 @@ class AnvilSection(object):
                 next_long = states[i]
                 remaining_bits = num_bits - bits_left
 
-                next_long = (next_long & (pow(2, remaining_bits) - 1)) << bits_left
-                curr_long = (curr_long & (pow(2, bits_left) - 1))
+                next_long = (next_long & ((1 << remaining_bits) - 1)) << bits_left
+                curr_long = (curr_long & ((1 << bits_left) - 1))
                 self.indexes.append(next_long | curr_long)
 
                 curr_long = states[i]
@@ -236,7 +236,7 @@ class AnvilSection(object):
         states = nbt['BlockStates'].value
         num_bits = (len(self.names) - 1).bit_length()
         if num_bits < 4: num_bits = 4
-        mask = 2**num_bits - 1
+        mask = (1 << num_bits) - 1
         
         indexes_per_element = 64 // num_bits
         last_state_elements = 4096 % indexes_per_element
@@ -261,7 +261,7 @@ class AnvilSection(object):
 
     def get_block(self, x, y, z):
         # Blocks are stored in YZX order
-        i = y * 256 + z * 16 + x
+        i = (y << 8) + (z << 4) + x
         p = self.indexes[i]
         return self.names[p]
 
@@ -312,7 +312,7 @@ class AnvilChunk(Chunk):
         ymax = 0
         for y in self.sections.keys():
             if y > ymax: ymax = y
-        return ymax * 16 + 15
+        return (ymax << 4) + 15
 
 
     def get_block(self, x, y, z):
@@ -389,7 +389,7 @@ class BlockArray(object):
             for z in range(16):
                 for x in range(16):
                     for y in range(127, -1, -1):
-                        offset = y + z*128 + x*128*16
+                        offset = y + (z << 7) + (x << 11)
                         if (self.blocksList[offset] not in non_solids or y == 0):
                             bytes.append(y+1)
                             break
@@ -413,7 +413,7 @@ class BlockArray(object):
                 for z in range(16):
                     for y in range(128):
                         coord = x,y,z
-                        offset = y + z*128 + x*128*16
+                        offset = y + (z << 7) + (x << 11)
                         if (coord in dict):
                             list.append(dict[coord])
                         else:
@@ -429,7 +429,7 @@ class BlockArray(object):
 
     def set_block(self, x,y,z, id, data=0):
         """Sets the block a x, y, z to the specified id, and optionally data."""
-        offset = y + z*128 + x*128*16
+        offset = y + (z << 7) + (x << 11)
         self.blocksList[offset] = id
         if (offset % 2 == 1):
             # offset is odd
@@ -458,5 +458,5 @@ class BlockArray(object):
                 blocks.append(Block(x,y,z))
         """
 
-        offset = y + z*128 + x*128*16 if (coord == False) else coord[1] + coord[2]*128 + coord[0]*128*16
+        offset = y + (z << 7) + (x << 11) if (coord == False) else coord[1] + (coord[2] << 7) + (coord[0] << 11)
         return self.blocksList[offset]
