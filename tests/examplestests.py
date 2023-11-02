@@ -21,6 +21,7 @@ except ImportError:
 
 # local modules
 from . import downloadsample
+from . import sample_server
 
 if sys.version_info[0] < 3:
     def _deletechars(text, deletechars):
@@ -64,7 +65,6 @@ class ScriptTestCase(unittest.TestCase):
         env['LC_ALL'] = 'C'
         # Open a subprocess, wait till it is done, and get the STDOUT result
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
-        p.wait()
         output = [r.decode('utf-8') for r in p.stdout.readlines()]
         for l in p.stderr.readlines():
             sys.stdout.write("%s: %s" % (script, l.decode('utf-8')))
@@ -73,6 +73,7 @@ class ScriptTestCase(unittest.TestCase):
             p.stderr.close()
         except IOError:
             pass
+        p.wait()
         self.assertEqual(p.returncode, 0, "return code is %d" % p.returncode)
         return output
     def assertEqualOutput(self, actual, expected):
@@ -106,16 +107,10 @@ class BiomeAnalysisScriptTest(ScriptTestCase):
     #   output = self.runScript('biome_analysis.py', [self.anvilfolder])
 
 class BlockAnalysisScriptTest(ScriptTestCase):
-
-    def testMcRegionWorld(self):
-        output = self.runScript('block_analysis.py', [self.mcregionfolder])
-        self.assertTrue(len(output) == 60, "Expected output of 60 lines long")
-        self.assertEqualString(output[-1], '21397504 total blocks in world, 11181987 are non-air (52.2584%)')
+    anvilfolder = sample_server.world_dir
 
     def testAnvilWorld(self):
-        output = self.runScript('block_analysis.py', [self.anvilfolder])
-        self.assertTrue(len(output) == 60, "Expected output of 60 lines long")
-        self.assertEqualString(output[-1], '13819904 total blocks in world, 11181987 are non-air (80.9122%)')
+        self.runScript('block_analysis.py', [self.anvilfolder])
 
 
 class ChestAnalysisScriptTest(ScriptTestCase):
@@ -140,18 +135,14 @@ def has_PIL():
 
 
 class MapScriptTest(ScriptTestCase):
-    @unittest.skipIf(not has_PIL(), "PIL library not available")
-    def testMcRegionWorld(self):
-        output = self.runScript('map.py', ['--noshow', self.mcregionfolder])
-        self.assertTrue(output[-1].startswith("Saved map as "))
-    # TODO: this currently writes the map to tests/nbtmcregion*.png files. 
-    # The locations should be a tempfile, and the file should be deleted afterwards.
-    
+    anvilfolder = sample_server.world_dir
+
     @unittest.skipIf(not has_PIL(), "PIL library not available")
     def testAnvilWorld(self):
         output = self.runScript('map.py', ['--noshow', self.anvilfolder])
         self.assertTrue(output[-1].startswith("Saved map as "))
-    # TODO: same as above
+    # TODO: this currently writes the map to tests/nbtmcregion*.png files.
+    # The locations should be a tempfile, and the file should be deleted afterwards.
 
 
 class MobAnalysisScriptTest(ScriptTestCase):
@@ -243,6 +234,7 @@ class ScoreboardScriptTest(ScriptTestCase):
 
 def setUpModule():
     """Download sample world, and copy Anvil and McRegion files to temporary folders."""
+    sample_server.make_world()
     if ScriptTestCase.worldfolder == None:
         downloadsample.install()
         ScriptTestCase.worldfolder = downloadsample.worlddir

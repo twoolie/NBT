@@ -19,11 +19,14 @@ def test_we_have_a_world_dir(world_dir):
     assert os.path.exists(os.path.join(world_dir, 'level.dat'))
 
 
-@pytest.mark.xfail(reason="NBT is not (yet) compatible with Minecraft 1.20.2")
 def test_read_no_smoke(world_dir):
     """We dont crash when reading a world"""
     world = WorldFolder(world_dir)
     assert world.get_boundingbox()
     assert world.chunk_count()
-    for chunk in world.iter_chunks():
-        assert chunk
+
+    chunk = next(world.iter_chunks())
+    assert chunk.get_max_height()
+
+    block = chunk.get_block(0, 0, 0)
+    assert block

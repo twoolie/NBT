@@ -100,7 +100,7 @@ def block_id_to_name(bid):
 class Chunk(object):
     """Class for representing a single chunk."""
     def __init__(self, nbt):
-        self.chunk_data = nbt['Level']
+        self.chunk_data = nbt
         self.coords = self.chunk_data['xPos'],self.chunk_data['zPos']
 
     def get_coords(self):
@@ -152,7 +152,8 @@ class AnvilSection(object):
         elif version >= 2566 and version <= 2730: # MC 1.16.0 to MC 1.17.2 (latest tested version)
             self._init_index_padded(nbt)
         else:
-            raise NotImplementedError()
+            # best guess for other versions
+            self._init_index_padded(nbt)
 
         # Section contains 4096 blocks whatever data version
 
@@ -228,12 +229,17 @@ class AnvilSection(object):
     # Contains palette of block names and indexes packed with padding if elements don't fit (post 1.16 format)
 
     def _init_index_padded(self, nbt):
-
-        for p in nbt['Palette']:
+        for p in nbt['block_states']['palette']:
             name = p['Name'].value
             self.names.append(name)
 
-        states = nbt['BlockStates'].value
+        # When there is only one element in the palette and no data
+        # we have single block fill the whole section.
+        if len(self.names) == 1 and 'data' not in nbt['block_states']:
+            self.indexes = [0] * 4096
+            return
+
+        states = nbt['block_states']['data'].value
         num_bits = (len(self.names) - 1).bit_length()
         if num_bits < 4: num_bits = 4
         mask = 2**num_bits - 1
@@ -294,9 +300,9 @@ class AnvilChunk(Chunk):
         # Load all sections
 
         self.sections = {}
-        if 'Sections' in self.chunk_data:
-            for s in self.chunk_data['Sections']:
-                if "BlockStates" in s.keys() or "Blocks" in s.keys(): # sections may only contain lighting information
+        if 'sections' in self.chunk_data:
+            for s in self.chunk_data['sections']:
+                if 'block_states' in s.keys():  # sections may only contain lighting information
                     self.sections[s['Y'].value] = AnvilSection(s, version)
 
 
