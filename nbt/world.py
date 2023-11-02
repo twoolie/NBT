@@ -26,23 +26,24 @@ class _BaseWorldFolder(object):
     extension = ''
     chunkclass = chunk.Chunk
 
-    def __init__(self, world_folder):
+    def __init__(self, world_folder, is_entity=False):
         """Initialize a WorldFolder."""
         self.worldfolder = world_folder
         self.regionfiles = {}
         self.regions     = {}
         self.chunks  = None
+        self.is_entity = is_entity
         # os.listdir triggers an OSError for non-existant directories or permission errors.
         # This is needed, because glob.glob silently returns no files.
         os.listdir(world_folder)
-        self.set_regionfiles(self.get_filenames())
+        self.set_regionfiles(self.get_filenames(subfolder="entities" if self.is_entity else "region"))
 
-    def get_filenames(self):
+    def get_filenames(self, subfolder="region"):
         """Find all matching file names in the world folder.
         
         This method is private, and it's use it deprecated. Use get_regionfiles() instead."""
         # Warning: glob returns a empty list if the directory is unreadable, without raising an Exception
-        return list(glob.glob(os.path.join(self.worldfolder,'region','r.*.*.'+self.extension)))
+        return list(glob.glob(os.path.join(self.worldfolder,subfolder,'r.*.*.'+self.extension)))
 
     def set_regionfiles(self, filenames):
         """
