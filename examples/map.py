@@ -15,9 +15,7 @@ except ImportError:
     if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
         raise
     sys.path.append(extrasearchpath)
-from nbt.region import RegionFile
-from nbt.chunk import Chunk
-from nbt.world import WorldFolder,McRegionWorldFolder
+from nbt.world import WorldFolder
 # PIL module (not build-in)
 try:
     from PIL import Image
@@ -73,6 +71,7 @@ block_ignore = [
 #    'redstone_ore', 'lapis_ore', 'emerald_ore',
 #    'cobweb',
     ]
+block_ignore = [f'minecraft:{b}' for b in block_ignore]
 
 
 # Map of block colors from names
@@ -165,6 +164,10 @@ block_colors = {
     'wheat':                {'h':123, 's':60,  'l':50 },
     'white_wool':           {'h':0,   's':0,   'l':100},
     }
+block_colors = {
+    f'minecraft:{b}': c
+    for b, c in block_colors.items()
+}
 
 
 def get_map(chunk):

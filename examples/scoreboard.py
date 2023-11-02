@@ -15,7 +15,7 @@ except ImportError:
     if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
         raise
     sys.path.append(extrasearchpath)
-from nbt.nbt import NBTFile, TAG_Long, TAG_Int, TAG_String, TAG_List, TAG_Compound
+from nbt.nbt import NBTFile
 
 def main(world_folder, show=True):
     scorefile = world_folder + '/data/scoreboard.dat'

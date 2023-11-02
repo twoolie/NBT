@@ -15,7 +15,7 @@ except ImportError:
     import unittest2 as unittest
 
 # local modules
-from utils import open_files
+from .utils import open_files
 
 # Search parent directory first, to make sure we test the local nbt module, 
 # not an installed nbt module.
@@ -23,7 +23,7 @@ parentdir = os.path.realpath(os.path.join(os.path.dirname(__file__),os.pardir))
 if parentdir not in sys.path:
     sys.path.insert(1, parentdir) # insert ../ just after ./
 
-from nbt.region import RegionFile, RegionFileFormatError, NoRegionHeader, \
+from nbt.region import RegionFile, RegionFileFormatError, \
     RegionHeaderError, ChunkHeaderError, ChunkDataError, InconceivedChunk
 from nbt.nbt import NBTFile, TAG_Compound, TAG_Byte_Array, TAG_Long, TAG_Int, TAG_String
 
@@ -201,7 +201,7 @@ class ReadWriteTest(unittest.TestCase):
         self.tempdir = tempfile.mkdtemp()
         self.filename = os.path.join(self.tempdir, 'regiontest.mca')
         shutil.copy(REGIONTESTFILE, self.filename)
-        self.region = RegionFile(filename = self.filename)
+        self.region = RegionFile(filename = self.filename, for_write=True)
 
     def tearDown(self):
         del self.region

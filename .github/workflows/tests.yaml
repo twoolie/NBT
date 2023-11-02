@@ -14,12 +14,16 @@ jobs:
         ]
 
     steps:
+      - name: Select java runtime version
+        run: sudo update-java-alternatives --set $JAVA_HOME_21_X64
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: pip install pillow
+        run: pip install pillow pytest
+      - name: Pregenerate minecraft worlds
+        run: python -m tests.sample_server
       - name: Run tests
-        run: python tests/alltests.py
+        run: pytest

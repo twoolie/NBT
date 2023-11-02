@@ -16,7 +16,7 @@ except ImportError:
     if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
         raise
     sys.path.append(extrasearchpath)
-from nbt.nbt import NBTFile, TAG_Long, TAG_Int, TAG_String, TAG_List, TAG_Compound
+from nbt.nbt import TAG_Long, TAG_String, TAG_List, TAG_Compound
 
 def unpack_nbt(tag):
     """

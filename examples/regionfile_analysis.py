@@ -3,7 +3,7 @@
 Defragment a given region file.
 """
 
-import locale, os, sys
+import os, sys
 import collections
 from optparse import OptionParser
 import gzip

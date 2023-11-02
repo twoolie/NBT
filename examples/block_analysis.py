@@ -107,7 +107,7 @@ def print_results():
         print(locale.format_string("%20s: %12d", (block_id, block_count)))
         block_total += block_count
     
-    solid_blocks = block_total - block_counts ['air']
+    solid_blocks = block_total - block_counts['minecraft:air']
     solid_ratio = (solid_blocks+0.0)/block_total
     print(locale.format_string("%d total blocks in world, %d are non-air (%0.4f", (block_total, solid_blocks, 100.0*solid_ratio))+"%)")
 

@@ -3,7 +3,6 @@
 Counter the number of biomes in the world. Works only for Anvil-based world folders.
 """
 import locale, os, sys
-from struct import pack, unpack
 
 # local module
 try:
@@ -14,9 +13,7 @@ except ImportError:
     if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
         raise
     sys.path.append(extrasearchpath)
-from nbt.region import RegionFile
-from nbt.chunk import Chunk
-from nbt.world import AnvilWorldFolder,UnknownWorldFormat
+from nbt.world import AnvilWorldFolder
 
 BIOMES = {
     0 : "Ocean",
