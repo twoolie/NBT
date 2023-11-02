@@ -15,9 +15,7 @@ except ImportError:
     if not os.path.exists(os.path.join(extrasearchpath,'nbt')):
         raise
     sys.path.append(extrasearchpath)
-from nbt.region import RegionFile
-from nbt.chunk import Chunk
-from nbt.world import WorldFolder,McRegionWorldFolder
+from nbt.world import WorldFolder
 # PIL module (not build-in)
 try:
     from PIL import Image

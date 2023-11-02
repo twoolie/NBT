@@ -3,7 +3,7 @@
 Finds and prints different entities in a game file, including mobs, items, and vehicles.
 """
 
-import locale, os, sys
+import os, sys
 
 # local module
 try:

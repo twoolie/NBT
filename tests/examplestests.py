@@ -8,7 +8,6 @@ import sys
 import os
 import subprocess
 import shutil
-import tempfile
 import glob
 import logging
 

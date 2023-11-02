@@ -23,7 +23,7 @@ parentdir = os.path.realpath(os.path.join(os.path.dirname(__file__),os.pardir))
 if parentdir not in sys.path:
     sys.path.insert(1, parentdir) # insert ../ just after ./
 
-from nbt.region import RegionFile, RegionFileFormatError, NoRegionHeader, \
+from nbt.region import RegionFile, RegionFileFormatError, \
     RegionHeaderError, ChunkHeaderError, ChunkDataError, InconceivedChunk
 from nbt.nbt import NBTFile, TAG_Compound, TAG_Byte_Array, TAG_Long, TAG_Int, TAG_String
 
