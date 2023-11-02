@@ -4,14 +4,16 @@ import pytest
 
 from nbt.world import WorldFolder
 
-from .sample_server import make_world
-from .sample_server import world_dir as sample_world_dir
+from .sample_server import get_world_dir, versions
 
 
-@pytest.fixture(scope='session', autouse=True)
-def world_dir():
-    make_world()
-    yield sample_world_dir
+@pytest.fixture(
+    scope='session',
+    autouse=True,
+    params=versions.keys(),
+)
+def world_dir(request):
+    yield get_world_dir(version=request.param)
 
 
 def test_we_have_a_world_dir(world_dir):

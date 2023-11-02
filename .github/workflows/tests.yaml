@@ -23,5 +23,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: pip install pillow pytest
+      - name: Pregenerate minecraft worlds
+        run: python -m tests.sample_server
       - name: Run tests
         run: pytest

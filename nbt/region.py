@@ -193,7 +193,7 @@ class RegionFile(object):
     """Constant indicating an normal status: the chunk does not exist.
     Deprecated. Use :const:`nbt.region.STATUS_CHUNK_NOT_CREATED` instead."""
     
-    def __init__(self, filename=None, fileobj=None, chunkclass = None):
+    def __init__(self, filename=None, for_write=False, fileobj=None, chunkclass = None):
         """
         Read a region file by filename or file object. 
         If a fileobj is specified, it is not closed after use; it is the callers responibility to close it.
@@ -206,7 +206,8 @@ class RegionFile(object):
         self.chunkclass = chunkclass
         if filename:
             self.filename = filename
-            self.file = open(filename, 'r+b') # open for read and write in binary mode
+            mode = 'r+b' if for_write else 'rb'
+            self.file = open(filename, mode)
             self._closefile = True
         elif fileobj:
             if hasattr(fileobj, 'name'):

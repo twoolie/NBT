@@ -19,7 +19,7 @@ from nbt.nbt import NBTFile
 def main(world_folder):
     filename = os.path.join(world_folder,'level.dat')
     level = NBTFile(filename)
-    print(level["Data"]["RandomSeed"])
+    print(level["Data"]["WorldGenSettings"]["seed"].value)
     return 0 # NOERR
 
 

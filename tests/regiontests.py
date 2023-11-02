@@ -201,7 +201,7 @@ class ReadWriteTest(unittest.TestCase):
         self.tempdir = tempfile.mkdtemp()
         self.filename = os.path.join(self.tempdir, 'regiontest.mca')
         shutil.copy(REGIONTESTFILE, self.filename)
-        self.region = RegionFile(filename = self.filename)
+        self.region = RegionFile(filename = self.filename, for_write=True)
 
     def tearDown(self):
         del self.region

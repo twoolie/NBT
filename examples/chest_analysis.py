@@ -51,21 +51,7 @@ def chests_per_chunk(chunk):
 
     chests = []
 
-    for entity in chunk['Entities']:
-        eid = entity["id"].value
-        if eid == "Minecart" and entity["type"].value == 1 or eid == "minecraft:chest_minecart":
-            x,y,z = entity["Pos"]
-            x,y,z = x.value,y.value,z.value
-
-            # Treasures are empty upon first opening
-
-            try:
-                items = items_from_nbt(entity["Items"])
-            except KeyError:
-                items = {}
-            chests.append(Chest("Minecart with chest",(x,y,z),items))
-
-    for entity in chunk['TileEntities']:
+    for entity in chunk['block_entities']:
         eid = entity["id"].value
         if eid == "Chest" or eid == "minecraft:chest":
             x,y,z = entity["x"].value,entity["y"].value,entity["z"].value
@@ -103,7 +89,7 @@ def main(world_folder):
     
     try:
         for chunk in world.iter_nbt():
-            print_results(chests_per_chunk(chunk["Level"]))
+            print_results(chests_per_chunk(chunk))
 
     except KeyboardInterrupt:
         return 75 # EX_TEMPFAIL
