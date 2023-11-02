@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 import sys,os
-import tempfile, shutil
-from io import BytesIO
 import logging
-import random
-import time
-import zlib
 
 import unittest
 try:
