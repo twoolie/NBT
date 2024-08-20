@@ -605,7 +605,7 @@ TAGLIST = {TAG_END: _TAG_End, TAG_BYTE: TAG_Byte, TAG_SHORT: TAG_Short,
 class NBTFile(TAG_Compound):
     """Represent an NBT file object."""
 
-    def __init__(self, filename=None, buffer=None, fileobj=None):
+    def __init__(self, filename=None, buffer=None, fileobj=None, network=None):
         """
         Create a new NBTFile object.
         Specify either a filename, file object or data buffer.
@@ -619,6 +619,7 @@ class NBTFile(TAG_Compound):
         super(NBTFile, self).__init__()
         self.filename = filename
         self.type = TAG_Byte(self.id)
+        self.network = network # https://wiki.vg/NBT#Network_NBT_.28Java_Edition.29
         closefile = True
         # make a file object
         if filename:
@@ -648,7 +649,7 @@ class NBTFile(TAG_Compound):
                     pass
             self.file = None
 
-    def parse_file(self, filename=None, buffer=None, fileobj=None):
+    def parse_file(self, filename=None, buffer=None, fileobj=None, network=None):
         """Completely parse a file, extracting all tags."""
         closefile = True
         if filename:
@@ -666,7 +667,10 @@ class NBTFile(TAG_Compound):
             try:
                 type = TAG_Byte(buffer=self.file)
                 if type.value == self.id:
-                    name = TAG_String(buffer=self.file).value
+                    if self.network or network:
+                        name = ""
+                    else:
+                        name = TAG_String(buffer=self.file).value
                     self._parse_buffer(self.file)
                     self.name = name
                     if closefile:
@@ -683,7 +687,7 @@ class NBTFile(TAG_Compound):
                 "filename or a file object"
             )
 
-    def write_file(self, filename=None, buffer=None, fileobj=None):
+    def write_file(self, filename=None, buffer=None, fileobj=None, network=None):
         """Write this NBT file to a file."""
         closefile = True
         if buffer:
@@ -705,7 +709,8 @@ class NBTFile(TAG_Compound):
             )
         # Render tree to file
         TAG_Byte(self.id)._render_buffer(self.file)
-        TAG_String(self.name)._render_buffer(self.file)
+        if not (self.network or network):
+            TAG_String(self.name)._render_buffer(self.file)
         self._render_buffer(self.file)
         # make sure the file is complete
         try:
