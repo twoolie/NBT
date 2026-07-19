@@ -7,10 +7,7 @@ https://minecraft.wiki/w/NBT_format
 
 from struct import Struct, error as StructError
 from gzip import GzipFile
-try:
-    from collections.abc import MutableMapping, MutableSequence, Sequence
-except ImportError:  # for Python 2.7
-    from collections import MutableMapping, MutableSequence, Sequence
+from collections.abc import MutableMapping, MutableSequence, Sequence
 import sys
 
 _PY3 = sys.version_info >= (3,)
