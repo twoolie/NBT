@@ -522,7 +522,7 @@ class TAG_Compound(TAG, MutableMapping):
 
     def __contains__(self, key):
         if isinstance(key, int):
-            return key <= len(self.tags)
+            return -len(self.tags) <= key < len(self.tags)
         elif isinstance(key, basestring):
             for tag in self.tags:
                 if tag.name == key:
