@@ -17,7 +17,8 @@ parentdir = os.path.realpath(os.path.join(os.path.dirname(__file__),os.pardir))
 if parentdir not in sys.path:
     sys.path.insert(1, parentdir)  # insert ../ just after ./
 
-from nbt.nbt import _TAG_Numeric, TAG_Int, MalformedFileError, NBTFile, TAGLIST
+from nbt.nbt import (_TAG_Numeric, TAG_Compound, TAG_Int, MalformedFileError,
+                     NBTFile, TAGLIST)
 
 NBTTESTFILE = os.path.join(os.path.dirname(__file__), 'bigtest.nbt')
 
@@ -32,6 +33,30 @@ class BugfixTest(unittest.TestCase):
         temp = BytesIO(b"")
         temp.seek(0)
         self.assertRaises(MalformedFileError, NBTFile, buffer=temp)
+
+
+class CompoundIndexMembershipTest(unittest.TestCase):
+    """Integer membership follows TAG_Compound list-index bounds."""
+
+    def test_empty_compound_has_no_valid_indexes(self):
+        compound = TAG_Compound()
+
+        self.assertNotIn(0, compound)
+        self.assertNotIn(-1, compound)
+
+    def test_membership_matches_valid_and_out_of_range_indexes(self):
+        compound = TAG_Compound()
+        compound.tags.extend([TAG_Int(10), TAG_Int(20)])
+
+        self.assertIn(0, compound)
+        self.assertIn(1, compound)
+        self.assertIn(-1, compound)
+        self.assertIn(-2, compound)
+        self.assertEqual(compound[-1].value, 20)
+        self.assertEqual(compound[-2].value, 10)
+
+        self.assertNotIn(len(compound), compound)
+        self.assertNotIn(-len(compound) - 1, compound)
 
 
 class ReadWriteTest(unittest.TestCase):
